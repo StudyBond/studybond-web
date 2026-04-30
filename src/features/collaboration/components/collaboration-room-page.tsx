@@ -7,7 +7,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowRight,
-  CheckCircle2,
   ClipboardCopy,
   Crown,
   Loader2,
@@ -43,14 +42,12 @@ import { offlineStore } from "@/features/exam/stores/offline-store";
 import { getExamQuestions } from "@/lib/api/exams";
 import type {
   CollaborationParticipant,
-  CollaborationSession,
   CollaborationSessionStatus,
   CollaborationStartResult,
   ExamSessionData,
   UserProfile,
   UserStats,
 } from "@/lib/api/types";
-import { cn } from "@/lib/utils/cn";
 
 type CollaborationRoomPageProps = {
   code: string;
@@ -214,23 +211,16 @@ export function CollaborationRoomPage({
     rememberCollaborationRoom(session);
   }, [session]);
 
-  // Reset name draft when editing mode changes or session name changes
-  useEffect(() => {
-    if (!isEditingName && session) {
-      setNameDraft(session.customName ?? "");
-    }
-  }, [isEditingName, session?.customName]);
-
   // Ref to track if we have already initiated the launch to the exam arena.
   // This prevents multiple redirects or race conditions during rapid state updates.
   const launchInitiatedRef = useRef(false);
 
   // Reset launching state when session status changes away from IN_PROGRESS
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   // (Safe to call setState here: status change doesn't depend on isLaunching, prevents cascading)
   useEffect(() => {
     if (session?.status !== "IN_PROGRESS") {
       launchInitiatedRef.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLaunching(false);
     }
   }, [session?.status]);
@@ -303,7 +293,7 @@ export function CollaborationRoomPage({
         clearTimeout(timer);
       }
     };
-  }, [myExamId, queryClient, router, session?.status]);
+  }, [myExamId, queryClient, router, session, session?.status]);
 
   async function handleCopyInvite() {
     if (!session) return;
@@ -419,6 +409,18 @@ export function CollaborationRoomPage({
     }
   }
 
+  function handleToggleNameEditing() {
+    if (!session) return;
+
+    if (isEditingName) {
+      setIsEditingName(false);
+      return;
+    }
+
+    setNameDraft(session.customName ?? "");
+    setIsEditingName(true);
+  }
+
   if (sessionQuery.isLoading) {
     return (
       <div className="space-y-6">
@@ -497,7 +499,7 @@ export function CollaborationRoomPage({
                 {canRename ? (
                   <button
                     type="button"
-                    onClick={() => setIsEditingName((value) => !value)}
+                    onClick={handleToggleNameEditing}
                     className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/45 transition-all hover:border-white/[0.14] hover:text-white/75"
                   >
                     <PencilLine className="h-4 w-4" />
@@ -576,10 +578,7 @@ export function CollaborationRoomPage({
                 <div className="flex gap-3">
                   <Button
                     variant="secondary"
-                    onClick={() => {
-                      setIsEditingName(false);
-                      setNameDraft(session.customName ?? "");
-                    }}
+                    onClick={() => setIsEditingName(false)}
                   >
                     Keep current
                   </Button>
