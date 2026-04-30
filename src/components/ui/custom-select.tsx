@@ -11,31 +11,42 @@ export interface CustomSelectOption {
 }
 
 export interface CustomSelectProps {
+  id?: string;
   value: string;
   onValueChange: (val: string) => void;
   options: CustomSelectOption[];
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  labelledBy?: string;
 }
 
 export function CustomSelect({
+  id,
   value,
   onValueChange,
   options,
   placeholder = "Select an option",
   className,
   disabled = false,
+  labelledBy,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedLabel = options.find((o) => o.value === value)?.label ?? placeholder;
+  const optionsId = id ? `${id}-options` : undefined;
 
   return (
     <div className={cn("relative", className)}>
       <button
+        id={id}
         type="button"
+        role="combobox"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={optionsId}
+        aria-haspopup="listbox"
+        aria-labelledby={labelledBy}
         className={cn(
           "flex h-11 w-full items-center justify-between rounded-xl border border-white/10 bg-black/20 px-4 py-2 text-sm text-white/90 outline-none transition-all",
           !disabled && "hover:bg-white/[0.04]",
@@ -55,10 +66,16 @@ export function CustomSelect({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute z-50 mt-2 w-full min-w-[max-content] overflow-hidden rounded-xl border border-white/10 bg-[#121212] py-1 shadow-2xl">
+          <div
+            id={optionsId}
+            role="listbox"
+            className="absolute z-50 mt-2 w-full min-w-[max-content] overflow-hidden rounded-xl border border-white/10 bg-[#121212] py-1 shadow-2xl"
+          >
             {options.map((option) => (
               <div
                 key={option.value}
+                role="option"
+                aria-selected={value === option.value}
                 className={cn(
                   "relative flex cursor-pointer select-none items-center px-4 py-2.5 text-sm text-white/80 transition-colors",
                   option.disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10",

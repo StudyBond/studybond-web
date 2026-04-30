@@ -114,17 +114,19 @@ export function SignupForm() {
       />
 
       <div className="space-y-1.5 z-10 relative">
-        <label
-          htmlFor="institution"
+        <p
+          id="institution-label"
           className="block text-xs font-medium text-white/50 tracking-wide"
         >
           Target University
-        </label>
+        </p>
         <Controller
           control={form.control}
           name="institution"
           render={({ field }) => (
             <CustomSelect
+              id="institution"
+              labelledBy="institution-label"
               value={field.value}
               onValueChange={field.onChange}
               options={[
