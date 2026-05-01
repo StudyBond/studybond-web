@@ -10,6 +10,45 @@ type AnswerReviewProps = {
   result: ExamResult;
 };
 
+// ── Media Helper ──────────────────────────────────────────
+
+function isVideoUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return /\.(mp4|webm|ogg)$/i.test(url.split("?")[0]);
+}
+
+function MediaNode({
+  url,
+  alt,
+  className,
+}: {
+  url: string;
+  alt: string;
+  className?: string;
+}) {
+  if (isVideoUrl(url)) {
+    return (
+      <video
+        src={url}
+        className={cn(className, "sb-protected-img")}
+        controls
+        preload="metadata"
+        controlsList="nodownload"
+        onContextMenu={(e) => e.preventDefault()}
+      />
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={alt}
+      className={cn(className, "sb-protected-img")}
+      onContextMenu={(e) => e.preventDefault()}
+      draggable={false}
+    />
+  );
+}
+
 // Extracted Option view to display correct/incorrect options cleanly
 function OptionView({
   label,
@@ -74,12 +113,10 @@ function OptionView({
           </div>
         ) : null}
         {imageUrl ? (
-          <img
-            src={imageUrl}
+          <MediaNode
+            url={imageUrl}
             alt={`Option ${label}`}
-            className="max-h-32 rounded border border-white/10 opacity-80 mix-blend-screen sb-protected-img"
-            onContextMenu={(e) => e.preventDefault()}
-            draggable={false}
+            className="max-h-32 rounded border border-white/10 opacity-80 mix-blend-screen"
           />
         ) : null}
       </div>
@@ -169,12 +206,10 @@ export function QuestionReviewItem({
                 </div>
               )}
               {q.imageUrl && (
-                <img
-                  src={q.imageUrl}
+                <MediaNode
+                  url={q.imageUrl}
                   alt="Question"
-                  className="max-h-48 rounded-xl border border-white/[0.06] sb-protected-img"
-                  onContextMenu={(e) => e.preventDefault()}
-                  draggable={false}
+                  className="max-h-48 rounded-xl border border-white/[0.06]"
                 />
               )}
             </div>
@@ -217,12 +252,10 @@ export function QuestionReviewItem({
                   />
                 </div>
                 {q.explanation.imageUrl && (
-                  <img
-                    src={q.explanation.imageUrl}
+                  <MediaNode
+                    url={q.explanation.imageUrl}
                     alt="Explanation"
-                    className="mt-3 max-h-40 rounded-lg border border-white/10 sb-protected-img"
-                    onContextMenu={(e) => e.preventDefault()}
-                    draggable={false}
+                    className="mt-3 max-h-40 rounded-lg border border-white/10"
                   />
                 )}
               </div>
