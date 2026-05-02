@@ -21,7 +21,6 @@ import { useExamSession } from "@/features/exam/hooks/use-exam-session";
 import {
   useSubmitExamMutation,
   useAbandonExamMutation,
-  useReportViolationMutation,
 } from "@/features/exam/hooks/use-exam-mutations";
 import { useExamStore } from "@/features/exam/stores/exam-store";
 import type { ExamQuestion } from "@/lib/api/types";
@@ -199,14 +198,10 @@ export function ExamArena({ examId }: ExamArenaProps) {
   }, []);
 
   const autoSubmitRef = useRef<() => void>(() => {});
-  const reportViolationMutation = useReportViolationMutation();
 
   const { guardState, dismissViolation } = useExamGuard({
     mode: "exam",
     onAutoSubmit: () => autoSubmitRef.current(),
-    onViolation: (type, metadata) => {
-      reportViolationMutation.mutate({ examId, violationType: type, metadata });
-    },
     enabled: !!session && !isLoading && storeExamId === examId,
   });
 

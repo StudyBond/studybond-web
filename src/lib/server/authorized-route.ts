@@ -28,7 +28,8 @@ export async function forwardAuthorizedRoute(
     | "leaderboard"
     | "subscriptions"
     | "bookmarks"
-    | "collaboration",
+    | "collaboration"
+    | "reports",
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
 ) {
   const { slug } = await context.params;

@@ -8,7 +8,7 @@ import type {
 /** Submit a question report. */
 export async function createQuestionReport(payload: CreateReportPayload) {
   const response = await apiClient<SuccessEnvelope<QuestionReport>>(
-    "/api/reports/",
+    "/api/reports",
     {
       method: "POST",
       body: JSON.stringify(payload),

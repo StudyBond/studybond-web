@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 import { useReportQuestion } from "@/features/exam/hooks/use-report-question";
 import type { ReportIssueType } from "@/lib/api/types";
@@ -76,10 +77,26 @@ export function ReportQuestionModal({
   onClose,
 }: ReportQuestionModalProps) {
   const mutation = useReportQuestion();
+  const [isMounted, setIsMounted] = useState(false);
 
   const [selectedType, setSelectedType] = useState<ReportIssueType | null>(null);
   const [description, setDescription] = useState("");
   const [step, setStep] = useState<"select" | "success">("select");
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const resetState = useCallback(() => {
     setSelectedType(null);
@@ -118,19 +135,18 @@ export function ReportQuestionModal({
     (selectedType !== "OTHER" || description.trim().length >= 5) &&
     !mutation.isPending;
 
-  if (!open) return null;
+  if (!open || !isMounted) return null;
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-        onClick={handleClose}
-      />
-
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+    >
       {/* Modal */}
-      <div className="fixed inset-x-0 bottom-0 z-50 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-4 md:fade-in duration-300">
-        <div className="rounded-t-3xl md:rounded-2xl border border-white/[0.08] bg-[var(--sb-bg-surface-1)] shadow-2xl shadow-black/40 overflow-hidden">
+      <div className="w-full max-w-md animate-in zoom-in-95 slide-in-from-bottom-6 duration-300">
+        <div className="rounded-2xl border border-white/[0.08] bg-[var(--sb-bg-surface-1)] shadow-2xl shadow-black/40 overflow-hidden">
           {/* ── Header ── */}
           <div className="flex items-center gap-3 border-b border-white/[0.06] px-5 py-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
@@ -161,9 +177,9 @@ export function ReportQuestionModal({
                 <h4 className="text-base font-bold text-white mb-1">
                   Report submitted
                 </h4>
-                <p className="text-xs text-white/40 max-w-[240px] leading-relaxed">
+                <p className="text-xs text-white/40 max-w-[260px] leading-relaxed">
                   Thank you for helping us improve. Our team will review this
-                  question shortly.
+                  question and make adjustments if necessary.
                 </p>
               </div>
             ) : (
@@ -313,6 +329,7 @@ export function ReportQuestionModal({
           </div>
         </div>
       </div>
-    </>
+    </div>,
+    document.body,
   );
 }
