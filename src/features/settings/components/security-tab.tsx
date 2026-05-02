@@ -20,7 +20,7 @@ import {
   LogOut,
 } from "lucide-react";
 
-export function SecurityTab() {
+export function SecurityTab({ isPremium = false }: { isPremium?: boolean }) {
   const { data: security, isLoading, isError } = useSecurityOverview();
   const changePassword = useChangePassword();
   const logout = useLogoutMutation();
@@ -161,68 +161,70 @@ export function SecurityTab() {
         </div>
       </div>
 
-      {/* ── Active Sessions ── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-            <Fingerprint className="h-4 w-4" />
+      {/* ── Active Sessions (Premium only) ── */}
+      {isPremium && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+              <Fingerprint className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Active Sessions</h3>
+              <p className="text-[10px] text-white/30">Devices currently signed into your account</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-white">Active Sessions</h3>
-            <p className="text-[10px] text-white/30">Devices currently signed into your account</p>
-          </div>
-        </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-white/20" />
-          </div>
-        ) : isError ? (
-          <div className="rounded-xl border border-red-400/10 bg-red-400/[0.03] p-4 text-center text-xs text-red-400/70">
-            Failed to load sessions.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {security?.activeSessions.map((session) => {
-              const DeviceIcon = getDeviceIcon(session.userAgent);
-              return (
-                <div
-                  key={session.sessionId}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-2xl border p-4 transition-all duration-300",
-                    session.isCurrent
-                      ? "border-emerald-400/15 bg-emerald-400/[0.03]"
-                      : "border-white/[0.04] bg-white/[0.015] hover:bg-white/[0.025]",
-                  )}
-                >
-                  <div className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
-                    session.isCurrent ? "bg-emerald-400/10 text-emerald-400" : "bg-white/[0.04] text-white/30",
-                  )}>
-                    <DeviceIcon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-white/80 truncate">
-                        {session.deviceName || parseUserAgent(session.userAgent)}
-                      </p>
-                      {session.isCurrent && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold uppercase tracking-wider text-emerald-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          This Device
-                        </span>
-                      )}
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-white/20" />
+            </div>
+          ) : isError ? (
+            <div className="rounded-xl border border-red-400/10 bg-red-400/[0.03] p-4 text-center text-xs text-red-400/70">
+              Failed to load sessions.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {security?.activeSessions.map((session) => {
+                const DeviceIcon = getDeviceIcon(session.userAgent);
+                return (
+                  <div
+                    key={session.sessionId}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-2xl border p-4 transition-all duration-300",
+                      session.isCurrent
+                        ? "border-emerald-400/15 bg-emerald-400/[0.03]"
+                        : "border-white/[0.04] bg-white/[0.015] hover:bg-white/[0.025]",
+                    )}
+                  >
+                    <div className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+                      session.isCurrent ? "bg-emerald-400/10 text-emerald-400" : "bg-white/[0.04] text-white/30",
+                    )}>
+                      <DeviceIcon className="h-5 w-5" />
                     </div>
-                    <p className="text-[10px] text-white/25 mt-0.5">
-                      {session.lastLoginAt ? `Last active ${formatTimeAgo(session.lastLoginAt)}` : "Active now"}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-white/80 truncate">
+                          {session.deviceName || parseUserAgent(session.userAgent)}
+                        </p>
+                        {session.isCurrent && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold uppercase tracking-wider text-emerald-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            This Device
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-white/25 mt-0.5">
+                        {session.lastLoginAt ? `Last active ${formatTimeAgo(session.lastLoginAt)}` : "Active now"}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Logout Section ── */}
       <div className="space-y-4 pt-6 border-t border-white/[0.04]">

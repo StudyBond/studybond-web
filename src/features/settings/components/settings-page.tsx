@@ -204,7 +204,7 @@ export function SettingsPageClient() {
               {activeTab === "profile" && profile && (
                 <ProfileTab profile={profile} isPremium={isPremium} />
               )}
-              {activeTab === "security" && <SecurityTab />}
+              {activeTab === "security" && <SecurityTab isPremium={isPremium} />}
               {activeTab === "subscription" && (
                 <SubscriptionTab
                   isPremium={isPremium}
