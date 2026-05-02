@@ -4,8 +4,8 @@ import { ResetPasswordForm } from "@/features/auth/components/reset-password-for
 export default function ResetPasswordPage() {
   return (
     <AuthPanel
-      description="Use the code from your email and choose a new password."
-      eyebrow="New password"
+      description="Verify the code from your email, then set a new password."
+      eyebrow="Account recovery"
       title="Reset your password"
     >
       <ResetPasswordForm />
