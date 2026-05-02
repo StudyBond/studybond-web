@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { ChevronDown, Check, X as XIcon, Lightbulb, Info } from "lucide-react";
+import { ChevronDown, Check, X as XIcon, Lightbulb, Info, Flag } from "lucide-react";
 import { MathMarkdown } from "@/components/ui/math-markdown";
 import type { ExamResult, QuestionWithAnswer } from "@/lib/api/types";
+import { ReportQuestionModal } from "@/features/exam/components/report-question-modal";
 
 type AnswerReviewProps = {
   result: ExamResult;
@@ -135,6 +136,7 @@ export function QuestionReviewItem({
   index: number;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const options: ("A" | "B" | "C" | "D" | "E")[] = ["A", "B", "C", "D", "E"];
 
   return (
@@ -276,15 +278,34 @@ export function QuestionReviewItem({
               </div>
             )}
 
-            {/* Time spent */}
-            {q.timeSpentSeconds !== null && (
-              <div className="text-right sb-mono text-[10px] text-white/20">
-                Time spent: {q.timeSpentSeconds}s
-              </div>
-            )}
+            {/* Footer: time spent + report */}
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setReportOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-medium text-white/15 transition-all hover:bg-white/[0.03] hover:text-amber-400/60"
+              >
+                <Flag className="h-3 w-3" />
+                Report
+              </button>
+              {q.timeSpentSeconds !== null && (
+                <div className="sb-mono text-[10px] text-white/20">
+                  Time spent: {q.timeSpentSeconds}s
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Report modal */}
+      <ReportQuestionModal
+        questionId={q.id}
+        questionNumber={index + 1}
+        subject={q.subject}
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+      />
     </div>
   );
 }

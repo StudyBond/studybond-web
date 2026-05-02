@@ -653,3 +653,43 @@ export type Leaderboard = {
   totalParticipants: number;
   entries: LeaderboardEntry[];
 };
+
+// ─── Question Report Types ───
+
+export type ReportIssueType =
+  | "WRONG_ANSWER"
+  | "TYPO"
+  | "AMBIGUOUS"
+  | "IMAGE_MISSING"
+  | "OTHER";
+
+export type ReportStatus = "PENDING" | "REVIEWED" | "RESOLVED";
+
+export type CreateReportPayload = {
+  questionId: number;
+  issueType: ReportIssueType;
+  description?: string | null;
+};
+
+export type QuestionReport = {
+  id: number;
+  questionId: number;
+  issueType: string;
+  description: string | null;
+  status: ReportStatus;
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt: string | null;
+  resolvedAt: string | null;
+  question: {
+    id: number;
+    questionText: string;
+    subject: string;
+    topic: string | null;
+    questionType: string;
+    questionPool: string;
+    hasImage: boolean;
+    imageUrl: string | null;
+  };
+};
