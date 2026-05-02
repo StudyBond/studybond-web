@@ -274,7 +274,7 @@ export function CollaborationRoomPage({
 
       // If we are still active, schedule the redirect.
       timer = setTimeout(() => {
-        router.push(`/exams/${examId}` as Route);
+        router.push(`/exams/${examId}?collab=${session.code}` as Route);
       }, 900);
     }
 
@@ -738,7 +738,7 @@ export function CollaborationRoomPage({
                 <Button
                   asChild
                   className="w-full"
-                  href={`/exams/${myExamId}` as Route}
+                  href={`/exams/${myExamId}?collab=${session.code}` as Route}
                 >
                   <>
                     Enter my exam

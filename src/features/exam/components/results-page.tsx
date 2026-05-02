@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useExamDetail } from "@/features/exam/hooks/use-exam-detail";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
@@ -19,11 +19,19 @@ import { ReviewLockedPage } from "@/features/exam/components/review-locked-page"
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useCollaborationSession } from "@/features/collaboration/hooks/use-collaboration";
+import { DuelResultsPage } from "@/features/collaboration/components/duel-results-page";
 
 export function ResultsPageClient({ examId }: { examId: number }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const collabCode = searchParams.get("collab");
+  
   const critical = useDashboardCriticalData();
   const { data: result, isLoading: isResultLoading, isError, error } = useExamDetail(examId);
+
+  const { data: collabData, isLoading: isCollabLoading } = useCollaborationSession(collabCode || "", !!collabCode);
+  const collabSession = collabData?.session;
 
   // ─── Progressive review lockout ───
   const {
@@ -83,7 +91,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   }, [dismissViolation, recordViolation, isPermanentlyLocked, isInLastChance, violationsBeforeLockout]);
 
   // ─── Loading ───
-  if (critical.isLoading || isResultLoading) {
+  if (critical.isLoading || isResultLoading || isCollabLoading) {
     return (
       <LearnerShell>
         <div className="flex h-[50vh] items-center justify-center">
@@ -127,6 +135,21 @@ export function ResultsPageClient({ examId }: { examId: number }) {
           cooldownMinutes={lastChanceCooldownRemaining()}
           onRequestLastChance={requestLastChance}
         />
+      </LearnerShell>
+    );
+  }
+
+  // ─── Duel Results View ───
+  if (result.examType === "ONE_V_ONE_DUEL" && collabSession) {
+    return (
+      <LearnerShell profile={critical.profile.data}>
+        <div className="sb-print-watermark" />
+        <ExamSecurityOverlay
+          guardState={guardState}
+          onDismiss={handleDismissViolation}
+          mode="review"
+        />
+        <DuelResultsPage result={result} collabSession={collabSession} />
       </LearnerShell>
     );
   }

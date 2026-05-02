@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -24,6 +24,11 @@ import {
 } from "@/features/exam/hooks/use-exam-mutations";
 import { useExamStore } from "@/features/exam/stores/exam-store";
 import type { ExamQuestion } from "@/lib/api/types";
+import { useCollaborationSession } from "@/features/collaboration/hooks/use-collaboration";
+import { useDuelWebsocket } from "@/features/collaboration/hooks/use-duel-websocket";
+import { DuelWaitingLobby } from "@/features/collaboration/components/duel-waiting-lobby";
+
+const EMOJI_OPTIONS = ["🚀", "🔥", "😅", "😭", "💀", "👀"];
 
 type ExamArenaProps = {
   examId: number;
@@ -31,7 +36,12 @@ type ExamArenaProps = {
 
 export function ExamArena({ examId }: ExamArenaProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  const collabCode = searchParams.get("collab");
+  const { data: collabData } = useCollaborationSession(collabCode || "", !!collabCode);
+  const collabSession = collabData?.session;
 
   const { data: session, isLoading, isError, error } = useExamSession(examId);
 
@@ -58,6 +68,57 @@ export function ExamArena({ examId }: ExamArenaProps) {
 
   const prevIndexRef = useRef<number | null>(null);
   const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // --- DUEL STATE ---
+  const [opponentProgress, setOpponentProgress] = useState<{ current: number; total: number } | null>(null);
+  const [opponentFinished, setOpponentFinished] = useState(false);
+  const [isWaitingInLobby, setIsWaitingInLobby] = useState(false);
+  const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string }[]>([]);
+
+  // Find opponent in the session (assuming 2 participants, find the one that doesn't match our displayName)
+  const opponent = collabSession?.participants.find((p) => p.fullName !== session?.displayNameLong);
+
+  const { sendProgress, sendEmoji, sendFinished } = useDuelWebsocket({
+    sessionId: collabSession?.id || null,
+    onProgressUpdate: (userId, current, total) => {
+      if (opponent && userId === opponent.userId) {
+        setOpponentProgress({ current, total });
+      }
+    },
+    onEmojiReaction: (userId, emoji) => {
+      if (opponent && userId === opponent.userId) {
+        const id = crypto.randomUUID();
+        setFloatingEmojis((prev) => [...prev, { id, emoji }]);
+        setTimeout(() => {
+          setFloatingEmojis((prev) => prev.filter((e) => e.id !== id));
+        }, 4000);
+      }
+    },
+    onFinished: (userId) => {
+      if (opponent && userId === opponent.userId) {
+        setOpponentFinished(true);
+      }
+    },
+  });
+
+  // Automatically route to results when both are finished and we are in the lobby
+  useEffect(() => {
+    if (isWaitingInLobby && opponentFinished) {
+      if (collabCode) {
+        router.push(`/exams/${examId}/results?collab=${collabCode}`);
+      } else {
+        router.push(`/exams/${examId}/results`);
+      }
+    }
+  }, [isWaitingInLobby, opponentFinished, router, examId, collabCode]);
+
+  // Send progress whenever we change questions
+  useEffect(() => {
+    if (collabSession && session) {
+      sendProgress(currentIndex + 1, session.questions.length);
+    }
+  }, [currentIndex, collabSession, session, sendProgress]);
+  // ------------------
 
   const needsSessionInit =
     !!session &&
@@ -230,6 +291,16 @@ export function ExamArena({ examId }: ExamArenaProps) {
         return;
       }
 
+      if (collabSession && collabCode) {
+        sendFinished(examId);
+        if (!opponentFinished) {
+          setIsWaitingInLobby(true);
+          return;
+        }
+        router.push(`/exams/${examId}/results?collab=${collabCode}`);
+        return;
+      }
+
       router.push(`/exams/${examId}/results`);
     } catch {
       toast.error("Failed to submit exam. Your answers are saved, try again.");
@@ -316,6 +387,60 @@ export function ExamArena({ examId }: ExamArenaProps) {
         <ExamCalculator onClose={() => setIsCalculatorOpen(false)} />
       ) : null}
 
+      {/* Floating Emojis Overlay */}
+      {floatingEmojis.map(({ id, emoji }, index) => (
+        <div
+          key={id}
+          className="pointer-events-none fixed z-[300] text-5xl animate-in slide-in-from-bottom-[20vh] fade-in slide-out-to-top-[10vh] fade-out duration-[3000ms] fill-mode-forwards"
+          style={{
+            left: `${15 + (index % 3) * 10}%`,
+            bottom: "20%",
+          }}
+        >
+          {emoji}
+        </div>
+      ))}
+
+      {/* Duel Opponent HUD */}
+      {collabSession && opponent && (
+        <div className="fixed top-24 right-4 z-40 hidden md:flex items-center gap-4 animate-in slide-in-from-right fade-in">
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+              Opponent
+            </span>
+            <span className="text-sm font-bold text-white">
+              {opponent.fullName}
+            </span>
+            {opponentProgress && (
+              <span className="text-xs text-amber-400">
+                Q {opponentProgress.current} / {opponentProgress.total}
+              </span>
+            )}
+            {opponentFinished && (
+              <span className="text-xs text-emerald-400 font-bold">Finished</span>
+            )}
+          </div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(140deg,rgba(224,144,64,0.2),rgba(255,255,255,0.05))] font-bold text-white shadow-inner shadow-white/10">
+            {opponent.fullName.charAt(0).toUpperCase()}
+          </div>
+        </div>
+      )}
+
+      {/* Duel Emoji Bar */}
+      {collabSession && (
+        <div className="fixed bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-auto md:left-6 z-40 flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] p-1.5 backdrop-blur-xl">
+          {EMOJI_OPTIONS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => sendEmoji(emoji)}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-xl transition-all hover:scale-125 hover:bg-white/[0.1] active:scale-95"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex">
         <main
           className={cn(
@@ -398,6 +523,14 @@ export function ExamArena({ examId }: ExamArenaProps) {
         isAbandoning={abandonMutation.isPending}
       />
       <TimeExpiredModal onAutoSubmit={handleSubmit} />
+
+      {isWaitingInLobby && opponent && (
+        <DuelWaitingLobby
+          opponentName={opponent.fullName}
+          opponentProgress={opponentProgress}
+          opponentFinished={opponentFinished}
+        />
+      )}
     </div>
   );
 }
