@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,10 @@ import {
   ShieldBan,
   CheckCircle2,
   Flame,
-  Clock3
+  Clock3,
+  Lock,
+  Unlock,
+  Info
 } from "lucide-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useStartExamMutation, useStartDailyChallengeMutation } from "@/features/practice/hooks/use-practice-mutations";
@@ -97,11 +100,26 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
   });
   
   // State
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedMode, setSelectedMode] = useState<ExamType | null>(null);
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [autoSelectLoaded, setAutoSelectLoaded] = useState(false);
+
+  // Handle URL parameters for direct navigation
+  useEffect(() => {
+    const modeParam = searchParams.get("mode") as ExamType | null;
+    const stepParam = searchParams.get("step");
+
+    if (modeParam && ["REAL_PAST_QUESTION", "PRACTICE", "MIXED", "DAILY_CHALLENGE"].includes(modeParam)) {
+      setSelectedMode(modeParam);
+    }
+
+    if (stepParam === "2") {
+      setStep(2);
+    }
+  }, [searchParams]);
 
   // Pre-fetch State
   const [createdExamId, setCreatedExamId] = useState<number | null>(null);
@@ -119,23 +137,20 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
   useEffect(() => {
     if (selectedMode === "DAILY_CHALLENGE" && !autoSelectLoaded) {
       setAutoSelectLoaded(true);
-      getExamHistory({ limit: 1 })
+      // Fetch more items to find the most recent 4-subject combination
+      getExamHistory({ limit: 10 })
         .then((history) => {
-          if (history?.exams?.length > 0) {
-            const lastSubjects = history.exams[0].subjects as Subject[];
-            // Only auto-fill if they had exactly 4 subjects
-            if (lastSubjects?.length === 4) {
-              setSelectedSubjects(lastSubjects);
-            } else {
-              // Default: English, Mathematics, Physics, Chemistry
-              setSelectedSubjects(["English", "Mathematics", "Physics", "Chemistry"]);
-            }
+          const lastFourSubjectExam = history?.exams?.find(e => e.subjects.length === 4);
+          
+          if (lastFourSubjectExam) {
+            setSelectedSubjects(lastFourSubjectExam.subjects as Subject[]);
           } else {
-            setSelectedSubjects(["English", "Mathematics", "Physics", "Chemistry"]);
+            // Default: English, Physics, Chemistry
+            setSelectedSubjects(["English", "Physics", "Chemistry"]);
           }
         })
         .catch(() => {
-          setSelectedSubjects(["English", "Mathematics", "Physics", "Chemistry"]);
+          setSelectedSubjects(["English", "Biology", "Physics", "Chemistry"]);
         });
     }
   }, [selectedMode, autoSelectLoaded]);
@@ -248,20 +263,35 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {EXAM_MODES.map((mode, i) => {
           const isSelected = selectedMode === mode.id;
+          const isPremiumMode = mode.id === "PRACTICE" || mode.id === "MIXED";
+          const isLocked = isPremiumMode && !profile.isPremium;
           const Icon = mode.icon;
           
           return (
             <button
               key={mode.id}
-              onClick={() => handleSelectMode(mode.id)}
+              onClick={() => !isLocked && handleSelectMode(mode.id)}
               className={cn(
                 "sb-enter group relative overflow-hidden rounded-[24px] border p-6 md:p-8 text-left transition-all duration-300",
                 isSelected 
                   ? cn(`bg-white/[0.04] ${mode.borderClass} ${mode.glowClass} scale-[1.02]`)
-                  : "border-white/[0.05] bg-[var(--sb-bg-surface-1)] hover:bg-white/[0.04] hover:-translate-y-1 hover:border-white/10"
+                  : "border-white/[0.05] bg-[var(--sb-bg-surface-1)] hover:bg-white/[0.04] hover:-translate-y-1 hover:border-white/10",
+                isLocked && "opacity-80 cursor-default"
               )}
               style={{ animationDelay: `${200 + i * 100}ms` }}
             >
+              {/* Premium Lock Overlay */}
+              {isLocked && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#09090b]/40 backdrop-blur-[2px] transition-all duration-300 group-hover:backdrop-blur-[4px]">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/20 shadow-xl backdrop-blur-md">
+                      <Lock className="h-5 w-5 text-yellow-500" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-500/80">Premium</span>
+                  </div>
+                </div>
+              )}
+
               {/* Animated mesh backdrop */}
               {isSelected && (
                 <div 
@@ -276,7 +306,12 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
                 <Icon className="h-6 w-6" />
               </div>
               
-              <h3 className="mb-2 text-xl font-semibold text-white tracking-tight">{mode.title}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xl font-semibold text-white tracking-tight">{mode.title}</h3>
+                {isPremiumMode && (
+                  <Badge className="bg-yellow-500/10 text-yellow-500 border-none text-[8px] h-4 px-1">PRO</Badge>
+                )}
+              </div>
               <p className="text-sm leading-relaxed text-white/40">
                 {mode.description}
               </p>
@@ -329,10 +364,13 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
           )}
 
           {selectedMode === "REAL_PAST_QUESTION" && eligibilityQuery.data && (
-            <div className="mt-4 flex items-center gap-2 rounded-full border border-[var(--sb-accent)]/20 bg-[var(--sb-accent)]/10 px-4 py-1.5 w-fit animate-in fade-in zoom-in duration-500">
-              <Sparkles className="h-4 w-4 text-[var(--sb-accent)]" />
-              <span className="text-sm font-medium text-[var(--sb-accent)]">
-                {eligibilityQuery.data.creditsRemaining} Subject Credit{eligibilityQuery.data.creditsRemaining !== 1 ? 's' : ''} Remaining Today
+            <div className={cn(
+              "mt-4 flex items-center gap-2 rounded-full border px-4 py-1.5 w-fit animate-in fade-in zoom-in duration-500",
+              profile.isPremium ? "border-[var(--sb-accent)]/20 bg-[var(--sb-accent)]/10 text-[var(--sb-accent)]" : "border-yellow-500/20 bg-yellow-500/10 text-yellow-500"
+            )}>
+              <Sparkles className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {eligibilityQuery.data.creditsRemaining} {profile.isPremium ? "Daily" : "Free"} Subject Credit{eligibilityQuery.data.creditsRemaining !== 1 ? 's' : ''} Remaining
               </span>
             </div>
           )}
@@ -354,27 +392,49 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         {AVAILABLE_SUBJECTS.map((subject, i) => {
           const isSelected = selectedSubjects.includes(subject.id);
-          const isDisabled = !isSelected && !canSelectMoreSubjects;
+          const usedFreeSubjects = eligibilityQuery.data?.freeSubjectsTaken ?? [];
+          const isAlreadyTaken = !profile.isPremium && usedFreeSubjects.some(s => s.toLowerCase() === subject.id.toLowerCase());
+          const isOutOfCredits = !profile.isPremium && (eligibilityQuery.data?.creditsRemaining ?? 0) <= 0;
+          
+          // A subject is "locked" for a free user if they've used it before OR they have no credits left (and it's not selected)
+          const isLocked = !isSelected && (isAlreadyTaken || isOutOfCredits);
+          const isDisabled = (!isSelected && !canSelectMoreSubjects) || isLocked;
+          
           const Icon = subject.icon;
 
           return (
             <button
               key={subject.id}
-              onClick={() => toggleSubject(subject.id)}
+              onClick={() => !isLocked && toggleSubject(subject.id)}
               disabled={isDisabled && !isSelected}
               className={cn(
                 "sb-enter group relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border p-6 transition-all duration-300",
                 isSelected
                   ? "border-[var(--sb-accent)]/40 bg-[var(--sb-accent)]/10 shadow-[0_0_20px_var(--sb-accent-glow)] scale-[1.02]"
                   : isDisabled
-                  ? "border-white/[0.02] bg-white/[0.01] opacity-40 cursor-not-allowed"
+                  ? "border-white/[0.02] bg-white/[0.01] opacity-60 grayscale-[0.5]"
                   : "border-white/[0.04] bg-[var(--sb-bg-surface-1)] hover:bg-white/[0.04] hover:border-white/10 hover:-translate-y-1"
               )}
               style={{ animationDelay: `${i * 100}ms` }}
             >
+              {/* Used/Locked Overlay */}
+              {isLocked && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#09090b]/60 backdrop-blur-[2px]">
+                   <div className="flex flex-col items-center gap-1">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                         <Lock className="h-4 w-4 text-white/40" />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-tighter text-white/40">
+                        {isAlreadyTaken ? "Already Taken" : "No Credits"}
+                      </span>
+                   </div>
+                </div>
+              )}
+
               <div className={cn(
                 "flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300",
-                isSelected ? "bg-[var(--sb-accent)] text-white shadow-lg" : "bg-white/[0.03] text-white/50"
+                isSelected ? "bg-[var(--sb-accent)] text-white shadow-lg" : "bg-white/[0.03] text-white/50",
+                isLocked && "opacity-20"
               )}>
                 <Icon className={cn("h-6 w-6", isSelected ? "" : subject.color)} />
               </div>

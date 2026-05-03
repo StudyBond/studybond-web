@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils/cn";
-import { ShieldAlert, AlertTriangle, Eye } from "lucide-react";
+import { ShieldAlert, AlertTriangle, Eye, Fingerprint } from "lucide-react";
 import type { ExamGuardState } from "@/features/exam/hooks/use-exam-guard";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -39,7 +39,19 @@ export function ExamSecurityOverlay({
 
   const isTabSwitch = guardState.violationType === "tab_switch";
   const isScreenshot = guardState.violationType === "screenshot";
+  const isMultiTouch = guardState.violationType === "multi_touch";
   const canDismiss = mode === "exam" ? guardState.violationCount < 3 : true;
+
+  let title = "Focus Mode Violation";
+  let description = "You left the exam tab. StudyBond requires full focus during active exams to maintain integrity.";
+  
+  if (isScreenshot) {
+    title = "Screenshot Blocked";
+    description = "Screenshots are not allowed during exams. Your exam content is protected by StudyBond's integrity system.";
+  } else if (isMultiTouch) {
+    title = "Suspicious Gesture Detected";
+    description = "A multi-finger gesture was detected. StudyBond restricts complex gestures during exams to prevent unauthorized captures.";
+  }
 
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center animate-in fade-in duration-200">
@@ -78,12 +90,14 @@ export function ExamSecurityOverlay({
         <div className="relative mb-6 sm:mb-8 shrink-0">
           <div className={cn(
             "flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl",
-            isScreenshot
+            isScreenshot || isMultiTouch
               ? "bg-red-500/15 text-red-400"
               : "bg-amber-500/15 text-amber-400",
           )}>
             {isScreenshot ? (
               <Eye className="h-10 w-10 sm:h-12 sm:w-12" />
+            ) : isMultiTouch ? (
+              <Fingerprint className="h-10 w-10 sm:h-12 sm:w-12" />
             ) : (
               <ShieldAlert className="h-10 w-10 sm:h-12 sm:w-12" />
             )}
@@ -91,21 +105,18 @@ export function ExamSecurityOverlay({
           {/* Animated pulse ring */}
           <div className={cn(
             "absolute inset-0 rounded-3xl animate-ping opacity-20",
-            isScreenshot ? "bg-red-400" : "bg-amber-400",
+            isScreenshot || isMultiTouch ? "bg-red-400" : "bg-amber-400",
           )} style={{ animationDuration: "2s" }} />
         </div>
 
         {/* Title */}
         <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-2 sm:mb-3 shrink-0">
-          {isScreenshot ? "Screenshot Blocked" : "Focus Mode Violation"}
+          {title}
         </h2>
 
         {/* Description */}
         <p className="text-xs sm:text-sm text-white/50 leading-relaxed mb-6 sm:mb-8 max-w-xs shrink-0">
-          {isScreenshot
-            ? "Screenshots are not allowed during exams. Your exam content is protected by StudyBond's integrity system."
-            : "You left the exam tab. StudyBond requires full focus during active exams to maintain integrity."
-          }
+          {description}
         </p>
 
         {/* Countdown (exam mode only) */}
@@ -167,7 +178,13 @@ export function ExamSecurityOverlay({
         {/* Return button */}
         {canDismiss && (
           <button
-            onClick={onDismiss}
+            onClick={() => {
+              // Request fullscreen on return to make it rugged
+              if (mode === "exam" && !document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+              }
+              onDismiss();
+            }}
             className={cn(
               "flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 w-full sm:w-auto shrink-0",
               "bg-white/[0.06] text-white/80 hover:bg-white/[0.10] hover:text-white",
@@ -176,7 +193,7 @@ export function ExamSecurityOverlay({
             )}
           >
             <ShieldAlert className="h-4 w-4" />
-            {mode === "exam" ? "Return to Exam" : "I Understand"}
+            {mode === "exam" ? "Return to Exam (Fullscreen)" : "I Understand"}
           </button>
         )}
 

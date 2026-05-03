@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils/cn";
 import { toast } from "sonner";
 import { useExamDetail } from "@/features/exam/hooks/use-exam-detail";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
@@ -16,6 +17,7 @@ import { RetakeButton } from "@/features/exam/components/retake-button";
 import { ShareResultCard } from "@/features/exam/components/share-result-card";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { ReviewLockedPage } from "@/features/exam/components/review-locked-page";
+import { WatermarkOverlay } from "@/features/exam/components/watermark-overlay";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -149,6 +151,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
           onDismiss={handleDismissViolation}
           mode="review"
         />
+        <WatermarkOverlay />
         <DuelResultsPage result={result} collabSession={collabSession} />
       </LearnerShell>
     );
@@ -167,7 +170,12 @@ export function ResultsPageClient({ examId }: { examId: number }) {
         mode="review"
       />
 
-      <div className="mx-auto max-w-5xl px-4 py-8 md:py-12 pb-24 space-y-8 md:space-y-12 sb-exam-content">
+      <WatermarkOverlay />
+
+      <div className={cn(
+        "mx-auto max-w-5xl px-4 py-8 md:py-12 pb-24 space-y-8 md:space-y-12 sb-exam-content transition-all duration-500",
+        guardState.isObscured ? "blur-2xl grayscale scale-[0.98] pointer-events-none" : ""
+      )}>
         
         {/* Restricted phase warning banner */}
         {isInLastChance && (

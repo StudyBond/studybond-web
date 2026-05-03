@@ -32,11 +32,13 @@ export type ExamGuardState = {
   /** Whether a violation overlay is currently showing */
   violationActive: boolean;
   /** Type of the current violation */
-  violationType: "tab_switch" | "screenshot" | null;
+  violationType: "tab_switch" | "screenshot" | "multi_touch" | null;
   /** Number of violations so far */
   violationCount: number;
   /** Remaining seconds on the auto-submit countdown (exam mode only) */
   countdownSeconds: number;
+  /** Whether the content should be blurred (e.g. window lost focus but violation overlay not yet triggered) */
+  isObscured: boolean;
 };
 
 type UseExamGuardOptions = {
@@ -63,6 +65,7 @@ export function useExamGuard({
     violationType: null,
     violationCount: 0,
     countdownSeconds: Math.ceil(EXAM_AUTO_SUBMIT_DELAY_MS / 1000),
+    isObscured: false,
   });
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -88,6 +91,7 @@ export function useExamGuard({
       violationActive: false,
       violationType: null,
       countdownSeconds: Math.ceil(EXAM_AUTO_SUBMIT_DELAY_MS / 1000),
+      isObscured: false,
     }));
 
     if (mode === "exam") {
@@ -113,7 +117,7 @@ export function useExamGuard({
 
   // ─── Trigger a violation ───
   const triggerViolation = useCallback(
-    (type: "tab_switch" | "screenshot") => {
+    (type: "tab_switch" | "screenshot" | "multi_touch") => {
       const now = Date.now();
 
       // ── Suppress during startup grace period ──
@@ -142,6 +146,7 @@ export function useExamGuard({
         violationType: type,
         violationCount: count,
         countdownSeconds: Math.ceil(EXAM_AUTO_SUBMIT_DELAY_MS / 1000),
+        isObscured: true,
       }));
 
       // In exam mode, start auto-submit countdown
@@ -172,33 +177,92 @@ export function useExamGuard({
     [mode],
   );
 
+  // ─── Layer 0: Fullscreen Enforcement (Rugged Mode) ───
+  useEffect(() => {
+    if (!enabled || mode !== "exam") return;
+
+    function handleFullscreenChange() {
+      if (!document.fullscreenElement) {
+        // User exited fullscreen — trigger violation
+        triggerViolation("tab_switch");
+        toast.error("StudyBond requires Fullscreen mode for exams. Exiting fullscreen is a violation.", {
+          duration: 5000,
+        });
+      }
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [enabled, mode, triggerViolation]);
+
   // ─── Layer 1: Tab Switch / Visibility Detection ───
-  // Exam mode: triggers tab_switch violation with auto-submit countdown
-  // Review mode: triggers screenshot violation to feed into lockout system
   useEffect(() => {
     if (!enabled) return;
 
     function handleVisibilityChange() {
       if (document.visibilityState === "hidden") {
         triggerViolation(mode === "exam" ? "tab_switch" : "screenshot");
+      } else {
+        // When coming back, we stay obscured until dismissed
       }
     }
 
     function handleWindowBlur() {
       // Catches Alt+Tab and OS screenshot tools (like Snipping Tool) that blur the window
+      // On Mobile: Also catches notification shade pull-downs or app switcher.
+      
+      // Instantly obscure content on blur
+      setState(s => ({ ...s, isObscured: true }));
+      
       triggerViolation(mode === "exam" ? "tab_switch" : "screenshot");
+    }
+
+    function handleWindowFocus() {
+      // Potentially reset instant blur if no violation was triggered, 
+      // but if violationActive is true, we stay obscured.
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("focus", handleWindowFocus);
     };
   }, [enabled, mode, triggerViolation]);
 
-  // ─── Layer 2: Screenshot Key Detection ───
+  // ─── Layer 2: Mobile Specific & Gesture Detection ───
+  useEffect(() => {
+    if (!enabled) return;
+
+    function handleTouchStart(e: TouchEvent) {
+      // 3-finger touch is a common screenshot gesture on Android (Xiaomi, OnePlus, Oppo, etc.)
+      if (e.touches.length >= 3) {
+        e.preventDefault();
+        triggerViolation("multi_touch");
+      }
+    }
+
+    // Detect orientation change - some users use this to bypass overlays or trigger screenshots
+    function handleOrientationChange() {
+      // Small delay to allow layout to settle
+      setTimeout(() => {
+        toast.info("Layout adjusted. Stay focused.", { duration: 2000 });
+      }, 500);
+    }
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("orientationchange", handleOrientationChange);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("orientationchange", handleOrientationChange);
+    };
+  }, [enabled, triggerViolation]);
+
+  // ─── Layer 3: Screenshot Key Detection ───
   useEffect(() => {
     if (!enabled) return;
 
@@ -277,7 +341,7 @@ export function useExamGuard({
     };
   }, [enabled, triggerViolation]);
 
-  // ─── Layer 3: Copy / Cut / Select / Drag / Context Menu Prevention ───
+  // ─── Layer 4: Copy / Cut / Select / Drag / Context Menu Prevention ───
   useEffect(() => {
     if (!enabled) return;
 
@@ -302,7 +366,7 @@ export function useExamGuard({
     }
 
     function handleSelectStart(e: Event) {
-      // Allow selection in input/textarea elements (for password fields, etc.)
+      // Allow selection in input/textarea elements
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
       e.preventDefault();
@@ -327,7 +391,7 @@ export function useExamGuard({
     };
   }, [enabled]);
 
-  // ─── Layer 4: DevTools Heuristic Detection (soft warning only) ───
+  // ─── Layer 5: DevTools Heuristic Detection ───
   useEffect(() => {
     if (!enabled || mode !== "exam") return;
 

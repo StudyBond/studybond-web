@@ -122,7 +122,7 @@ export function NewUserDashboard({
                 asChild
                 size="lg"
                 className="shadow-[0_2px_24px_var(--sb-accent-glow)] border-t border-[var(--sb-accent)]/30 bg-gradient-to-r from-[var(--sb-accent)] via-[#a06520] to-[#7a4a14] rounded-xl sb-glow-pulse"
-                href={"/exams/new" as Route}
+                href={"/exams/new?mode=REAL_PAST_QUESTION&step=2" as Route}
               >
                 <div className="flex items-center px-4 sm:px-6 py-1 font-bold text-sm sm:text-base text-white">
                   Take Your First Exam

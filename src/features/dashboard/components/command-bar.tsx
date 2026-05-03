@@ -257,6 +257,9 @@ function getMicroCopyPool(stats: UserStats, streak: StreakSummary): string[] {
     `You've started — that already puts you ahead of the ones who haven't. Keep the momentum.`,
     `${exams} exam${exams > 1 ? "s" : ""} done, many more to conquer. Every rep makes the real thing easier.`,
     `Progress is progress. ${exams} exams logged. Let's add one more today.`,
+    `${exams} exams completed. The candidates who make it aren't smarter — they just keep showing up. Your turn.`,
+    `${exams} exams completed. Each one is data. Take another and watch the pattern emerge.`,
+    `${exams} exams completed. You're not a beginner anymore — now build the consistency to match.`,    
   ];
 }
 

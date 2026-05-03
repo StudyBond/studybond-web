@@ -32,6 +32,7 @@ export interface ExamEligibilityResult {
   creditsUsed?: number;
   creditsRemaining?: number;
   requestedCredits?: number;
+  freeSubjectsTaken?: string[];
 }
 
 // ─── API Functions ───
