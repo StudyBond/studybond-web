@@ -169,20 +169,22 @@ export function PremiumPreviewCard() {
         </div>
 
         {/* CTA */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <Button
             asChild
-            href={"/dashboard/settings?tab=subscription" as Route}
+            href={"https://wa.link/k6fl61" as any}
             size="lg"
-            className="bg-gradient-to-r from-yellow-500 to-[#e09040] border-t border-yellow-400/40 shadow-[0_0_24px_rgba(251,191,36,0.2)] rounded-xl"
+            className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-[#e09040] border-t border-yellow-400/40 shadow-[0_0_24px_rgba(251,191,36,0.2)] rounded-xl"
           >
-            <div className="flex items-center px-5 font-bold text-[#09090b]">
+            <div className="flex items-center justify-center px-4 font-bold text-[#09090b]">
               <Sparkles className="mr-2 h-4 w-4" />
-              Unlock Premium — ₦5,000
+              <span>Unlock Premium — ₦5,000</span>
               <ArrowRight className="ml-2 h-4 w-4" />
             </div>
           </Button>
-          <span className="text-[11px] text-white/25">5 months of full access</span>
+          <div className="flex items-center justify-center sm:justify-start">
+            <span className="text-[11px] text-white/25">5 months of full access</span>
+          </div>
         </div>
       </div>
 

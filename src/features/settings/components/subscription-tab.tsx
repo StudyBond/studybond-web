@@ -38,14 +38,19 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
   const initiateMutation = useInitiateSubscription();
 
   const handleUpgrade = () => {
+    // TEMPORARY: Redirect to WhatsApp until Paystack is activated
+    window.location.href = "https://wa.link/k6fl61";
+    
+    /* Original Paystack logic (disabled for now)
     initiateMutation.mutate(
-      { autoRenew: false }, // Let's default to false for one-off
+      { autoRenew: false },
       {
         onSuccess: (data) => {
           window.location.href = data.checkoutUrl;
         },
       }
     );
+    */
   };
 
   return (

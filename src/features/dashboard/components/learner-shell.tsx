@@ -351,7 +351,7 @@ export function LearnerShell({
             </Badge>
           ) : (
             <Link
-              href={"/dashboard/settings" as Route}
+              href={"https://wa.link/k6fl61" as any}
               className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[var(--sb-gold)]/[0.08] to-[var(--sb-accent)]/[0.05] px-2.5 py-1 text-[10px] font-semibold text-[var(--sb-accent-text)] transition-all hover:from-[var(--sb-gold)]/[0.14] hover:to-[var(--sb-accent)]/[0.10]"
             >
               <Crown className="h-2.5 w-2.5" />

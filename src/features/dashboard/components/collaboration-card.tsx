@@ -98,7 +98,7 @@ export function CollaborationCard({ stats }: CollaborationCardProps) {
               </>
             </Button>
           ) : needsPremium ? (
-            <Button asChild className="w-full" href={"/dashboard/settings" as Route}>
+            <Button asChild className="w-full" href={"https://wa.link/k6fl61" as any}>
               <>
                 Upgrade for duel access
                 <Crown className="h-4 w-4" />
