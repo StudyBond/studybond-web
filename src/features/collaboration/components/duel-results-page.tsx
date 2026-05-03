@@ -3,11 +3,11 @@
 import { Crown, Trophy, Swords, Clock, Target, Star, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import type { ExamResultPayload, CollaborationSessionSnapshot } from "@/lib/api/types";
+import type { ExamResult, CollaborationSessionSnapshot } from "@/lib/api/types";
 import { AnswerReview } from "@/features/exam/components/answer-review";
 
 type DuelResultsPageProps = {
-  result: ExamResultPayload;
+  result: ExamResult;
   collabSession: CollaborationSessionSnapshot["session"];
 };
 
@@ -114,7 +114,7 @@ export function DuelResultsPage({ result, collabSession }: DuelResultsPageProps)
         <Button size="lg" className="w-full sm:w-auto font-bold tracking-wide" onClick={() => router.push("/dashboard")}>
           Return to Dashboard
         </Button>
-        <Button size="lg" variant="outline" className="w-full sm:w-auto font-bold tracking-wide border-white/10 bg-white/5 text-white hover:bg-white/10">
+        <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold tracking-wide border-white/10 bg-white/5 text-white hover:bg-white/10">
           <Share2 className="mr-2 h-4 w-4" /> Share Result
         </Button>
       </div>

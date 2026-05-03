@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import type { WsClientEventInput } from "@/lib/api/types";
 
 type DuelWebsocketOptions = {
   sessionId: number | null;

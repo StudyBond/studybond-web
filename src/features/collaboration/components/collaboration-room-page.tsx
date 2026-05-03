@@ -235,6 +235,7 @@ export function CollaborationRoomPage({
     if (launchInitiatedRef.current) return;
 
     const examId = myExamId;
+    const sessionCode = session.code;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -274,7 +275,7 @@ export function CollaborationRoomPage({
 
       // If we are still active, schedule the redirect.
       timer = setTimeout(() => {
-        router.push(`/exams/${examId}?collab=${session.code}` as Route);
+        router.push(`/exams/${examId}?collab=${sessionCode}` as Route);
       }, 900);
     }
 
