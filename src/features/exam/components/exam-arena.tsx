@@ -16,7 +16,6 @@ import { AbandonDialog } from "@/features/exam/components/abandon-dialog";
 import { TimeExpiredModal } from "@/features/exam/components/time-expired-modal";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { ExamCalculator } from "@/features/exam/components/exam-calculator";
-import { WatermarkOverlay } from "@/features/exam/components/watermark-overlay";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
 import { useExamSession } from "@/features/exam/hooks/use-exam-session";
 import {
@@ -377,8 +376,6 @@ export function ExamArena({ examId }: ExamArenaProps) {
         mode="exam"
       />
 
-      <WatermarkOverlay />
-
       <ExamHeader
         displayName={session.displayNameShort}
         subjects={session.subjects}
@@ -447,9 +444,8 @@ export function ExamArena({ examId }: ExamArenaProps) {
       <div className="flex">
         <main
           className={cn(
-            "flex-1 pt-16 pb-24 md:pb-8 transition-all duration-500 sb-exam-content",
+            "flex-1 pt-16 pb-24 md:pb-8 transition-all duration-300 sb-exam-content",
             navigatorOpen ? "md:mr-[280px]" : "",
-            guardState.isObscured ? "blur-2xl grayscale scale-[0.98] pointer-events-none" : "",
           )}
         >
           <div className="mx-auto max-w-2xl px-4 py-6 md:px-6 sb-protected">
