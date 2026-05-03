@@ -71,9 +71,11 @@ export function useExamGuard({
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const violationCountRef = useRef(0);
   const lastWidthRef = useRef(typeof window !== "undefined" ? window.innerWidth : 0);
+  const lastHeightRef = useRef(typeof window !== "undefined" ? window.innerHeight : 0);
   const lastViolationTimeRef = useRef<number>(0);
   const guardEnabledAtRef = useRef<number>(0);
   const autoSubmitRef = useRef(onAutoSubmit);
+  const isTouchingRef = useRef(false);
 
   // Keep the callback ref fresh
   useEffect(() => {
@@ -195,130 +197,194 @@ export function useExamGuard({
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, [enabled, mode, triggerViolation]);
 
-  // ─── Layer 1: Tab Switch / Visibility Detection ───
+  // ─── Layer 1: Tab Switch / Visibility / Occlusion Detection ───
   useEffect(() => {
     if (!enabled) return;
 
     function handleVisibilityChange() {
       if (document.visibilityState === "hidden") {
         triggerViolation(mode === "exam" ? "tab_switch" : "screenshot");
-      } else {
-        // When coming back, we stay obscured until dismissed
       }
     }
 
     function handleWindowBlur() {
-      // Catches Alt+Tab and OS screenshot tools (like Snipping Tool) that blur the window
-      // On Mobile: Also catches notification shade pull-downs or app switcher.
-      
       // Instantly obscure content on blur
       setState(s => ({ ...s, isObscured: true }));
       
+      // On Mobile: focus loss during touch is extremely suspicious
+      if (isTouchingRef.current) {
+        triggerViolation("screenshot");
+      } else {
+        triggerViolation(mode === "exam" ? "tab_switch" : "screenshot");
+      }
+    }
+
+    // Secondary occlusion detection for mobile browsers that don't blur immediately
+    function handlePageHide() {
       triggerViolation(mode === "exam" ? "tab_switch" : "screenshot");
     }
 
-    function handleWindowFocus() {
-      // Potentially reset instant blur if no violation was triggered, 
-      // but if violationActive is true, we stay obscured.
-    }
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("pagehide", handlePageHide);
     window.addEventListener("blur", handleWindowBlur);
-    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("blur", handleWindowBlur);
-      window.removeEventListener("focus", handleWindowFocus);
     };
   }, [enabled, mode, triggerViolation]);
 
-  // ─── Layer 2: Mobile Specific & Gesture Detection ───
+  // ─── Layer 2: Mobile Specific Heuristics & Gestures ───
   useEffect(() => {
     if (!enabled) return;
 
     function handleTouchStart(e: TouchEvent) {
-      // 3-finger touch is a common screenshot gesture on Android (Xiaomi, OnePlus, Oppo, etc.)
+      isTouchingRef.current = true;
+      // 3-finger touch is a common screenshot gesture on Android
       if (e.touches.length >= 3) {
         e.preventDefault();
         triggerViolation("multi_touch");
       }
     }
 
-    // Detect orientation change - some users use this to bypass overlays or trigger screenshots
+    function handleTouchEnd() {
+      isTouchingRef.current = false;
+    }
+
+    // Detect orientation change
     function handleOrientationChange() {
-      // Small delay to allow layout to settle
       setTimeout(() => {
         toast.info("Layout adjusted. Stay focused.", { duration: 2000 });
       }, 500);
     }
 
     window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchcancel", handleTouchEnd);
     window.addEventListener("orientationchange", handleOrientationChange);
 
     return () => {
       window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
       window.removeEventListener("orientationchange", handleOrientationChange);
     };
   }, [enabled, triggerViolation]);
 
-  // ─── Layer 3: Screenshot Key Detection ───
+  // ─── Layer 3: Frame Freeze Detection (The "Rugged" Monitor) ───
+  // Detects the 500ms+ freeze that happens during OS screenshot processing
+  useEffect(() => {
+    if (!enabled) return;
+
+    let lastFrameTime = performance.now();
+    let frameRequest: number;
+
+    function checkFrame(time: number) {
+      const delta = time - lastFrameTime;
+      
+      // If frame time > 600ms, the browser thread was likely suspended by the OS
+      // for a screenshot capture or app switcher entry.
+      if (delta > 600) {
+        const now = Date.now();
+        // Only trigger if we aren't already showing a violation
+        if (now - guardEnabledAtRef.current > GUARD_STARTUP_GRACE_MS) {
+            // This heuristic is aggressive. In "exam" mode, we treat it as a warning/violation.
+            // But we only trigger if visibility is still 'visible' (meaning it was a transient freeze)
+            if (document.visibilityState === "visible") {
+              triggerViolation("screenshot");
+            }
+        }
+      }
+      
+      lastFrameTime = time;
+      frameRequest = requestAnimationFrame(checkFrame);
+    }
+
+    frameRequest = requestAnimationFrame(checkFrame);
+    return () => cancelAnimationFrame(frameRequest);
+  }, [enabled, triggerViolation]);
+
+  // ─── Layer 4: Strict Viewport Occlusion Monitoring ───
+  useEffect(() => {
+    if (!enabled) return;
+
+    function handleResize() {
+      const currentWidth = window.innerWidth;
+      const currentHeight = window.innerHeight;
+      
+      const widthDelta = Math.abs(lastWidthRef.current - currentWidth);
+      const heightDelta = Math.abs(lastHeightRef.current - currentHeight);
+
+      // On mobile, screenshot overlays often cause a minor viewport resize (toolbar appearing)
+      // If it's a significant change (> 50px) without a keyboard being active, it's a violation.
+      // We exclude minor resizes to allow for browser chrome hiding/showing.
+      if (widthDelta > 10 || heightDelta > 100) {
+         if (mode === "exam") {
+            // Heuristic for DevTools or Screenshot UI
+            if (widthDelta > DEVTOOLS_WIDTH_THRESHOLD || heightDelta > 150) {
+              triggerViolation("tab_switch");
+            }
+         }
+      }
+
+      lastWidthRef.current = currentWidth;
+      lastHeightRef.current = currentHeight;
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [enabled, mode, triggerViolation]);
+
+  // ─── Layer 5: Screenshot Key Detection ───
   useEffect(() => {
     if (!enabled) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       const key = e.key;
 
-      // PrintScreen
       if (key === "PrintScreen") {
         e.preventDefault();
         triggerViolation("screenshot");
         return;
       }
 
-      // macOS: Cmd+Shift+3, Cmd+Shift+4, Cmd+Shift+5
       if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(key)) {
         e.preventDefault();
         triggerViolation("screenshot");
         return;
       }
 
-      // Windows Snipping Tool: Win+Shift+S
       if (e.metaKey && e.shiftKey && key.toLowerCase() === "s") {
         e.preventDefault();
         triggerViolation("screenshot");
         return;
       }
 
-      // Ctrl+Shift+S (save as / screenshot tools)
       if (e.ctrlKey && e.shiftKey && key.toLowerCase() === "s") {
         e.preventDefault();
         triggerViolation("screenshot");
         return;
       }
 
-      // Ctrl+P (print)
       if ((e.ctrlKey || e.metaKey) && key.toLowerCase() === "p") {
         e.preventDefault();
         toast.error("Printing is disabled during exams.", { duration: 3000 });
         return;
       }
 
-      // Ctrl+S (save page)
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && key.toLowerCase() === "s") {
         e.preventDefault();
         toast.error("Saving is disabled during exams.", { duration: 3000 });
         return;
       }
 
-      // F12 / Ctrl+Shift+I (DevTools)
       if (key === "F12" || (e.ctrlKey && e.shiftKey && key.toLowerCase() === "i")) {
         e.preventDefault();
         toast.error("Developer tools are restricted during exams.", { duration: 3000 });
         return;
       }
 
-      // Ctrl+U (view source)
       if ((e.ctrlKey || e.metaKey) && key.toLowerCase() === "u") {
         e.preventDefault();
         toast.error("Viewing source is restricted.", { duration: 3000 });
@@ -341,13 +407,12 @@ export function useExamGuard({
     };
   }, [enabled, triggerViolation]);
 
-  // ─── Layer 4: Copy / Cut / Select / Drag / Context Menu Prevention ───
+  // ─── Layer 6: Copy / Cut / Select / Drag / Context Menu Prevention ───
   useEffect(() => {
     if (!enabled) return;
 
     function handleCopy(e: ClipboardEvent) {
       e.preventDefault();
-      // Clear clipboard
       e.clipboardData?.setData("text/plain", "");
       toast.error(getRandomCopyMessage(), {
         duration: 3000,
@@ -366,7 +431,6 @@ export function useExamGuard({
     }
 
     function handleSelectStart(e: Event) {
-      // Allow selection in input/textarea elements
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
       e.preventDefault();
@@ -390,29 +454,6 @@ export function useExamGuard({
       document.removeEventListener("dragstart", handleDragStart);
     };
   }, [enabled]);
-
-  // ─── Layer 5: DevTools Heuristic Detection ───
-  useEffect(() => {
-    if (!enabled || mode !== "exam") return;
-
-    function handleResize() {
-      const currentWidth = window.innerWidth;
-      const delta = lastWidthRef.current - currentWidth;
-
-      // If viewport suddenly shrinks by a large amount, DevTools might have opened
-      if (delta > DEVTOOLS_WIDTH_THRESHOLD) {
-        toast.warning("Suspicious window resize detected. Stay focused on your exam.", {
-          duration: 4000,
-          icon: "⚠️",
-        });
-      }
-
-      lastWidthRef.current = currentWidth;
-    }
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [enabled, mode]);
 
   // ─── Cleanup countdown on unmount ───
   useEffect(() => {
