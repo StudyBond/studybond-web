@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { toast } from "sonner";
+import { useMobileShield } from "@/features/exam/hooks/use-mobile-shield";
 
 // ─── Configuration ───
 
@@ -349,6 +350,20 @@ export function useExamGuard({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [enabled, mode]);
+
+  // ─── Layer 5: Mobile Shield Integration ───
+  // Activates the hardened mobile anti-screenshot system that:
+  // - Cloaks content when the app loses focus (screenshot captures black screen)
+  // - Detects screenshot timing patterns via visibilitychange heuristics
+  // - Blocks Screen Capture API
+  // - Prevents long-press save dialogs on images
+  // - Injects CSS hardening for touch devices
+  useMobileShield({
+    enabled,
+    onScreenshotDetected: useCallback(() => {
+      triggerViolation("screenshot");
+    }, [triggerViolation]),
+  });
 
   // ─── Cleanup countdown on unmount ───
   useEffect(() => {

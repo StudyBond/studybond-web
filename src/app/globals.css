@@ -796,6 +796,51 @@ button, input, textarea, select {
   pointer-events: none;
 }
 
+/* ─── Mobile-specific exam content hardening ─── */
+/* These rules are aggressive and apply globally when exam content is present */
+
+/* Prevent iOS long-press "save image" and "copy" dialogs */
+.sb-exam-content {
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Prevent ALL images from being saved via long-press on mobile */
+.sb-exam-content img,
+.sb-exam-content picture img,
+.sb-exam-content [data-question-image] img {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-touch-callout: none !important;
+  pointer-events: none !important;
+  /* Prevent image from being easily identifiable in accessibility tree */
+  -ms-high-contrast-adjust: none;
+}
+
+/* Prevent canvas-based screenshots via devtools */
+.sb-exam-content canvas {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Block text selection on exam content (mobile-specific override) */
+.sb-exam-content * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow selection only in actual input fields */
+.sb-exam-content input,
+.sb-exam-content textarea,
+.sb-exam-content select,
+.sb-exam-content [contenteditable="true"] {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
 /* ─── Print protection: replace all exam content with a watermark ─── */
 @media print {
   /* Hide all protected content when printing */
@@ -840,3 +885,10 @@ button, input, textarea, select {
 .sb-print-watermark {
   display: none;
 }
+
+/* ─── Mobile Cloak Styles ─── */
+/* The cloak element is injected by useMobileShield.ts */
+#sb-mobile-cloak {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
