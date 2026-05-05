@@ -122,9 +122,7 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
   }, [searchParams]);
 
   // Pre-fetch State
-  const [createdExamId, setCreatedExamId] = useState<number | null>(null);
-  const [isPrefetching, setIsPrefetching] = useState(false);
-  const startExamRef = useRef(false);
+  const [isStartingExam, setIsStartingExam] = useState(false);
 
   // derived constraints
   const canSelectMoreSubjects = selectedSubjects.length < 4;
@@ -145,12 +143,12 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
           if (lastFourSubjectExam) {
             setSelectedSubjects(lastFourSubjectExam.subjects as Subject[]);
           } else {
-            // Default: English, Physics, Chemistry
-            setSelectedSubjects(["English", "Physics", "Chemistry"]);
+            // Default to a valid 4-subject combination so first-time users can start immediately.
+            setSelectedSubjects(["English", "Mathematics", "Physics", "Chemistry"]);
           }
         })
         .catch(() => {
-          setSelectedSubjects(["English", "Biology", "Physics", "Chemistry"]);
+          setSelectedSubjects(["English", "Mathematics", "Physics", "Chemistry"]);
         });
     }
   }, [selectedMode, autoSelectLoaded]);
@@ -209,43 +207,29 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // When step 3 is reached, trigger the creation and prefetch
-  useEffect(() => {
-    if (step === 3 && !startExamRef.current) {
-      startExamRef.current = true;
-      setIsPrefetching(true);
+  const handleEnterExam = async () => {
+    if (isStartingExam) return;
+    setIsStartingExam(true);
+    setSetupError(null);
 
-      // Use the correct mutation based on mode
-      const mutationPromise = selectedMode === "DAILY_CHALLENGE"
-        ? startDailyChallengeMutation.mutateAsync({ subjects: selectedSubjects })
-        : startExamMutation.mutateAsync({ examType: selectedMode!, subjects: selectedSubjects });
-      
-      mutationPromise
-      .then((response) => {
-        setCreatedExamId(response.examId);
-        // Pre-fetch questions quietly so they are instantly available
-        queryClient.prefetchQuery({
-          queryKey: ["exam-session", response.examId],
-          queryFn: () => getExamQuestions(response.examId)
-        }).then(() => {
-          setIsPrefetching(false);
-        }).catch(() => {
-          setIsPrefetching(false); 
-        });
-      })
-      .catch((err) => {
-        const errorMessage = err instanceof Error ? err.message : "Failed to start exam session.";
-        setSetupError(errorMessage);
-        setStep(2); // Go back if creation fails
-        startExamRef.current = false;
-        setIsPrefetching(false);
+    try {
+      const response = selectedMode === "DAILY_CHALLENGE"
+        ? await startDailyChallengeMutation.mutateAsync({ subjects: selectedSubjects })
+        : await startExamMutation.mutateAsync({ examType: selectedMode!, subjects: selectedSubjects });
+
+      // Pre-fetch questions quietly so they are instantly available when routing
+      queryClient.prefetchQuery({
+        queryKey: ["exam-session", response.examId],
+        queryFn: () => getExamQuestions(response.examId)
+      }).catch(() => {
+        // Prefetch failure shouldn't block routing
       });
-    }
-  }, [step, selectedMode, selectedSubjects, startExamMutation, startDailyChallengeMutation, queryClient]);
 
-  const handleEnterExam = () => {
-    if (createdExamId) {
-      router.push(`/exams/${createdExamId}`);
+      router.push(`/exams/${response.examId}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to start exam session.";
+      setSetupError(errorMessage);
+      setIsStartingExam(false);
     }
   };
 
@@ -567,23 +551,23 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
 
         <Button
           onClick={handleEnterExam}
-          disabled={!createdExamId}
+          disabled={isStartingExam}
           className={cn(
             "w-full h-16 rounded-[20px] text-lg font-bold text-white transition-all md:max-w-md",
-            createdExamId && !isPrefetching
+            !isStartingExam
               ? "bg-emerald-500 hover:bg-emerald-600 border border-emerald-400 shadow-[0_4px_30px_rgba(16,185,129,0.3)]"
-              : "bg-white/5 border border-white/10 opacity-70"
+              : "bg-emerald-500/50 border border-emerald-400/50 opacity-70 cursor-not-allowed"
           )}
         >
-          {createdExamId ? (
+          {!isStartingExam ? (
             <div className="flex items-center gap-2">
               I Understand — Start Exam
               <ArrowRight className="h-5 w-5" />
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-white/50">
+            <div className="flex items-center gap-2 text-white/90">
               <Loader2 className="h-5 w-5 animate-spin" />
-              Preparing Session...
+              Starting Session...
             </div>
           )}
         </Button>
