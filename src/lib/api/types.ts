@@ -314,6 +314,7 @@ export type AnswerInput = {
   questionId: number;
   answer: string | null;
   timeSpentSeconds?: number;
+  isFlagged?: boolean;
 };
 
 export type SubmitExamPayload = {

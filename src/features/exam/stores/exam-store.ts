@@ -105,7 +105,7 @@ type ExamStoreActions = {
   getUnansweredCount: () => number;
 
   /** Build the final submission payload */
-  buildSubmitPayload: () => { questionId: number; answer: string | null; timeSpentSeconds: number }[];
+  buildSubmitPayload: () => { questionId: number; answer: string | null; timeSpentSeconds: number; isFlagged: boolean }[];
 
   /** Navigate to the first question of a subject */
   goToSubject: (subject: string) => void;
@@ -327,13 +327,14 @@ export const useExamStore = create<ExamStoreState & ExamStoreActions>()((set, ge
 
   buildSubmitPayload: () => {
     const { questionStates } = get();
-    const payload: { questionId: number; answer: string | null; timeSpentSeconds: number }[] = [];
+    const payload: { questionId: number; answer: string | null; timeSpentSeconds: number; isFlagged: boolean }[] = [];
 
     questionStates.forEach((state, questionId) => {
       payload.push({
         questionId,
         answer: state.answer,
         timeSpentSeconds: state.timeSpentSeconds,
+        isFlagged: state.flagged,
       });
     });
 
