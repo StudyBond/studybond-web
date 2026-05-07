@@ -61,54 +61,70 @@ function showCloak() {
       position: fixed;
       inset: 0;
       z-index: 999999;
-      background: #09090b;
+      background: rgba(9, 9, 11, 0.4);
+      backdrop-filter: blur(40px) brightness(0.3);
+      -webkit-backdrop-filter: blur(40px) brightness(0.3);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      gap: 16px;
-      transition: opacity 0ms;
+      gap: 20px;
+      transition: opacity 150ms ease-in-out;
       pointer-events: all;
+      opacity: 0;
     `);
     cloak.innerHTML = `
       <div style="
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 80px;
-        height: 80px;
-        border-radius: 24px;
-        background: rgba(248, 113, 113, 0.1);
+        width: 84px;
+        height: 84px;
+        border-radius: 28px;
+        background: rgba(248, 113, 113, 0.15);
+        box-shadow: 0 0 40px rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.2);
       ">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(248,113,113,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="rgba(248,113,113,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
       </div>
       <div style="
-        color: rgba(255,255,255,0.4);
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
       ">
-        CONTENT PROTECTED
-      </div>
-      <div style="
-        color: rgba(255,255,255,0.15);
-        font-size: 11px;
-        max-width: 280px;
-        text-align: center;
-        line-height: 1.6;
-      ">
-        StudyBond exam content is secured. Screenshots and screen recording are not permitted.
+        <div style="
+          color: white;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-align: center;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        ">
+          Shield Active
+        </div>
+        <div style="
+          color: rgba(255,255,255,0.4);
+          font-size: 11px;
+          max-width: 260px;
+          text-align: center;
+          line-height: 1.5;
+          font-weight: 500;
+        ">
+          StudyBond content is protected. Screenshots and recordings are restricted.
+        </div>
       </div>
     `;
     document.body.appendChild(cloak);
   }
-  cloak.style.opacity = "1";
+  // Force a reflow
+  cloak.offsetHeight;
   cloak.style.display = "flex";
+  cloak.style.opacity = "1";
 }
 
 function hideCloak() {
@@ -172,9 +188,12 @@ export function useMobileShield({
       } else if (document.visibilityState === "visible") {
         const elapsed = now - lastVisibilityChangeRef.current;
 
-        // If the hidden→visible cycle was very brief (<1500ms),
-        // it's highly likely a screenshot or screen recording preview
-        if (lastVisibilityChangeRef.current > 0 && elapsed < 1500) {
+        // Screenshot detection heuristic:
+        // A very brief hidden->visible cycle (between 150ms and 1000ms)
+        // is the signature of an OS screenshot or screen recording preview.
+        // Less than 150ms is usually a system glitch/flicker.
+        // More than 1000ms is likely a quick notification check or app switch.
+        if (lastVisibilityChangeRef.current > 0 && elapsed > 150 && elapsed < 1000) {
           triggerScreenshotDetected();
         }
 
@@ -186,8 +205,21 @@ export function useMobileShield({
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    // Some screenshot gestures (like 3-finger swipe) trigger touchcancel
+    function handleTouchCancel() {
+      showCloak();
+      // Brief cloak for touch cancel, only trigger violation if combined with other signals
+      setTimeout(() => {
+        if (document.visibilityState === "visible") hideCloak();
+      }, 1000);
+    }
+    
+    document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("touchcancel", handleTouchCancel);
     };
   }, [enabled, triggerScreenshotDetected]);
 
@@ -235,8 +267,9 @@ export function useMobileShield({
 
       resizeCount++;
 
-      // Multiple rapid resizes in a short window = suspicious
-      if (resizeCount >= 3) {
+      // Multiple rapid resizes in a short window = suspicious (OS screenshot UI)
+      // Increased to 4 to avoid false positives from keyboard + rotation
+      if (resizeCount >= 4) {
         triggerScreenshotDetected();
         resizeCount = 0;
       }
@@ -402,8 +435,8 @@ export function useMobileShield({
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
         const now = Date.now();
-        // If resize happened just before visibility change (<500ms), strong screenshot signal
-        if (now - lastResizeTime < 500) {
+        // If resize happened just before visibility change (<600ms), strong screenshot signal
+        if (lastResizeTime > 0 && now - lastResizeTime < 600) {
           triggerScreenshotDetected();
         }
       }
@@ -416,6 +449,48 @@ export function useMobileShield({
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
+  }, [enabled, triggerScreenshotDetected]);
+
+  // ═══ Layer 8: Heartbeat Loop (Frame Jank Detection) ═══
+  // When the OS takes a screenshot, it often freezes the UI thread for 100-500ms.
+  // We detect this "jank" and trigger the cloak pre-emptively.
+  useEffect(() => {
+    if (!enabled || !isMobileDevice()) return;
+
+    let lastFrameTime = Date.now();
+    let frameRequest: number;
+    let jankCount = 0;
+
+    const checkJank = () => {
+      const now = Date.now();
+      const delta = now - lastFrameTime;
+
+      // If the delay between frames is > 200ms, it's highly suspicious (OS freeze)
+      if (delta > 200 && document.visibilityState === "visible") {
+        showCloak();
+        jankCount++;
+        
+        // After a few janks in a row, it's almost certainly a capture process
+        if (jankCount >= 2) {
+          triggerScreenshotDetected();
+          jankCount = 0;
+        }
+
+        // Auto-hide after a short period if no actual visibility change followed
+        setTimeout(() => {
+          if (document.visibilityState === "visible") hideCloak();
+        }, 1500);
+      } else if (delta < 50) {
+        // Normal frame rate resumed
+        jankCount = 0;
+      }
+
+      lastFrameTime = now;
+      frameRequest = requestAnimationFrame(checkJank);
+    };
+
+    frameRequest = requestAnimationFrame(checkJank);
+    return () => cancelAnimationFrame(frameRequest);
   }, [enabled, triggerScreenshotDetected]);
 
   // ═══ Cleanup on unmount ═══

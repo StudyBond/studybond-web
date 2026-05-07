@@ -36,6 +36,20 @@ export const MathMarkdown = React.memo(function MathMarkdown({
     option: 'prose prose-sm max-w-none text-inherit leading-relaxed [&>p]:mb-0',
   };
 
+  // Pre-process content to handle different LaTeX delimiters used by AI models
+  const processedContent = React.useMemo(() => {
+    if (!content) return '';
+
+    return content
+      // Handle inline math: \( ... \) -> $ ... $
+      .replace(/\\\((.*?)\\\)/g, (_, formula) => `$${formula}$`)
+      // Handle block math: \[ ... \] -> $$ ... $$
+      .replace(/\\\[(.*?)\\\]/g, (_, formula) => `\n$$\n${formula}\n$$\n`)
+      // Sometimes AI escapes dollar signs incorrectly or uses them raw
+      // This ensures we don't break existing $ formatting
+      .trim();
+  }, [content]);
+
   return (
     <div className={clsx(variantClasses[variant], className)}>
       <style>{`
@@ -107,7 +121,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
           },
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );

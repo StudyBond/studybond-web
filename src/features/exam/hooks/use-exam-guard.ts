@@ -114,7 +114,7 @@ export function useExamGuard({
 
   // ─── Trigger a violation ───
   const triggerViolation = useCallback(
-    (type: "tab_switch" | "screenshot") => {
+    (type: "tab_switch" | "screenshot", options: { silent?: boolean } = {}) => {
       const now = Date.now();
 
       // ── Suppress during startup grace period ──
@@ -135,6 +135,17 @@ export function useExamGuard({
       if (now - lastReportTimeRef.current > VIOLATION_REPORT_THROTTLE_MS) {
         onViolationRef.current?.(type, { count });
         lastReportTimeRef.current = now;
+      }
+
+      // If it's a silent violation, we just toast and record it, don't show overlay
+      if (options.silent) {
+        toast.error(`Security Warning: Potential ${type} detected. Content is protected.`, {
+          duration: 4000,
+          id: `silent-violation-${type}`,
+        });
+        
+        setState(s => ({ ...s, violationCount: count }));
+        return;
       }
 
       setState((s) => ({
@@ -180,14 +191,18 @@ export function useExamGuard({
     if (!enabled) return;
 
     function handleVisibilityChange() {
-      if (document.visibilityState === "hidden") {
-        triggerViolation(mode === "exam" ? "tab_switch" : "screenshot");
+      if (document.visibilityState === "hidden" && mode === "exam") {
+        triggerViolation("tab_switch");
       }
     }
 
     function handleWindowBlur() {
-      // Catches Alt+Tab and OS screenshot tools (like Snipping Tool) that blur the window
-      triggerViolation(mode === "exam" ? "tab_switch" : "screenshot");
+      // For exams, any blur is a tab switch violation.
+      // For review mode, we rely on explicit keys and mobile heuristics instead of catch-all blur
+      // to avoid annoying users when they simply click away from the window.
+      if (mode === "exam") {
+        triggerViolation("tab_switch");
+      }
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -361,8 +376,11 @@ export function useExamGuard({
   useMobileShield({
     enabled,
     onScreenshotDetected: useCallback(() => {
-      triggerViolation("screenshot");
-    }, [triggerViolation]),
+      // Mobile screenshot detection is heuristic-based.
+      // We use "silent" mode to avoid annoying the user with a lockout overlay,
+      // but still record the violation and rely on the cloak for protection.
+      triggerViolation("screenshot", { silent: mode === "review" });
+    }, [triggerViolation, mode]),
   });
 
   // ─── Cleanup countdown on unmount ───
