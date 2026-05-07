@@ -137,6 +137,17 @@ export function useExamGuard({
         lastReportTimeRef.current = now;
       }
 
+      // ─── Mobile Removal ───
+      // As requested, we are removing ALL guard measures for mobile users for now.
+      // This includes anti-screenshot and tab-switch detection.
+      const isMobile = typeof window !== "undefined" && 
+        ("ontouchstart" in window || navigator.maxTouchPoints > 0) && 
+        window.innerWidth <= 1024;
+
+      if (isMobile) {
+        return;
+      }
+
       // If it's a silent violation, we just toast and record it, don't show overlay
       if (options.silent) {
         toast.error(`Security Warning: Potential ${type} detected. Content is protected.`, {
@@ -373,12 +384,14 @@ export function useExamGuard({
   // - Blocks Screen Capture API
   // - Prevents long-press save dialogs on images
   // - Injects CSS hardening for touch devices
+  // - Injects CSS hardening for touch devices
+  const isMobile = typeof window !== "undefined" && 
+    ("ontouchstart" in window || navigator.maxTouchPoints > 0) && 
+    window.innerWidth <= 1024;
+
   useMobileShield({
-    enabled,
+    enabled: enabled && !isMobile, // Completely disabled on mobile
     onScreenshotDetected: useCallback(() => {
-      // Mobile screenshot detection is heuristic-based.
-      // We use "silent" mode to avoid annoying the user with a lockout overlay,
-      // but still record the violation and rely on the cloak for protection.
       triggerViolation("screenshot", { silent: mode === "review" });
     }, [triggerViolation, mode]),
   });
