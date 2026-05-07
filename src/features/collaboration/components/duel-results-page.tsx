@@ -9,14 +9,17 @@ import { AnswerReview } from "@/features/exam/components/answer-review";
 type DuelResultsPageProps = {
   result: ExamResult;
   collabSession: CollaborationSessionSnapshot["session"];
+  myUserId: number;
 };
 
-export function DuelResultsPage({ result, collabSession }: DuelResultsPageProps) {
+export function DuelResultsPage({ result, collabSession, myUserId }: DuelResultsPageProps) {
   const router = useRouter();
 
-  // Find me and opponent
-  const me = collabSession.participants.find((p) => p.fullName === result.displayNameLong);
-  const opponent = collabSession.participants.find((p) => p.fullName !== result.displayNameLong);
+  // Match by the authenticated user's numeric ID — NOT by comparing
+  // fullName against result.displayNameLong (which is a generated exam
+  // title like "1v1 Duel #3: Physics, Mathematics").
+  const me = collabSession.participants.find((p) => p.userId === myUserId);
+  const opponent = collabSession.participants.find((p) => p.userId !== myUserId);
 
   if (!me || !opponent) return null;
 

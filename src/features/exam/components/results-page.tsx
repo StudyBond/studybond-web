@@ -149,7 +149,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
           onDismiss={handleDismissViolation}
           mode="review"
         />
-        <DuelResultsPage result={result} collabSession={collabSession} />
+        <DuelResultsPage result={result} collabSession={collabSession} myUserId={critical.profile.data.id} />
       </LearnerShell>
     );
   }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -24,6 +25,7 @@ import {
 } from "@/features/exam/hooks/use-exam-mutations";
 import { useExamStore } from "@/features/exam/stores/exam-store";
 import type { ExamQuestion } from "@/lib/api/types";
+import { getUserProfile } from "@/lib/api/users";
 import { useCollaborationSession } from "@/features/collaboration/hooks/use-collaboration";
 import { useDuelWebsocket } from "@/features/collaboration/hooks/use-duel-websocket";
 import { DuelWaitingLobby } from "@/features/collaboration/components/duel-waiting-lobby";
@@ -38,6 +40,15 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  // ─── Current user identity ───
+  // The profile query is already warm from the dashboard shell. We read
+  // from the cache to avoid an extra network round-trip.
+  const { data: profile } = useQuery({
+    queryKey: ["dashboard", "profile"],
+    queryFn: getUserProfile,
+  });
+  const myUserId = profile?.id ?? null;
 
   const collabCode = searchParams.get("collab");
   const { data: collabData } = useCollaborationSession(collabCode || "", !!collabCode);
@@ -75,29 +86,31 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const [isWaitingInLobby, setIsWaitingInLobby] = useState(false);
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string }[]>([]);
 
-  // Find opponent in the session (assuming 2 participants, find the one that doesn't match our displayName)
-  const opponent = collabSession?.participants.find((p) => p.fullName !== session?.displayNameLong);
+  // Identify the opponent by excluding ourselves. This is the correct
+  // approach: compare against the authenticated user's numeric ID, NOT
+  // the exam's displayNameLong (which is a generated title like
+  // "1v1 Duel #3: Physics, Mathematics", not a person's name).
+  const opponent = collabSession?.participants.find(
+    (p) => typeof myUserId === "number" && p.userId !== myUserId,
+  ) ?? null;
 
   const { sendProgress, sendEmoji, sendFinished } = useDuelWebsocket({
-    sessionId: collabSession?.id || null,
-    onProgressUpdate: (userId, current, total) => {
-      if (opponent && userId === opponent.userId) {
-        setOpponentProgress({ current, total });
-      }
+    sessionId: collabSession?.id ?? null,
+    myUserId,
+    // The hook already filters out self-echo using myUserId, so every
+    // fromUserId arriving here is guaranteed to be another participant.
+    onProgressUpdate: (_fromUserId, current, total) => {
+      setOpponentProgress({ current, total });
     },
-    onEmojiReaction: (userId, emoji) => {
-      if (opponent && userId === opponent.userId) {
-        const id = crypto.randomUUID();
-        setFloatingEmojis((prev) => [...prev, { id, emoji }]);
-        setTimeout(() => {
-          setFloatingEmojis((prev) => prev.filter((e) => e.id !== id));
-        }, 4000);
-      }
+    onEmojiReaction: (_fromUserId, emoji) => {
+      const id = crypto.randomUUID();
+      setFloatingEmojis((prev) => [...prev, { id, emoji }]);
+      setTimeout(() => {
+        setFloatingEmojis((prev) => prev.filter((e) => e.id !== id));
+      }, 4000);
     },
-    onFinished: (userId) => {
-      if (opponent && userId === opponent.userId) {
-        setOpponentFinished(true);
-      }
+    onFinished: () => {
+      setOpponentFinished(true);
     },
   });
 
@@ -318,6 +331,10 @@ export function ExamArena({ examId }: ExamArenaProps) {
     reset,
     router,
     dismissViolation,
+    collabSession,
+    collabCode,
+    sendFinished,
+    opponentFinished,
   ]);
 
   autoSubmitRef.current = handleSubmit;

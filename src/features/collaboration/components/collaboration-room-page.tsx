@@ -385,7 +385,9 @@ export function CollaborationRoomPage({
 
     try {
       const data = await leaveMutation.mutateAsync(session.id);
-      rememberCollaborationRoom(data.session);
+      if (data.session) {
+        rememberCollaborationRoom(data.session);
+      }
       toast.success("You left the room.");
       router.push("/dashboard/collaboration" as Route);
     } catch (error) {

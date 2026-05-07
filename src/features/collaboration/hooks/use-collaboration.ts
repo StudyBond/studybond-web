@@ -74,10 +74,14 @@ export function useLeaveCollaborationMutation() {
   return useMutation({
     mutationFn: (sessionId: number) => leaveCollaborationSession(sessionId),
     onSuccess: (data) => {
-      queryClient.setQueryData(
-        collaborationSessionQueryKey(data.session.code),
-        data,
-      );
+      // The leave endpoint returns { success, message, session? } which
+      // does NOT match the CollaborationSessionSnapshot shape the query
+      // cache expects. Invalidate instead of writing corrupted data.
+      if (data.session?.code) {
+        queryClient.invalidateQueries({
+          queryKey: collaborationSessionQueryKey(data.session.code),
+        });
+      }
     },
   });
 }
