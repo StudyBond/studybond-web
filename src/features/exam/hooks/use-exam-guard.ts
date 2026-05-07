@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useMobileShield } from "@/features/exam/hooks/use-mobile-shield";
 
 // ─── Configuration ───
 
@@ -114,7 +113,7 @@ export function useExamGuard({
 
   // ─── Trigger a violation ───
   const triggerViolation = useCallback(
-    (type: "tab_switch" | "screenshot", options: { silent?: boolean } = {}) => {
+    (type: "tab_switch" | "screenshot") => {
       const now = Date.now();
 
       // ── Suppress during startup grace period ──
@@ -135,28 +134,6 @@ export function useExamGuard({
       if (now - lastReportTimeRef.current > VIOLATION_REPORT_THROTTLE_MS) {
         onViolationRef.current?.(type, { count });
         lastReportTimeRef.current = now;
-      }
-
-      // ─── Mobile Removal ───
-      // As requested, we are removing ALL guard measures for mobile users for now.
-      // This includes anti-screenshot and tab-switch detection.
-      const isMobile = typeof window !== "undefined" && 
-        ("ontouchstart" in window || navigator.maxTouchPoints > 0) && 
-        window.innerWidth <= 1024;
-
-      if (isMobile) {
-        return;
-      }
-
-      // If it's a silent violation, we just toast and record it, don't show overlay
-      if (options.silent) {
-        toast.error(`Security Warning: Potential ${type} detected. Content is protected.`, {
-          duration: 4000,
-          id: `silent-violation-${type}`,
-        });
-        
-        setState(s => ({ ...s, violationCount: count }));
-        return;
       }
 
       setState((s) => ({
@@ -225,9 +202,16 @@ export function useExamGuard({
     };
   }, [enabled, mode, triggerViolation]);
 
-  // ─── Layer 2: Screenshot Key Detection ───
+  // ─── Layer 2: Screenshot Key Detection (Desktop Only) ───
   useEffect(() => {
     if (!enabled) return;
+
+    const isMobile = typeof window !== "undefined" && 
+      ("ontouchstart" in window || navigator.maxTouchPoints > 0) && 
+      window.innerWidth <= 1024;
+
+    // Skip screenshot key detection on mobile as requested
+    if (isMobile) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       const key = e.key;
@@ -303,6 +287,8 @@ export function useExamGuard({
       window.removeEventListener("keyup", handleKeyUp, { capture: true });
     };
   }, [enabled, triggerViolation]);
+  
+  // ─── Layer 3: Copy / Cut / Select / Drag / Context Menu Prevention ───
 
   // ─── Layer 3: Copy / Cut / Select / Drag / Context Menu Prevention ───
   useEffect(() => {
@@ -354,9 +340,15 @@ export function useExamGuard({
     };
   }, [enabled]);
 
-  // ─── Layer 4: DevTools Heuristic Detection (soft warning only) ───
+  // ─── Layer 4: DevTools Heuristic Detection (Desktop Only) ───
   useEffect(() => {
     if (!enabled || mode !== "exam") return;
+
+    const isMobile = typeof window !== "undefined" && 
+      ("ontouchstart" in window || navigator.maxTouchPoints > 0) && 
+      window.innerWidth <= 1024;
+
+    if (isMobile) return;
 
     function handleResize() {
       const currentWidth = window.innerWidth;
@@ -377,24 +369,9 @@ export function useExamGuard({
     return () => window.removeEventListener("resize", handleResize);
   }, [enabled, mode]);
 
-  // ─── Layer 5: Mobile Shield Integration ───
-  // Activates the hardened mobile anti-screenshot system that:
-  // - Cloaks content when the app loses focus (screenshot captures black screen)
-  // - Detects screenshot timing patterns via visibilitychange heuristics
-  // - Blocks Screen Capture API
-  // - Prevents long-press save dialogs on images
-  // - Injects CSS hardening for touch devices
-  // - Injects CSS hardening for touch devices
-  const isMobile = typeof window !== "undefined" && 
-    ("ontouchstart" in window || navigator.maxTouchPoints > 0) && 
-    window.innerWidth <= 1024;
-
-  useMobileShield({
-    enabled: enabled && !isMobile, // Completely disabled on mobile
-    onScreenshotDetected: useCallback(() => {
-      triggerViolation("screenshot", { silent: mode === "review" });
-    }, [triggerViolation, mode]),
-  });
+  // Layers 4 & 5: Removed Mobile Shield as requested for mobile users
+  
+  // ─── Cleanup countdown on unmount ───
 
   // ─── Cleanup countdown on unmount ───
   useEffect(() => {
