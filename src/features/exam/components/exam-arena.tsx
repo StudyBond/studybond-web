@@ -97,8 +97,11 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const { sendProgress, sendEmoji, sendFinished } = useDuelWebsocket({
     sessionId: collabSession?.id ?? null,
     myUserId,
-    // The hook already filters out self-echo using myUserId, so every
-    // fromUserId arriving here is guaranteed to be another participant.
+    // The hook already filters out self-echo for client-originated events
+    // (progress, emoji) using fromUserId. However, the `finished` event
+    // is SERVER-originated — it goes through markParticipantFinished, not
+    // emitClientRealtimeEvent — so `fromUserId` is never injected. We
+    // must filter self-events manually via the userId in the payload.
     onProgressUpdate: (_fromUserId, current, total) => {
       setOpponentProgress({ current, total });
     },
@@ -109,12 +112,33 @@ export function ExamArena({ examId }: ExamArenaProps) {
         setFloatingEmojis((prev) => prev.filter((e) => e.id !== id));
       }, 4000);
     },
-    onFinished: () => {
+    onFinished: (finishedUserId) => {
+      // The server's `finished` event carries `userId` (not `fromUserId`),
+      // so the hook's built-in self-echo filter does NOT catch it. We must
+      // explicitly ignore our own completion event here.
+      if (typeof myUserId === "number" && finishedUserId === myUserId) return;
       setOpponentFinished(true);
+      toast("⚡ Your opponent has submitted!", {
+        description: "They're watching your progress now. Stay focused!",
+        duration: 5000,
+      });
+    },
+    onSessionCompleted: () => {
+      // The server's authoritative "all participants finished" signal.
+      // Force-navigate to results regardless of local state — this is the
+      // definitive end-of-duel event and resolves any race conditions
+      // between the two players' `finished` events.
+      if (collabCode) {
+        router.push(`/exams/${examId}/results?collab=${collabCode}`);
+      } else {
+        router.push(`/exams/${examId}/results`);
+      }
     },
   });
 
-  // Automatically route to results when both are finished and we are in the lobby
+  // Automatically route to results when both are finished and we are in the lobby.
+  // This is the local-state fallback — the `onSessionCompleted` handler above is
+  // the primary navigation trigger from the server.
   useEffect(() => {
     if (isWaitingInLobby && opponentFinished) {
       if (collabCode) {
@@ -408,7 +432,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
       {floatingEmojis.map(({ id, emoji }, index) => (
         <div
           key={id}
-          className="pointer-events-none fixed z-[300] text-5xl animate-in slide-in-from-bottom-[20vh] fade-in slide-out-to-top-[10vh] fade-out duration-[3000ms] fill-mode-forwards"
+          className="pointer-events-none fixed z-[300] text-5xl sb-emoji-float"
           style={{
             left: `${15 + (index % 3) * 10}%`,
             bottom: "20%",

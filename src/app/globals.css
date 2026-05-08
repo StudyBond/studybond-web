@@ -764,6 +764,35 @@ button, input, textarea, select {
   animation: exam-timer-pulse 0.5s ease-in-out infinite;
 }
 
+/* ─── Duel Emoji Float ─── */
+/* Sequenced enter → hold → exit in a single keyframe to avoid
+   the simultaneous fade-in + fade-out that Tailwind utility classes cause. */
+@keyframes sb-emoji-float {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1.15);
+  }
+  25% {
+    transform: translateY(-50px) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-100px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-180px) scale(0.8);
+  }
+}
+
+.sb-emoji-float {
+  animation: sb-emoji-float 3.5s var(--sb-ease) both;
+}
+
 /* ─── Scroll hiding utility ─── */
 .sb-scroll-hide {
   -ms-overflow-style: none;
