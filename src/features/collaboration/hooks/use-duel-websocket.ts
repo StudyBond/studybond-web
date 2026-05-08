@@ -146,6 +146,12 @@ export function useDuelWebsocket({
     myUserIdRef.current = myUserId;
   }, [myUserId]);
 
+  // ─── Pending outbound queue ───
+  // Critical messages (like `finished`) that were attempted while the
+  // socket was not yet OPEN are queued here and flushed on the next
+  // successful connection.
+  const pendingOutboundRef = useRef<string[]>([]);
+
   useEffect(() => {
     if (!sessionId) return;
 
@@ -175,10 +181,14 @@ export function useDuelWebsocket({
     /**
      * Dispatches a parsed WebSocket message to the appropriate callback.
      *
-     * For client-originated events (progress, emoji, finished), the
-     * backend injects `fromUserId` into the payload. We use this to
-     * suppress self-echo: the sender should not react to their own
-     * broadcast.
+     * For client-originated events (progress, emoji), the backend injects
+     * `fromUserId` into the payload. We use this to suppress self-echo:
+     * the sender should not react to their own broadcast.
+     *
+     * For the `finished` event specifically: this is a SERVER-originated
+     * event (goes through markParticipantFinished, not emitClientRealtimeEvent),
+     * so `fromUserId` is NOT injected. The payload carries `userId` instead.
+     * Self-echo filtering must happen in the callback, not here.
      */
     function dispatchMessage(type: string, payload: Record<string, unknown>) {
       const fromUserId = payload.fromUserId as number | undefined;
@@ -206,9 +216,9 @@ export function useDuelWebsocket({
           return;
         }
         case WS_EVENTS.FINISHED: {
-          if (isSelfEcho) return;
-          // `finished` events carry `userId` (not `fromUserId`) when
-          // emitted by the service layer directly. Fall back gracefully.
+          // Server-originated: carries `userId`, NOT `fromUserId`.
+          // Do NOT filter self-echo here — let the callback handle it,
+          // because the callback has access to the component's myUserId.
           const finishedUserId = fromUserId ?? (payload.userId as number | undefined);
           if (!finishedUserId) return;
           callbacksRef.current.onFinished?.(
@@ -252,7 +262,7 @@ export function useDuelWebsocket({
 
         // ─── Infrastructure events ───
         case WS_EVENTS.SERVER_ERROR: {
-          console.error("[Duel WS] Server error:", payload.message);
+          console.error("[Duel WS] Server error:", payload.code, payload.message);
           if (payload.code === "WS_CONNECTION_REPLACED") {
             handleTerminalError("Connection replaced by another tab or device.");
             wsRef.current?.close();
@@ -298,9 +308,22 @@ export function useDuelWebsocket({
           setError(null);
           reconnectAttempts = 0;
 
-          // Announce ready state directly on the socket to avoid
-          // the circular reference through the `sendEvent` callback.
+          console.info(`[Duel WS] Connected to session ${sessionId}`);
+
+          // Announce ready state directly on the socket.
           ws.send(JSON.stringify({ type: "ready", eventId: crypto.randomUUID() }));
+
+          // Flush any messages that were queued while disconnected.
+          // This handles the critical case where sendFinished fires
+          // before the WS connection is established.
+          const pending = pendingOutboundRef.current;
+          if (pending.length > 0) {
+            console.info(`[Duel WS] Flushing ${pending.length} queued message(s)`);
+            for (const msg of pending) {
+              ws.send(msg);
+            }
+            pendingOutboundRef.current = [];
+          }
 
           // Heartbeat every 15s — matches backend COLLAB_LIMITS.HEARTBEAT_PING_INTERVAL_SECONDS.
           pingInterval = setInterval(() => {
@@ -323,10 +346,12 @@ export function useDuelWebsocket({
         ws.onerror = () => {
           // The browser fires `onerror` before `onclose`. We handle
           // reconnection in `onclose` to avoid duplicate attempts.
+          console.warn("[Duel WS] Connection error (will retry on close)");
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
           if (!mounted) return;
+          console.warn(`[Duel WS] Closed: code=${event.code} reason=${event.reason}`);
           setIsConnected(false);
           wsRef.current = null;
           if (pingInterval) {
@@ -363,14 +388,29 @@ export function useDuelWebsocket({
 
   // ─── Outbound helpers ───
 
-  const sendEvent = useCallback((event: Record<string, unknown>) => {
+  /**
+   * Sends a JSON message on the WebSocket. If the socket is not OPEN,
+   * the message is queued in `pendingOutboundRef` for delivery once the
+   * connection is established. This prevents silently dropping critical
+   * messages like `finished` that would otherwise never reach the server.
+   */
+  const sendEvent = useCallback((event: Record<string, unknown>, critical = false) => {
+    const serialized = JSON.stringify({
+      eventId: crypto.randomUUID(),
+      ...event,
+    });
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          eventId: crypto.randomUUID(),
-          ...event,
-        }),
-      );
+      wsRef.current.send(serialized);
+      return;
+    }
+
+    // Socket not ready — queue critical messages for retry on reconnect.
+    if (critical) {
+      console.warn("[Duel WS] Socket not open, queuing critical message:", event.type);
+      pendingOutboundRef.current.push(serialized);
+    } else {
+      console.warn("[Duel WS] Socket not open, dropping non-critical message:", event.type);
     }
   }, []);
 
@@ -396,10 +436,14 @@ export function useDuelWebsocket({
 
   const sendFinished = useCallback(
     (examId: number) => {
-      sendEvent({
-        type: "finished",
-        payload: { examId },
-      });
+      // `finished` is critical — must be queued if the socket isn't ready.
+      sendEvent(
+        {
+          type: "finished",
+          payload: { examId },
+        },
+        true, // critical = queue for retry
+      );
     },
     [sendEvent],
   );
