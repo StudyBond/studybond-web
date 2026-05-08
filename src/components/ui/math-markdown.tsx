@@ -4,8 +4,45 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
 import clsx from 'clsx';
+
+/**
+ * Strict sanitization schema — extends the default safe schema with only
+ * harmless formatting tags. Blocks all dangerous elements (script, iframe,
+ * object, embed, form, input, etc.) and all event-handler attributes.
+ */
+const sanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    // Safe formatting-only tags
+    'u',     // underline
+    'ins',   // inserted text (also underlined by default)
+    'del',   // strikethrough
+    's',     // strikethrough
+    'mark',  // highlight
+    'sub',   // subscript
+    'sup',   // superscript
+    'br',    // line break
+    'span',  // inline container (needed by KaTeX)
+  ],
+  attributes: {
+    ...defaultSchema.attributes,
+    // Allow class and style on span for KaTeX rendering
+    span: ['className', 'class', 'style'],
+    // No attributes allowed on formatting tags — prevents event handlers
+    u: [],
+    ins: [],
+    del: [],
+    s: [],
+    mark: [],
+    sub: [],
+    sup: [],
+  },
+};
 
 interface MathMarkdownProps {
   content: string | null | undefined;
@@ -19,6 +56,9 @@ interface MathMarkdownProps {
  * - Inline math: $...$
  * - Display math: $$...$$
  * - Markdown formatting: bold, italic, lists, etc.
+ * - HTML underline: <u>text</u>
+ * - HTML subscript/superscript: <sub>/<sup>
+ * - XSS-safe: all dangerous HTML is stripped via rehype-sanitize
  */
 export const MathMarkdown = React.memo(function MathMarkdown({
   content,
@@ -70,7 +110,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
       `}</style>
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex]}
         components={{
           p: ({ children, ...props }) => {
             const { node, ...rest } = props as any;
@@ -118,6 +158,18 @@ export const MathMarkdown = React.memo(function MathMarkdown({
           blockquote: ({ children, ...props }) => {
             const { node, ...rest } = props as any;
             return <blockquote className="border-l-4 border-white/30 pl-4 py-2 italic text-white/70 mb-2" {...rest}>{children}</blockquote>;
+          },
+          u: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <span className="underline decoration-white/60 underline-offset-2" {...rest}>{children}</span>;
+          },
+          sub: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <sub className="text-[0.75em]" {...rest}>{children}</sub>;
+          },
+          sup: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <sup className="text-[0.75em]" {...rest}>{children}</sup>;
           },
         }}
       >
