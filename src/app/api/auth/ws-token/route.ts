@@ -3,6 +3,16 @@ import { cookies } from "next/headers";
 import { WEB_ACCESS_COOKIE } from "@/lib/auth/cookies";
 import { getBackendApiBaseUrl } from "@/lib/env/server";
 
+function getBackendWebSocketBaseUrl() {
+  const backendUrl = new URL(getBackendApiBaseUrl());
+  backendUrl.protocol = backendUrl.protocol === "https:" ? "wss:" : "ws:";
+  backendUrl.pathname = backendUrl.pathname.replace(/\/api\/?$/, "") || "/";
+  backendUrl.search = "";
+  backendUrl.hash = "";
+
+  return backendUrl.toString().replace(/\/$/, "");
+}
+
 export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get(WEB_ACCESS_COOKIE)?.value;
@@ -14,8 +24,9 @@ export async function GET() {
     );
   }
 
-  const backendHttp = getBackendApiBaseUrl();
-  const backendWsUrl = backendHttp.replace(/^http/, "ws");
-
-  return NextResponse.json({ success: true, token, backendWsUrl });
+  return NextResponse.json({
+    success: true,
+    token,
+    backendWsUrl: getBackendWebSocketBaseUrl(),
+  });
 }

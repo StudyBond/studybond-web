@@ -51,7 +51,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const myUserId = profile?.id ?? null;
 
   const collabCode = searchParams.get("collab");
-  const { data: collabData } = useCollaborationSession(collabCode || "", !!collabCode);
+  const { data: collabData, refetch: refetchCollabSession } = useCollaborationSession(collabCode || "", !!collabCode);
   const collabSession = collabData?.session;
 
   const { data: session, isLoading, isError, error } = useExamSession(examId);
@@ -85,6 +85,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const [opponentFinished, setOpponentFinished] = useState(false);
   const [isWaitingInLobby, setIsWaitingInLobby] = useState(false);
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string }[]>([]);
+  const opponentFinishedToastShownRef = useRef(false);
 
   // Identify the opponent by excluding ourselves. This is the correct
   // approach: compare against the authenticated user's numeric ID, NOT
@@ -94,7 +95,11 @@ export function ExamArena({ examId }: ExamArenaProps) {
     (p) => typeof myUserId === "number" && p.userId !== myUserId,
   ) ?? null;
 
-  const { sendProgress, sendEmoji, sendFinished } = useDuelWebsocket({
+  const markOpponentFinished = useCallback(() => {
+    setOpponentFinished(true);
+  }, []);
+
+  const { sendProgress, sendEmoji } = useDuelWebsocket({
     sessionId: collabSession?.id ?? null,
     myUserId,
     // The hook already filters out self-echo for client-originated events
@@ -117,7 +122,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
       // so the hook's built-in self-echo filter does NOT catch it. We must
       // explicitly ignore our own completion event here.
       if (typeof myUserId === "number" && finishedUserId === myUserId) return;
-      setOpponentFinished(true);
+      markOpponentFinished();
+      if (opponentFinishedToastShownRef.current) return;
+      opponentFinishedToastShownRef.current = true;
       toast("⚡ Your opponent has submitted!", {
         description: "They're watching your progress now. Stay focused!",
         duration: 5000,
@@ -136,18 +143,37 @@ export function ExamArena({ examId }: ExamArenaProps) {
     },
   });
 
+  useEffect(() => {
+    if (!opponentFinished || opponentFinishedToastShownRef.current) {
+      return;
+    }
+
+    opponentFinishedToastShownRef.current = true;
+    toast("Your opponent has submitted!", {
+      description: "They're watching your progress now. Stay focused!",
+      duration: 5000,
+    });
+  }, [opponentFinished]);
+
+  useEffect(() => {
+    const opponentState = opponent?.participantState;
+    if (opponentState === "FINISHED" || collabSession?.status === "COMPLETED") {
+      markOpponentFinished();
+    }
+  }, [collabSession?.status, markOpponentFinished, opponent?.participantState]);
+
   // Automatically route to results when both are finished and we are in the lobby.
   // This is the local-state fallback — the `onSessionCompleted` handler above is
   // the primary navigation trigger from the server.
   useEffect(() => {
-    if (isWaitingInLobby && opponentFinished) {
+    if (isWaitingInLobby && (opponentFinished || collabSession?.status === "COMPLETED")) {
       if (collabCode) {
         router.push(`/exams/${examId}/results?collab=${collabCode}`);
       } else {
         router.push(`/exams/${examId}/results`);
       }
     }
-  }, [isWaitingInLobby, opponentFinished, router, examId, collabCode]);
+  }, [isWaitingInLobby, opponentFinished, router, examId, collabCode, collabSession?.status]);
 
   // Send progress whenever we change questions
   useEffect(() => {
@@ -329,12 +355,23 @@ export function ExamArena({ examId }: ExamArenaProps) {
       }
 
       if (collabSession && collabCode) {
-        sendFinished(examId);
-        if (!opponentFinished) {
-          setIsWaitingInLobby(true);
+        const refreshedSession = await refetchCollabSession().catch(() => null);
+        const latestSession = refreshedSession?.data?.session ?? collabSession;
+        const latestOpponent = latestSession.participants.find(
+          (participant) =>
+            typeof myUserId === "number" && participant.userId !== myUserId,
+        );
+
+        if (latestSession.status === "COMPLETED") {
+          router.push(`/exams/${examId}/results?collab=${collabCode}`);
           return;
         }
-        router.push(`/exams/${examId}/results?collab=${collabCode}`);
+
+        if (latestOpponent?.participantState === "FINISHED") {
+          markOpponentFinished();
+        }
+
+        setIsWaitingInLobby(true);
         return;
       }
 
@@ -357,8 +394,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
     dismissViolation,
     collabSession,
     collabCode,
-    sendFinished,
-    opponentFinished,
+    refetchCollabSession,
+    myUserId,
+    markOpponentFinished,
   ]);
 
   autoSubmitRef.current = handleSubmit;
