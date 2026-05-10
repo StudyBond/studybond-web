@@ -97,6 +97,7 @@ export function useDuelWebsocket({
   onPresenceUpdate,
   onSessionNameUpdated,
 }: DuelWebsocketOptions) {
+  const MAX_PENDING_OUTBOUND = 32;
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -394,7 +395,7 @@ export function useDuelWebsocket({
    * connection is established. This prevents silently dropping critical
    * messages like `finished` that would otherwise never reach the server.
    */
-  const sendEvent = useCallback((event: Record<string, unknown>, critical = false) => {
+  const sendEvent = useCallback((event: Record<string, unknown>, queueIfDisconnected = false) => {
     const serialized = JSON.stringify({
       eventId: crypto.randomUUID(),
       ...event,
@@ -406,11 +407,13 @@ export function useDuelWebsocket({
     }
 
     // Socket not ready — queue critical messages for retry on reconnect.
-    if (critical) {
-      console.warn("[Duel WS] Socket not open, queuing critical message:", event.type);
+    if (queueIfDisconnected) {
+      if (pendingOutboundRef.current.length >= MAX_PENDING_OUTBOUND) {
+        pendingOutboundRef.current.shift();
+      }
       pendingOutboundRef.current.push(serialized);
     } else {
-      console.warn("[Duel WS] Socket not open, dropping non-critical message:", event.type);
+      console.warn("[Duel WS] Socket not open, dropping message:", event.type);
     }
   }, []);
 
@@ -429,7 +432,7 @@ export function useDuelWebsocket({
       sendEvent({
         type: "emoji_reaction",
         payload: { emoji },
-      });
+      }, true);
     },
     [sendEvent],
   );

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
@@ -28,11 +29,16 @@ const sanitizeSchema = {
     'sup',   // superscript
     'br',    // line break
     'span',  // inline container (needed by KaTeX)
+    // GFM table tags (structural, no XSS risk)
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
   ],
   attributes: {
     ...defaultSchema.attributes,
     // Allow class and style on span for KaTeX rendering
     span: ['className', 'class', 'style'],
+    // Table cell alignment (GFM uses align attribute)
+    th: ['align'],
+    td: ['align'],
     // No attributes allowed on formatting tags — prevents event handlers
     u: [],
     ins: [],
@@ -109,7 +115,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
         }
       `}</style>
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
+        remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex]}
         components={{
           p: ({ children, ...props }) => {
@@ -170,6 +176,40 @@ export const MathMarkdown = React.memo(function MathMarkdown({
           sup: ({ children, ...props }) => {
             const { node, ...rest } = props as any;
             return <sup className="text-[0.75em]" {...rest}>{children}</sup>;
+          },
+          // GFM table components — dark-theme styling
+          table: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return (
+              <div className="overflow-x-auto mb-3 rounded-lg border border-white/10">
+                <table className="w-full text-sm border-collapse" {...rest}>{children}</table>
+              </div>
+            );
+          },
+          thead: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <thead className="bg-white/10 text-white/90" {...rest}>{children}</thead>;
+          },
+          tbody: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <tbody className="divide-y divide-white/5" {...rest}>{children}</tbody>;
+          },
+          tr: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <tr className="border-b border-white/5 last:border-0" {...rest}>{children}</tr>;
+          },
+          th: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <th className="px-3 py-2 text-left font-semibold text-white/90" {...rest}>{children}</th>;
+          },
+          td: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <td className="px-3 py-2 text-white/70" {...rest}>{children}</td>;
+          },
+          // GFM strikethrough
+          del: ({ children, ...props }) => {
+            const { node, ...rest } = props as any;
+            return <del className="line-through text-white/50" {...rest}>{children}</del>;
           },
         }}
       >
