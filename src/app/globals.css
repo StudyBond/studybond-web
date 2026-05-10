@@ -793,6 +793,319 @@ button, input, textarea, select {
   animation: sb-emoji-float 3.5s var(--sb-ease) both;
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* ═══ DUEL COMPETITIVE ANIMATION SYSTEM                 ═══ */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* ─── Player cards sliding in from opposite sides ─── */
+@keyframes sb-duel-slide-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-80px) scale(0.92);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(8px) scale(1.02);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes sb-duel-slide-right {
+  0% {
+    opacity: 0;
+    transform: translateX(80px) scale(0.92);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-8px) scale(1.02);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.sb-duel-slide-left {
+  animation: sb-duel-slide-left 0.8s var(--sb-ease) both;
+}
+.sb-duel-slide-right {
+  animation: sb-duel-slide-right 0.8s var(--sb-ease) both;
+}
+
+/* ─── Crown drops from above with spring bounce ─── */
+@keyframes sb-duel-crown-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.5) rotate(-15deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(6px) scale(1.2) rotate(5deg);
+  }
+  60% {
+    transform: translateY(-4px) scale(0.95) rotate(-2deg);
+  }
+  80% {
+    transform: translateY(2px) scale(1.05) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+.sb-duel-crown-drop {
+  animation: sb-duel-crown-drop 0.7s var(--sb-ease-spring) both;
+}
+
+/* ─── VS badge clash explosion ─── */
+@keyframes sb-duel-vs-clash {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-20deg);
+    filter: blur(12px);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.4) rotate(5deg);
+    filter: blur(0);
+  }
+  50% {
+    transform: scale(0.9) rotate(-2deg);
+  }
+  70% {
+    transform: scale(1.08) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.sb-duel-vs-clash {
+  animation: sb-duel-vs-clash 0.6s var(--sb-ease-spring) both;
+}
+
+/* ─── Winner card gold pulse glow ─── */
+@keyframes sb-duel-winner-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(212, 161, 33, 0.15),
+      0 0 60px rgba(212, 161, 33, 0.08),
+      inset 0 0 30px rgba(212, 161, 33, 0.03);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(212, 161, 33, 0.25),
+      0 0 80px rgba(212, 161, 33, 0.12),
+      inset 0 0 40px rgba(212, 161, 33, 0.05);
+  }
+}
+
+.sb-duel-winner-glow {
+  border-color: rgba(212, 161, 33, 0.3) !important;
+  animation: sb-duel-winner-glow 2s ease-in-out infinite;
+}
+
+/* ─── Defeat card subtle dim ─── */
+.sb-duel-defeat {
+  opacity: 0.65;
+  filter: saturate(0.7);
+  transform: scale(0.97);
+  transition: all 0.6s var(--sb-ease);
+}
+
+/* ─── Confetti particle system ─── */
+@keyframes sb-confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-40px) rotate(90deg) translateX(var(--confetti-x, 20px)) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(300px) rotate(720deg) translateX(calc(var(--confetti-x, 20px) * 2)) scale(0.3);
+  }
+}
+
+.sb-confetti-particle {
+  position: absolute;
+  width: var(--confetti-size, 8px);
+  height: var(--confetti-size, 8px);
+  background: var(--confetti-color, #d4a121);
+  border-radius: var(--confetti-radius, 2px);
+  animation: sb-confetti-fall var(--confetti-duration, 2.5s) var(--sb-ease) forwards;
+  animation-delay: var(--confetti-delay, 0s);
+  pointer-events: none;
+}
+
+/* ─── Score ring fill animation ─── */
+@keyframes sb-duel-ring-fill {
+  from {
+    stroke-dashoffset: var(--ring-circumference, 283);
+  }
+  to {
+    stroke-dashoffset: var(--ring-offset, 0);
+  }
+}
+
+.sb-duel-ring-animate {
+  animation: sb-duel-ring-fill 1.5s var(--sb-ease) both;
+}
+
+/* ─── Stat bar race animation ─── */
+@keyframes sb-duel-bar-race {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--bar-fill, 0%);
+  }
+}
+
+.sb-duel-bar-race {
+  animation: sb-duel-bar-race 1.2s var(--sb-ease) both;
+}
+
+/* ─── Victory text blur-to-sharp reveal ─── */
+@keyframes sb-duel-text-reveal {
+  0% {
+    opacity: 0;
+    filter: blur(20px);
+    transform: scale(0.8);
+    letter-spacing: 0.3em;
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1.05);
+    letter-spacing: 0.05em;
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+    letter-spacing: 0.02em;
+  }
+}
+
+.sb-duel-text-reveal {
+  animation: sb-duel-text-reveal 0.8s var(--sb-ease) both;
+}
+
+/* ─── Energy pulse background for dramatic entrance ─── */
+@keyframes sb-duel-energy-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  40% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+.sb-duel-energy-pulse {
+  animation: sb-duel-energy-pulse 1.5s var(--sb-ease) both;
+}
+
+/* ─── Waiting lobby pulse ─── */
+@keyframes sb-duel-anticipation-pulse {
+  0%, 100% {
+    opacity: 0.04;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.12;
+    transform: scale(1.05);
+  }
+}
+
+.sb-duel-anticipation-pulse {
+  animation: sb-duel-anticipation-pulse 3s ease-in-out infinite;
+}
+
+/* ─── Slot machine number spin ─── */
+@keyframes sb-duel-slot-spin {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sb-duel-slot-spin {
+  animation: sb-duel-slot-spin 0.4s var(--sb-ease) both;
+}
+
+/* ─── Draw state shimmer ─── */
+@keyframes sb-duel-draw-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.sb-duel-draw-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    rgba(192, 192, 192, 0.08) 50%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: sb-duel-draw-shimmer 3s ease-in-out infinite;
+}
+
+/* ─── Opponent HUD pulse on question advance ─── */
+@keyframes sb-duel-hud-tick {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 144, 64, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(224, 144, 64, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 144, 64, 0);
+  }
+}
+
+.sb-duel-hud-tick {
+  animation: sb-duel-hud-tick 0.6s ease-out;
+}
+
+/* ─── Duel stagger orchestration ─── */
+.sb-duel-stagger-1 { animation-delay: 200ms; }
+.sb-duel-stagger-2 { animation-delay: 500ms; }
+.sb-duel-stagger-3 { animation-delay: 900ms; }
+.sb-duel-stagger-4 { animation-delay: 1400ms; }
+.sb-duel-stagger-5 { animation-delay: 2000ms; }
+.sb-duel-stagger-6 { animation-delay: 2600ms; }
+.sb-duel-stagger-7 { animation-delay: 3200ms; }
+
 /* ─── Scroll hiding utility ─── */
 .sb-scroll-hide {
   -ms-overflow-style: none;

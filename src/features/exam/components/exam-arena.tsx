@@ -85,6 +85,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const [opponentFinished, setOpponentFinished] = useState(false);
   const [isWaitingInLobby, setIsWaitingInLobby] = useState(false);
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string }[]>([]);
+  const [hudTickKey, setHudTickKey] = useState(0);
   const opponentFinishedToastShownRef = useRef(false);
 
   // Identify the opponent by excluding ourselves. This is the correct
@@ -109,6 +110,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
     // must filter self-events manually via the userId in the payload.
     onProgressUpdate: (_fromUserId, current, total) => {
       setOpponentProgress({ current, total });
+      setHudTickKey((k) => k + 1);
     },
     onEmojiReaction: (_fromUserId, emoji) => {
       const id = crypto.randomUUID();
@@ -480,39 +482,81 @@ export function ExamArena({ examId }: ExamArenaProps) {
         </div>
       ))}
 
-      {/* Duel Opponent HUD */}
+      {/* ═══ DUEL OPPONENT HUD — Desktop ═══ */}
       {collabSession && opponent && (
-        <div className="fixed top-24 right-4 z-40 hidden md:flex items-center gap-4 animate-in slide-in-from-right fade-in">
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-              Opponent
-            </span>
-            <span className="text-sm font-bold text-white">
-              {opponent.fullName}
-            </span>
-            {opponentProgress && (
-              <span className="text-xs text-amber-400">
-                Q {opponentProgress.current} / {opponentProgress.total}
-              </span>
+        <div
+          key={hudTickKey}
+          className={cn(
+            "fixed top-20 right-4 z-40 hidden md:block animate-in slide-in-from-right fade-in duration-500",
+            hudTickKey > 0 && "sb-duel-hud-tick",
+          )}
+        >
+          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0c0f]/80 backdrop-blur-2xl p-4 w-[200px] shadow-xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500/20 to-red-400/10 text-sm font-bold text-white shadow-inner shadow-white/10">
+                {opponent.fullName.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white truncate">{opponent.fullName}</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-red-400/50">Rival</p>
+              </div>
+            </div>
+
+            {opponentFinished ? (
+              <div className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 py-2 animate-in fade-in zoom-in-95 duration-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Submitted</span>
+              </div>
+            ) : opponentProgress ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-white/30">Progress</span>
+                  <span className="sb-mono font-bold text-white/60">{opponentProgress.current}/{opponentProgress.total}</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500/60 to-amber-400 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${Math.min(100, (opponentProgress.current / opponentProgress.total) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-[10px] text-white/25">
+                <span className="h-1.5 w-1.5 rounded-full bg-white/20 animate-pulse" />
+                Connecting...
+              </div>
             )}
-            {opponentFinished && (
-              <span className="text-xs text-emerald-400 font-bold">Finished</span>
-            )}
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(140deg,rgba(224,144,64,0.2),rgba(255,255,255,0.05))] font-bold text-white shadow-inner shadow-white/10">
-            {opponent.fullName.charAt(0).toUpperCase()}
           </div>
         </div>
       )}
 
-      {/* Duel Emoji Bar */}
+      {/* ═══ DUEL OPPONENT HUD — Mobile compact pill ═══ */}
+      {collabSession && opponent && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 md:hidden animate-in slide-in-from-top fade-in duration-300">
+          <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#0c0c0f]/80 backdrop-blur-2xl px-3 py-1.5 shadow-lg">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-red-500/15 text-[10px] font-bold text-white">
+              {opponent.fullName.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-[10px] font-bold text-white/70 max-w-[80px] truncate">{opponent.fullName.split(" ")[0]}</span>
+            {opponentFinished ? (
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            ) : opponentProgress ? (
+              <span className="sb-mono text-[9px] font-bold text-amber-400">{opponentProgress.current}/{opponentProgress.total}</span>
+            ) : (
+              <span className="h-1.5 w-1.5 rounded-full bg-white/20 animate-pulse" />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ DUEL EMOJI BAR ═══ */}
       {collabSession && (
-        <div className="fixed bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-auto md:left-6 z-40 flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] p-1.5 backdrop-blur-xl">
+        <div className="fixed bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-auto md:left-6 z-40 flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#0c0c0f]/70 backdrop-blur-2xl p-1 shadow-xl">
           {EMOJI_OPTIONS.map((emoji) => (
             <button
               key={emoji}
               onClick={() => sendEmoji(emoji)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-xl transition-all hover:scale-125 hover:bg-white/[0.1] active:scale-95"
+              className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full text-lg md:text-xl transition-all duration-200 hover:scale-125 hover:bg-white/[0.1] active:scale-90"
             >
               {emoji}
             </button>
@@ -608,6 +652,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
           opponentName={opponent.fullName}
           opponentProgress={opponentProgress}
           opponentFinished={opponentFinished}
+          myScore={submitMutation.data && "score" in submitMutation.data ? submitMutation.data.score : undefined}
+          myTotalQuestions={session.questions.length}
+          myTimeTaken={submitMutation.data && "timeTakenSeconds" in submitMutation.data ? submitMutation.data.timeTakenSeconds : undefined}
         />
       )}
     </div>

@@ -12,8 +12,6 @@ import {
   Crown,
   DoorOpen,
   Lock,
-  Radio,
-  ShieldCheck,
   Sparkles,
   Swords,
 } from "lucide-react";
@@ -30,7 +28,6 @@ import {
 import {
   collaborationQuestionSources,
   collaborationSubjects,
-  getCollaborationHeadline,
   getCollaborationStatChips,
   getQuestionSourceMeta,
 } from "@/features/collaboration/lib/collaboration-config";
@@ -213,27 +210,29 @@ export function CollaborationPage({
 
   return (
     <div className="space-y-10">
-      <section className="relative overflow-hidden rounded-[32px] border border-white/[0.06] bg-[radial-gradient(circle_at_top_right,rgba(224,144,64,0.16),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(96,165,250,0.12),transparent_28%),linear-gradient(135deg,#0b0c0f_0%,#101116_48%,#09090b_100%)] px-5 py-8 sm:px-8 sm:py-10">
-        <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.03)_32%,transparent_64%)]" />
+      <section className="relative overflow-hidden rounded-[32px] border border-white/[0.06] bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.10),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(224,144,64,0.14),transparent_30%),linear-gradient(135deg,#0b0c0f_0%,#0d0a08_48%,#09090b_100%)] px-5 py-8 sm:px-8 sm:py-10">
+        {/* Animated ambient layer */}
+        <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.02)_32%,transparent_64%)]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-red-500/[0.04] blur-[100px] pointer-events-none sb-duel-anticipation-pulse" />
+
         <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={isEligible ? "accent" : "neutral"} dot>
-                Collaboration Arena
+                1v1 Duel Arena
               </Badge>
               <Badge tone="neutral">{stats.institution.code}</Badge>
               <Badge tone="success">{profile.isPremium ? "Premium active" : "Upgrade to unlock"}</Badge>
             </div>
 
             <div className="space-y-4">
-              <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-                {getCollaborationHeadline(!isEligible)}
+              <h1 className="max-w-3xl text-3xl font-black tracking-tight text-white sm:text-5xl">
+                {isEligible
+                  ? "Enter the Arena."
+                  : "Earn your right to fight."}
               </h1>
-              <p className="max-w-2xl text-sm leading-relaxed text-white/55 sm:text-base">
-                StudyBond collaboration rooms feel deliberate before the first
-                question appears: shared subjects, the same question source, a
-                real invite code, and a room flow that keeps both players in one
-                cinematic rhythm.
+              <p className="max-w-2xl text-sm leading-relaxed text-white/50 sm:text-base">
+                Challenge a friend to a head-to-head duel. Same paper, same clock, same pressure — only one walks away with the crown. Build a room, share the code, and let the exam decide who&apos;s built different.
               </p>
             </div>
 
@@ -262,39 +261,46 @@ export function CollaborationPage({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            <Surface className="bg-white/[0.03] p-4">
-              <div className="mb-3 flex items-center gap-2 text-white/70">
-                <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                <span className="text-sm font-medium">Shared question set</span>
+          {/* Duel visual — VS arena card */}
+          <div className="relative flex items-center justify-center">
+            <div className="w-full max-w-[340px] rounded-[28px] border border-white/[0.06] bg-[#0c0c0f]/70 backdrop-blur-xl p-6 shadow-2xl">
+              {/* VS badge */}
+              <div className="flex items-center justify-center mb-5">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-red-500/20 blur-xl rounded-full scale-150" />
+                  <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-600 shadow-[0_0_30px_rgba(239,68,68,0.25)] border-4 border-[#0c0c0f]">
+                    <Swords className="h-6 w-6 text-white" />
+                  </div>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed text-white/45">
-                Both players get the same paper, the same clock, and the same
-                chance to prove composure.
-              </p>
-            </Surface>
 
-            <Surface className="bg-white/[0.03] p-4">
-              <div className="mb-3 flex items-center gap-2 text-white/70">
-                <Radio className="h-4 w-4 text-sky-300" />
-                <span className="text-sm font-medium">Live lobby heartbeat</span>
+              {/* Fighter slots */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-center">
+                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-500/10 text-lg font-bold text-white">
+                    {profile.fullName.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="text-xs font-bold text-white/80 truncate">{profile.fullName.split(" ")[0]}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400/50 mt-0.5">You</p>
+                </div>
+                <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] p-4 text-center">
+                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04] text-lg text-white/20">
+                    ?
+                  </div>
+                  <p className="text-xs font-medium text-white/30">Awaiting</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-red-400/30 mt-0.5">Rival</p>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed text-white/45">
-                Invite code, player presence, host controls, and launch handoff
-                are all synced in one room.
-              </p>
-            </Surface>
 
-            <Surface className="bg-white/[0.03] p-4">
-              <div className="mb-3 flex items-center gap-2 text-white/70">
-                <Swords className="h-4 w-4 text-[var(--sb-accent)]" />
-                <span className="text-sm font-medium">Competitive elegance</span>
+              {/* Duel stats footer */}
+              <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between text-[10px] text-white/25">
+                <span>Same paper</span>
+                <span>•</span>
+                <span>Same timer</span>
+                <span>•</span>
+                <span>One winner</span>
               </div>
-              <p className="text-sm leading-relaxed text-white/45">
-                This is built for students who want beauty, pressure, and focus
-                in the same session.
-              </p>
-            </Surface>
+            </div>
           </div>
         </div>
       </section>
@@ -306,7 +312,7 @@ export function CollaborationPage({
               Create a Room
             </p>
             <h2 className="text-2xl font-semibold tracking-tight text-white">
-              Set the mood before the matchup starts.
+              Forge your arena before the battle begins.
             </h2>
           </div>
 
@@ -551,10 +557,10 @@ export function CollaborationPage({
         <div className="space-y-6">
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/25">
-              Join Fast
+              Join a Duel
             </p>
             <h2 className="text-2xl font-semibold tracking-tight text-white">
-              Walk straight into a live room with a code.
+              Step into a live arena with a code.
             </h2>
           </div>
 
