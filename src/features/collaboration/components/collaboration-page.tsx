@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clipboard,
   Crown,
+  Dices,
   DoorOpen,
   Lock,
   Sparkles,
@@ -31,6 +32,7 @@ import {
   getCollaborationStatChips,
   getQuestionSourceMeta,
 } from "@/features/collaboration/lib/collaboration-config";
+import { generateDuelName } from "@/features/collaboration/lib/duel-name-generator";
 import {
   getRecentCollaborationRooms,
   rememberCollaborationRoom,
@@ -170,8 +172,22 @@ export function CollaborationPage({
       toast.success("Room created. Your invite link is ready.");
       router.push(`/dashboard/collaboration/${data.session.code}` as Route);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Could not create the room.";
+      let message = "Could not create the room. Please try again.";
+      if (error instanceof Error) {
+        // Map technical backend messages to user-friendly text
+        const raw = error.message.toLowerCase();
+        if (raw.includes("name") || raw.includes("custom")) {
+          message = "Room name is invalid. Try a shorter name or use the auto-generate button.";
+        } else if (raw.includes("premium")) {
+          message = "Duel rooms are a premium feature. Upgrade to unlock.";
+        } else if (raw.includes("subject")) {
+          message = "Please check your subject selection and try again.";
+        } else if (raw.includes("limit") || raw.includes("rate")) {
+          message = "You're creating rooms too fast. Wait a moment and try again.";
+        } else {
+          message = error.message;
+        }
+      }
       setFormError(message);
     }
   }
@@ -460,13 +476,27 @@ export function CollaborationPage({
                 </div>
 
                 <div className="space-y-4">
-                  <Field
-                    label="Room Name"
-                    placeholder="Eg. Saturday Physics face-off"
-                    maxLength={60}
-                    value={customName}
-                    onChange={(event) => setCustomName(event.target.value)}
-                  />
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-white/70">Room Name <span className="text-white/30 font-normal">(optional)</span></label>
+                      <button
+                        type="button"
+                        onClick={() => setCustomName(generateDuelName(selectedSubjects))}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-amber-400/70 hover:text-amber-400 bg-amber-500/[0.06] hover:bg-amber-500/[0.12] border border-amber-500/10 hover:border-amber-500/20 transition-all duration-200 active:scale-95"
+                      >
+                        <Dices className="h-3 w-3" />
+                        Generate name
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Eg. Saturday Physics face-off"
+                      maxLength={60}
+                      value={customName}
+                      onChange={(event) => setCustomName(event.target.value)}
+                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white/90 outline-none transition-all duration-200 placeholder:text-white/20 hover:border-white/[0.1] focus:border-[#e09040]/50 focus:ring-2 focus:ring-[#e09040]/15 focus:bg-white/[0.05]"
+                    />
+                  </div>
 
                   <Surface className="rounded-[24px] bg-[linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] p-5">
                     <div className="flex items-center justify-between">

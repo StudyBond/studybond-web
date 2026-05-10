@@ -1097,6 +1097,30 @@ button, input, textarea, select {
   animation: sb-duel-hud-tick 0.6s ease-out;
 }
 
+/* ─── Floating Emoji Animation ─── */
+@keyframes sb-emoji-float {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(-40px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-150px) scale(1);
+    opacity: 0;
+  }
+}
+
+.sb-emoji-float {
+  animation: sb-emoji-float 4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
 /* ─── Duel stagger orchestration ─── */
 .sb-duel-stagger-1 { animation-delay: 200ms; }
 .sb-duel-stagger-2 { animation-delay: 500ms; }

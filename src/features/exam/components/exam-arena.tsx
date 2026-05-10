@@ -328,7 +328,8 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const { guardState, dismissViolation } = useExamGuard({
     mode: "exam",
     onAutoSubmit: () => autoSubmitRef.current(),
-    enabled: !!session && !isLoading && storeExamId === examId,
+    // Disable guard if we're waiting in the lobby so the user can switch tabs
+    enabled: !!session && !isLoading && storeExamId === examId && !isWaitingInLobby,
   });
 
   const handleSubmit = useCallback(async () => {

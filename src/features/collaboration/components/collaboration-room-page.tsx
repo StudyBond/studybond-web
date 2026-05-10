@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { playVsClash } from "@/features/collaboration/lib/duel-sounds";
 import {
   ArrowRight,
   ClipboardCopy,
@@ -214,6 +215,29 @@ export function CollaborationRoomPage({
   // Ref to track if we have already initiated the launch to the exam arena.
   // This prevents multiple redirects or race conditions during rapid state updates.
   const launchInitiatedRef = useRef(false);
+  const prevParticipantCountRef = useRef(session?.participants.length ?? 0);
+
+  // ─── Detect when a new participant joins and play sound ───
+  useEffect(() => {
+    if (!session) return;
+    const currentCount = session.participants.length;
+    const prevCount = prevParticipantCountRef.current;
+
+    if (currentCount > prevCount && prevCount > 0 && session.status === "WAITING") {
+      const newPlayer = session.participants.find(
+        (p) => p.userId !== profile.id,
+      );
+      playVsClash();
+      if (newPlayer) {
+        toast.success(`⚔️ ${newPlayer.fullName} has entered the arena!`, {
+          description: "Your rival is ready. Launch when you are.",
+          duration: 6000,
+        });
+      }
+    }
+
+    prevParticipantCountRef.current = currentCount;
+  }, [session, session?.participants.length, profile.id]);
 
   // Reset launching state when session status changes away from IN_PROGRESS
   // (Safe to call setState here: status change doesn't depend on isLaunching, prevents cascading)
