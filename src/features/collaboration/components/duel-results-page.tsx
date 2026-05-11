@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import type { ExamResult, CollaborationSessionSnapshot } from "@/lib/api/types";
 import { AnswerReview } from "@/features/exam/components/answer-review";
+import { ShareResultCard } from "@/features/exam/components/share-result-card";
 import { AnimatedCounter } from "@/features/collaboration/components/animated-counter";
 import { DuelConfetti } from "@/features/collaboration/components/duel-confetti";
 import {
@@ -497,10 +498,17 @@ export function DuelResultsPage({ result, collabSession, myUserId }: DuelResults
             <RefreshCcw className="mr-2 h-4 w-4" />
             Rematch
           </Button>
-          <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold tracking-wide border-white/10 bg-white/5 text-white hover:bg-white/10">
-            <Share2 className="mr-2 h-4 w-4" />
-            Share Duel Result
-          </Button>
+          <ShareResultCard
+            result={result}
+            duelOutcome={outcomeText as "VICTORY" | "DEFEAT" | "DRAW"}
+            opponentName={opponent.fullName}
+            customTrigger={
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold tracking-wide border-white/10 bg-white/5 text-white hover:bg-white/10">
+                <Share2 className="mr-2 h-4 w-4" />
+                Share Duel Result
+              </Button>
+            }
+          />
           <Button
             size="lg"
             variant="ghost"

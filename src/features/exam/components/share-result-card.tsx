@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState, useCallback, useMemo, useEffect } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect, cloneElement } from "react";
 import { createPortal } from "react-dom";
 import { Share2, Download, X, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -128,7 +128,8 @@ const TRANSPARENT = "rgba(0, 0, 0, 0)";
 async function renderShareCard(
   result: ExamResult,
   headline: string,
-  subtitle: string
+  subtitle: string,
+  metadataOverride?: typeof TIER_METADATA[keyof typeof TIER_METADATA] & { isDuel?: boolean }
 ): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
@@ -138,7 +139,8 @@ async function renderShareCard(
   if (!ctx) throw new Error("Canvas 2D context not available");
 
   const tier = getScoreTier(result.percentage);
-  const metadata = TIER_METADATA[tier];
+  const metadata = metadataOverride || TIER_METADATA[tier];
+  const headerLabel = metadataOverride?.isDuel ? "DUEL ARENA" : tier.toUpperCase().replace(/_/g, " ");
 
   // ═══════════════════════════════════════════════════════════════════
   // ─── BACKGROUND WITH PREMIUM GRADIENT SYSTEM ───
@@ -228,7 +230,7 @@ async function renderShareCard(
   ctx.font = "600 24px 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.fillStyle = metadata.accentColor;
   ctx.textAlign = "center";
-  ctx.fillText(tier.toUpperCase().replace(/_/g, " "), CARD_WIDTH / 2, 260);
+  ctx.fillText(headerLabel, CARD_WIDTH / 2, 260);
   ctx.restore();
 
   // ═══════════════════════════════════════════════════════════════════
@@ -413,19 +415,27 @@ async function renderShareCard(
   ctx.restore();
 
   // Motivational quote based on performance
-  const motivations: Record<ScoreTier, string> = {
-    legendary: "Peak Performance Achieved",
-    excellent: "Exceptional Results",
-    solid: "Strong Effort",
-    average: "Keep Pushing",
-    needs_work: "Room to Grow",
-  };
+  let motivation = "";
+  if (metadataOverride?.isDuel) {
+    if (headline === "DUEL VICTORY") motivation = "Champion of the Arena";
+    else if (headline === "VALIANT EFFORT") motivation = "Iron Sharpens Iron";
+    else motivation = "A Clash of Equals";
+  } else {
+    const motivations: Record<ScoreTier, string> = {
+      legendary: "Peak Performance Achieved",
+      excellent: "Exceptional Results",
+      solid: "Strong Effort",
+      average: "Keep Pushing",
+      needs_work: "Room to Grow",
+    };
+    motivation = motivations[tier];
+  }
 
   ctx.save();
   ctx.font = "500 24px 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.fillStyle = metadata.accentColor;
   ctx.textAlign = "center";
-  ctx.fillText(motivations[tier], CARD_WIDTH / 2, infoY + 60);
+  ctx.fillText(motivation, CARD_WIDTH / 2, infoY + 60);
   ctx.restore();
 
   // ═══════════════════════════════════════════════════════════════════
@@ -551,31 +561,47 @@ function buildSubjectStats(result: ExamResult) {
 
 // ─── Share Text for WhatsApp etc ───
 
-function getShareText(result: ExamResult, headline: string): string {
+function getShareText(
+  result: ExamResult, 
+  headline: string,
+  metadataOverride?: typeof TIER_METADATA[keyof typeof TIER_METADATA] & { isDuel?: boolean },
+  duelOutcome?: "VICTORY" | "DEFEAT" | "DRAW"
+): string {
   const tier = getScoreTier(result.percentage);
-  const metadata = TIER_METADATA[tier];
+  const metadata = metadataOverride || TIER_METADATA[tier];
   const subjectText = result.subjects.join(", ");
 
   const baseText = `${metadata.emoji} ${headline}\n\n📊 Score: ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)\n📚 ${subjectText}\n⚡ +${result.spEarned} SP earned`;
 
-  const ctaLines: Record<ScoreTier, string> = {
-    legendary: "\n\n🏆 Preparation, precision, perfection.\nstudybond.app",
-    excellent: "\n\n🔥 Where serious students prepare.\nstudybond.app",
-    solid: "\n\n📈 Building results with every session.\nstudybond.app",
-    average: "\n\n💪 Every score is progress.\nstudybond.app",
-    needs_work: "\n\n🚀 Better is coming.\nstudybond.app",
-  };
+  let ctaLine = "";
+  if (duelOutcome) {
+    if (duelOutcome === "VICTORY") ctaLine = "\n\n👑 Prove yourself in the arena.\nstudybond.app";
+    else if (duelOutcome === "DEFEAT") ctaLine = "\n\n⚔️ Champions are made from setbacks.\nstudybond.app";
+    else ctaLine = "\n\n⚖️ Iron sharpens iron.\nstudybond.app";
+  } else {
+    const ctaLines: Record<ScoreTier, string> = {
+      legendary: "\n\n🏆 Preparation, precision, perfection.\nstudybond.app",
+      excellent: "\n\n🔥 Where serious students prepare.\nstudybond.app",
+      solid: "\n\n📈 Building results with every session.\nstudybond.app",
+      average: "\n\n💪 Every score is progress.\nstudybond.app",
+      needs_work: "\n\n🚀 Better is coming.\nstudybond.app",
+    };
+    ctaLine = ctaLines[tier];
+  }
 
-  return baseText + ctaLines[tier];
+  return baseText + ctaLine;
 }
 
 // ─── Component ───
 
 type ShareResultCardProps = {
   result: ExamResult;
+  customTrigger?: React.ReactElement<{ onClick?: React.MouseEventHandler }>;
+  duelOutcome?: "VICTORY" | "DEFEAT" | "DRAW";
+  opponentName?: string;
 };
 
-export function ShareResultCard({ result }: { result: ExamResult }) {
+export function ShareResultCard({ result, customTrigger, duelOutcome, opponentName }: ShareResultCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -598,15 +624,33 @@ export function ShareResultCard({ result }: { result: ExamResult }) {
   const blobRef = useRef<Blob | null>(null);
 
   const tier = getScoreTier(result.percentage);
-  const metadata = TIER_METADATA[tier];
-  const headline = useMemo(() => pickRandom(SHARE_HEADLINES[tier]), [tier]);
-  const subtitle = useMemo(() => pickRandom(SHARE_SUBTITLES[tier]), [tier]);
+  
+  const finalMetadata = useMemo(() => {
+    if (duelOutcome === "VICTORY") return { ...TIER_METADATA.legendary, isDuel: true };
+    if (duelOutcome === "DEFEAT") return { ...TIER_METADATA.solid, emoji: "⚔️", isDuel: true };
+    if (duelOutcome === "DRAW") return { ...TIER_METADATA.excellent, emoji: "⚖️", isDuel: true };
+    return TIER_METADATA[tier];
+  }, [tier, duelOutcome]);
+
+  const headline = useMemo(() => {
+    if (duelOutcome === "VICTORY") return "DUEL VICTORY";
+    if (duelOutcome === "DEFEAT") return "VALIANT EFFORT";
+    if (duelOutcome === "DRAW") return "EPIC DRAW";
+    return pickRandom(SHARE_HEADLINES[tier]);
+  }, [tier, duelOutcome]);
+
+  const subtitle = useMemo(() => {
+    if (duelOutcome === "VICTORY") return opponentName ? `Defeated ${opponentName} in the arena.` : "Emerged victorious in the arena.";
+    if (duelOutcome === "DEFEAT") return opponentName ? `A tough duel against ${opponentName}.` : "Fell in battle, but growing stronger.";
+    if (duelOutcome === "DRAW") return opponentName ? `A perfectly matched clash with ${opponentName}.` : "A clash of equals.";
+    return pickRandom(SHARE_SUBTITLES[tier]);
+  }, [tier, duelOutcome, opponentName]);
 
   const generateImage = useCallback(async () => {
     if (generatedUrl) return;
     setIsGenerating(true);
     try {
-      const blob = await renderShareCard(result, headline, subtitle);
+      const blob = await renderShareCard(result, headline, subtitle, finalMetadata);
       blobRef.current = blob;
       const url = URL.createObjectURL(blob);
       setGeneratedUrl(url);
@@ -616,7 +660,7 @@ export function ShareResultCard({ result }: { result: ExamResult }) {
     } finally {
       setIsGenerating(false);
     }
-  }, [result, headline, subtitle, generatedUrl]);
+  }, [result, headline, subtitle, finalMetadata, generatedUrl]);
 
   const handleOpen = useCallback(() => {
     setIsOpen(true);
@@ -639,7 +683,7 @@ export function ShareResultCard({ result }: { result: ExamResult }) {
   }, [generatedUrl, result.percentage]);
 
   const handleShare = useCallback(async () => {
-    const shareText = getShareText(result, headline);
+    const shareText = getShareText(result, headline, finalMetadata, duelOutcome);
 
     // Try native share (mobile)
     if (navigator.share && blobRef.current) {
@@ -674,23 +718,27 @@ export function ShareResultCard({ result }: { result: ExamResult }) {
   return (
     <>
       {/* Premium Trigger Button */}
-      <button
-        id="share-result-btn"
-        onClick={handleOpen}
-        className={cn(
-          "group relative inline-flex items-center gap-2.5 rounded-2xl px-5 py-2.5",
-          "bg-linear-to-r from-[#c17a28]/15 to-[#c17a28]/5",
-          "border border-[#c17a28]/20 hover:border-[#c17a28]/40",
-          "text-[#e8b87a] hover:text-white",
-          "transition-all duration-300 ease-out",
-          "hover:shadow-[0_0_30px_rgba(193,122,40,0.15)]",
-          "active:scale-[0.97]",
-          "hover:bg-linear-to-r hover:from-[#c17a28]/25 hover:to-[#c17a28]/10"
-        )}
-      >
-        <Share2 className="h-4 w-4 transition-transform group-hover:rotate-12" />
-        <span className="text-sm font-semibold tracking-wide">Share Result</span>
-      </button>
+      {customTrigger ? (
+        cloneElement(customTrigger, { onClick: handleOpen })
+      ) : (
+        <button
+          id="share-result-btn"
+          onClick={handleOpen}
+          className={cn(
+            "group relative inline-flex items-center gap-2.5 rounded-2xl px-5 py-2.5",
+            "bg-linear-to-r from-[#c17a28]/15 to-[#c17a28]/5",
+            "border border-[#c17a28]/20 hover:border-[#c17a28]/40",
+            "text-[#e8b87a] hover:text-white",
+            "transition-all duration-300 ease-out",
+            "hover:shadow-[0_0_30px_rgba(193,122,40,0.15)]",
+            "active:scale-[0.97]",
+            "hover:bg-linear-to-r hover:from-[#c17a28]/25 hover:to-[#c17a28]/10"
+          )}
+        >
+          <Share2 className="h-4 w-4 transition-transform group-hover:rotate-12" />
+          <span className="text-sm font-semibold tracking-wide">Share Result</span>
+        </button>
+      )}
 
       {/* Premium Fullscreen Modal (Portaled to body) */}
       {isMounted && isOpen && createPortal(
@@ -713,7 +761,7 @@ export function ShareResultCard({ result }: { result: ExamResult }) {
               {/* Decorative background glow behind image */}
               <div 
                 className="absolute inset-0 opacity-20 blur-[100px] pointer-events-none transition-all duration-1000" 
-                style={{ backgroundColor: metadata.accentColor }} 
+                style={{ backgroundColor: finalMetadata.accentColor }} 
               />
               
               <div className="relative w-full max-w-[140px] sm:max-w-[240px] md:max-w-[320px] aspect-[9/16] rounded-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden bg-black/50 group shrink-0">
@@ -725,7 +773,7 @@ export function ShareResultCard({ result }: { result: ExamResult }) {
                           "absolute inset-0 rounded-full border-2 border-transparent",
                           "border-t-[2px] sm:border-t-[3px] border-r-[2px] sm:border-r-[3px]",
                           "animate-spin"
-                        )} style={{ borderTopColor: metadata.accentColor, borderRightColor: metadata.accentColor }} />
+                        )} style={{ borderTopColor: finalMetadata.accentColor, borderRightColor: finalMetadata.accentColor }} />
                       </div>
                       <p className="text-[10px] sm:text-sm text-white/50 font-medium">Creating...</p>
                     </div>
@@ -751,7 +799,7 @@ export function ShareResultCard({ result }: { result: ExamResult }) {
               {/* Header */}
               <div className="space-y-1 sm:space-y-3 text-center md:text-left relative z-10">
                 <div className="hidden sm:inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-2 shadow-inner text-4xl">
-                  {metadata.emoji}
+                  {finalMetadata.emoji}
                 </div>
                 <h2 className="text-xl sm:text-4xl font-extrabold text-white tracking-tight">Share Your Success</h2>
                 <p className="text-white/50 text-xs sm:text-lg">Inspire others with your achievement</p>
