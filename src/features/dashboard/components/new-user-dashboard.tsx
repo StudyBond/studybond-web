@@ -246,7 +246,7 @@ export function NewUserDashboard({
             variant="secondary"
             size="sm"
             className="w-full sm:w-auto rounded-xl border-yellow-400/15 bg-yellow-400/[0.06] text-yellow-400/80 hover:bg-yellow-400/[0.10] hover:text-yellow-400"
-            href={"https://wa.link/k6fl61" as any}
+            href={"https://wa.link/cmo8uj" as any}
           >
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="h-3.5 w-3.5" />

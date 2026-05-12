@@ -39,7 +39,7 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
 
   const handleUpgrade = () => {
     // TEMPORARY: Redirect to WhatsApp until Paystack is activated
-    window.location.href = "https://wa.link/k6fl61";
+    window.location.href = "https://wa.link/cmo8uj";
     
     /* Original Paystack logic (disabled for now)
     initiateMutation.mutate(
