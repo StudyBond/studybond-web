@@ -11,6 +11,8 @@ import { features, faq, pricingFree, pricingPremium, footerLinks, socialLinks } 
 import { Mail, ArrowRight } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXTwitter, faInstagram, faLinkedin, faTiktok } from "@fortawesome/free-brands-svg-icons";
+import { JsonLdScript } from "@/components/seo/json-ld-script";
+import { faqJsonLd } from "@/lib/seo/json-ld";
 
 /* ── Social icon mapping ── */
 const socialIconMap: Record<string, typeof faXTwitter> = {
@@ -20,25 +22,11 @@ const socialIconMap: Record<string, typeof faXTwitter> = {
   tiktok: faTiktok,
 };
 
-/* ── JSON-LD ── */
-function JsonLd() {
-  const appUrl = getPublicAppUrl();
-  const data = [
-    { "@context": "https://schema.org", "@type": "Organization", name: "StudyBond", url: appUrl },
-    { "@context": "https://schema.org", "@type": "WebSite", name: "StudyBond", url: appUrl },
-    {
-      "@context": "https://schema.org", "@type": "FAQPage",
-      mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })),
-    },
-  ];
-  return <script dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} type="application/ld+json" />;
-}
-
 /* ── Main Page (Server Component, wraps visuals in client <Reveal>) ── */
 export default function MarketingPage() {
   return (
     <main className="min-h-screen bg-[#09090b] text-white overflow-x-hidden">
-      <JsonLd />
+      <JsonLdScript data={faqJsonLd(faq)} />
 
       {/* ── Navigation ── */}
       <MarketingNavbar />

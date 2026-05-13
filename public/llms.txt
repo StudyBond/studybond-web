@@ -1,0 +1,46 @@
+# StudyBond
+> The #1 exam preparation platform for Nigerian university Post-UTME candidates. Practice with real past questions, timed CBT simulation, AI-powered analytics, and 1v1 competitive duels.
+
+## About StudyBond
+StudyBond is a premium, free-to-start exam preparation platform built for Nigerian students preparing for university Post-UTME (Post-Unified Tertiary Matriculation Examination) screening exams. Currently focused on the University of Ibadan (UI), StudyBond offers real past questions, 90-minute timed CBT simulation, subject-specific practice, score analytics, daily streaks, leaderboards, and real-time 1v1 duel battles.
+
+## Core Pages
+- [UI Post-UTME Practice](https://studybond.app/ui-post-utme): Practice with real University of Ibadan Post-UTME past questions — free CBT simulation
+- [UI Post-UTME English](https://studybond.app/ui-post-utme/english): English language past questions and practice for UI Post-UTME
+- [UI Post-UTME Chemistry](https://studybond.app/ui-post-utme/chemistry): Chemistry past questions and practice for UI Post-UTME
+- [UI Post-UTME Physics](https://studybond.app/ui-post-utme/physics): Physics past questions and practice for UI Post-UTME
+- [UI Post-UTME Biology](https://studybond.app/ui-post-utme/biology): Biology past questions and practice for UI Post-UTME
+
+## Guides
+- [How to Pass UI Post-UTME](https://studybond.app/blog/how-to-pass-ui-post-utme): Complete preparation guide with strategies, subject tips, and study plans
+- [UI Post-UTME Cut-Off Marks](https://studybond.app/blog/ui-post-utme-cut-off-mark): Department-by-department cut-off marks for University of Ibadan
+- [UI Post-UTME Exam Format](https://studybond.app/blog/ui-post-utme-exam-format): Structure, timing, subjects, and scoring of the UI screening exam
+- [UI Post-UTME Score Calculator](https://studybond.app/blog/ui-post-utme-score-calculator): Calculate your aggregate score for UI admission
+- [Best UI Post-UTME Practice Site](https://studybond.app/blog/best-ui-post-utme-practice): Compare exam prep platforms for University of Ibadan
+- [UI Post-UTME Registration Guide](https://studybond.app/blog/ui-post-utme-registration): Step-by-step registration process for UI screening
+- [UI MBBS Post-UTME Guide](https://studybond.app/blog/ui-mbbs-post-utme): Medicine-specific preparation guide for UI
+- [UI Engineering Post-UTME](https://studybond.app/blog/ui-engineering-post-utme): Engineering-specific preparation guide for UI
+
+## Past Questions by Year
+- [2025 Past Questions](https://studybond.app/ui-post-utme/past-questions/2025)
+- [2024 Past Questions](https://studybond.app/ui-post-utme/past-questions/2024)
+- [2023 Past Questions](https://studybond.app/ui-post-utme/past-questions/2023)
+- [2022 Past Questions](https://studybond.app/ui-post-utme/past-questions/2022)
+- [2021 Past Questions](https://studybond.app/ui-post-utme/past-questions/2021)
+- [2020 Past Questions](https://studybond.app/ui-post-utme/past-questions/2020)
+- [2019 Past Questions](https://studybond.app/ui-post-utme/past-questions/2019)
+
+## Key Features
+- **Real Past Questions**: Verified UI Post-UTME questions, not generic content
+- **CBT Simulation**: 100 questions, 90 minutes — mirrors the real exam
+- **4 Subjects**: English, Chemistry, Physics, Biology
+- **Score Analytics**: Track performance by subject, see strengths and weaknesses
+- **Daily Streaks**: Build study habits with 3, 7, 14, and 30-day milestones
+- **Leaderboard**: Weekly top 50 students ranked by Study Points
+- **1v1 Duels**: Real-time head-to-head exam battles
+- **Free to Start**: First full exam is completely free, no credit card required
+- **Premium**: ₦5,000 for 5 months — unlimited exams, subject practice, duels, analytics
+
+## Contact
+- Website: https://studybond.app
+- Email: studybondapp@gmail.com
