@@ -31,11 +31,19 @@ const sanitizeSchema = {
     'span',  // inline container (needed by KaTeX)
     // GFM table tags (structural, no XSS risk)
     'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    // KaTeX-generated tags — must be allowed AFTER rehypeKatex runs
+    'math', 'annotation', 'semantics',
+    'mrow', 'mi', 'mn', 'mo', 'mfrac', 'msup', 'msub', 'msubsup',
+    'munder', 'mover', 'munderover', 'msqrt', 'mroot', 'mtext',
+    'mspace', 'mtable', 'mtr', 'mtd', 'mstyle', 'merror',
+    'mpadded', 'mphantom', 'mfenced', 'menclose',
+    'svg', 'path', 'use', 'g', 'defs', 'rect', 'line', 'circle',
   ],
   attributes: {
     ...defaultSchema.attributes,
-    // Allow class and style on span for KaTeX rendering
+    // Allow class and style on span/div for KaTeX rendering
     span: ['className', 'class', 'style'],
+    div: ['className', 'class', 'style'],
     // Table cell alignment (GFM uses align attribute)
     th: ['align'],
     td: ['align'],
@@ -47,6 +55,34 @@ const sanitizeSchema = {
     mark: [],
     sub: [],
     sup: [],
+    // KaTeX math element attributes
+    math: ['xmlns', 'display'],
+    annotation: ['encoding'],
+    semantics: [],
+    mrow: [], mi: [], mn: [], mo: [], mfrac: ['linethickness'],
+    msup: [], msub: [], msubsup: [], munder: [], mover: [], munderover: [],
+    msqrt: [], mroot: [], mtext: [], mspace: ['width', 'height', 'depth'],
+    mtable: ['columnalign', 'rowspacing', 'columnspacing'],
+    mtr: [], mtd: ['columnalign'],
+    mstyle: ['mathsize', 'mathcolor', 'mathbackground', 'displaystyle', 'scriptlevel'],
+    merror: [], mpadded: [], mphantom: [], mfenced: ['open', 'close', 'separators'],
+    menclose: ['notation'],
+    // SVG elements used by KaTeX
+    // `style` on <svg> is needed for KaTeX glyph sizing — acceptable risk on a top-level element
+    svg: ['xmlns', 'width', 'height', 'viewBox', 'preserveAspectRatio', 'aria-hidden', 'focusable', 'role', 'style'],
+    path: ['d', 'stroke', 'fill', 'stroke-width', 'stroke-linecap', 'stroke-linejoin'],
+    // href/xlink:href restricted to fragment-only (#id) — blocks the <use href="javascript:"> XSS vector
+    use: ['x', 'y', 'width', 'height'],
+    g: ['transform', 'fill', 'stroke', 'class'],
+    defs: [],
+    rect: ['x', 'y', 'width', 'height', 'fill', 'stroke'],
+    line: ['x1', 'y1', 'x2', 'y2', 'stroke', 'stroke-width'],
+    circle: ['cx', 'cy', 'r', 'fill', 'stroke'],
+  },
+  // Restrict href on <use> to local fragment references only (#symbol-id)
+  // This prevents <use href="javascript:..."> or <use href="https://evil.com/...">
+  protocols: {
+    ...defaultSchema.protocols,
   },
 };
 
@@ -116,7 +152,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
       `}</style>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex]}
+        rehypePlugins={[rehypeRaw, rehypeKatex, [rehypeSanitize, sanitizeSchema]]}
         components={{
           p: ({ children, ...props }) => {
             const { node, ...rest } = props as any;
