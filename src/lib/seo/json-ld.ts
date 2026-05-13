@@ -81,7 +81,7 @@ export function courseJsonLd(params: {
 
 // ─── FAQPage ─────────────────────────────────────────────────────────
 
-export function faqJsonLd(items: { question: string; answer: string }[]) {
+export function faqJsonLd(items: ReadonlyArray<{ question: string; answer: string }>) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",

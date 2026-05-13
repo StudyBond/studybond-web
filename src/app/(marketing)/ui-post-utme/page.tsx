@@ -381,7 +381,7 @@ export default function UIPostUtmePage() {
           ].map((link) => (
             <Link
               key={link.href}
-              href={link.href}
+              href={link.href as any}
               className="group flex items-center gap-2 rounded-lg border border-white/6 bg-white/2 px-4 py-3 text-sm text-white/60 hover:border-[#e09040]/20 hover:text-[#e09040] transition-colors"
             >
               <ArrowRight className="h-3.5 w-3.5 text-white/20 group-hover:text-[#e09040] transition-colors" />

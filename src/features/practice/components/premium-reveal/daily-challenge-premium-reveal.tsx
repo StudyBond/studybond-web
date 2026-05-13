@@ -289,7 +289,7 @@ function PremiumRevealContent({
           }}
           transition={{
             duration: 3,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
             delay: 2.8,
           }}
