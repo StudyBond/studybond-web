@@ -524,7 +524,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
             ) : (
               <div className="flex items-center gap-1.5 text-[10px] text-white/25">
                 <span className="h-1.5 w-1.5 rounded-full bg-white/20 animate-pulse" />
-                Connecting...
+                Syncing...
               </div>
             )}
           </div>
