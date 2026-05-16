@@ -160,7 +160,10 @@ export function ExamArena({ examId }: ExamArenaProps) {
   useEffect(() => {
     const opponentState = opponent?.participantState;
     if (opponentState === "FINISHED" || collabSession?.status === "COMPLETED") {
-      markOpponentFinished();
+      // Defer state update to avoid synchronous setState inside effect which
+      // can cause cascading renders. Schedule on next macrotask.
+      const t = setTimeout(() => markOpponentFinished(), 0);
+      return () => clearTimeout(t);
     }
   }, [collabSession?.status, markOpponentFinished, opponent?.participantState]);
 
@@ -402,7 +405,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
     markOpponentFinished,
   ]);
 
-  autoSubmitRef.current = handleSubmit;
+  useEffect(() => {
+    autoSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
 
   const handleAbandon = useCallback(async () => {
     try {

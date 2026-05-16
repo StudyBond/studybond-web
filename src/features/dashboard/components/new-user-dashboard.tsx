@@ -18,7 +18,7 @@ import {
   Star,
 } from "lucide-react";
 import type { Route } from "next";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type NewUserDashboardProps = {
   profile: UserProfile;
@@ -70,14 +70,9 @@ const premiumPeeks = [
 export function NewUserDashboard({
   profile,
   stats,
-  streak,
 }: NewUserDashboardProps) {
   const firstName = profile?.fullName.split(" ")[0] ?? "Student";
-  const [avatarId, setAvatarId] = useState("freshman");
-
-  useEffect(() => {
-    setAvatarId(getSavedAvatarId());
-  }, []);
+  const [avatarId] = useState(getSavedAvatarId());
 
   return (
     <>
@@ -246,7 +241,7 @@ export function NewUserDashboard({
             variant="secondary"
             size="sm"
             className="w-full sm:w-auto rounded-xl border-yellow-400/15 bg-yellow-400/[0.06] text-yellow-400/80 hover:bg-yellow-400/[0.10] hover:text-yellow-400"
-            href={"https://wa.link/cmo8uj" as any}
+            href="https://wa.link/cmo8uj"
           >
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="h-3.5 w-3.5" />
