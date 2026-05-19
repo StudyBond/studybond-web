@@ -28,6 +28,7 @@ export async function forwardAuthorizedRoute(
     | "leaderboard"
     | "subscriptions"
     | "bookmarks"
+    | "bookmark-exam"
     | "collaboration"
     | "reports",
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
