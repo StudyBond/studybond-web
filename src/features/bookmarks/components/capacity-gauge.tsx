@@ -112,30 +112,30 @@ export function CapacityGauge({ limits }: CapacityGaugeProps) {
         {/* Info Column */}
         <div className="flex-1 min-w-0 text-center sm:text-left space-y-2.5">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-            <h3 className="text-sm font-semibold text-white/80 tracking-wide">Vault Capacity</h3>
+            <h3 className="text-sm font-semibold text-white/85 tracking-wide">Saved Questions</h3>
             <span
               className={cn(
                 "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all",
                 accessTier === "PREMIUM"
                   ? "bg-[var(--sb-gold)]/10 text-[var(--sb-gold)] border border-[var(--sb-gold)]/20 shadow-[0_0_10px_var(--sb-gold-glow)]"
-                  : "bg-white/[0.04] text-white/20 border border-white/[0.05]",
+                  : "bg-white/[0.04] text-white/40 border border-white/[0.05]",
               )}
             >
               {accessTier === "PREMIUM" && <Crown className="h-2.5 w-2.5" />}
-              {accessTier === "PREMIUM" ? "Elite Vault" : "Explorer Vault"}
+              {accessTier === "PREMIUM" ? "Premium" : "Free"}
             </span>
           </div>
 
           <p className="text-xs text-white/40 leading-relaxed font-medium">
             {remainingBookmarks > 0 ? (
               <span>
-                You have <span className="text-white/70 font-semibold">{remainingBookmarks}</span> open slots left for saved questions.
+                You have <span className="text-white/70 font-semibold">{remainingBookmarks}</span> open slots left.
               </span>
             ) : (
-              <span className="text-red-400/80 font-semibold">Vault is completely full. Remove old questions to save new ones.</span>
+              <span className="text-red-400/80 font-semibold">Your capacity is full. Remove older questions to save new ones.</span>
             )}
             <span className="mx-1.5 opacity-30">·</span>
-            <span>Saved items persist for {expiryDays} days.</span>
+            <span>Saved items are kept for {expiryDays} days.</span>
           </p>
 
           {/* Promotion / Action Banner */}
@@ -145,13 +145,13 @@ export function CapacityGauge({ limits }: CapacityGaugeProps) {
                 <Crown className="h-3 w-3" />
               </div>
               <p className="text-[10px] text-[var(--sb-gold)]/80 font-medium">
-                Unlock Elite Vault to expand capacity to <span className="font-bold">50 slots</span> and disable expiration.
+                Upgrade to Premium to save up to <span className="font-bold">50 questions</span> with no expiration date.
               </p>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-1.5 text-[10px] text-white/20 font-medium">
+            <div className="inline-flex items-center gap-1.5 text-[10px] text-white/30 font-medium">
               <HelpCircle className="h-3.5 w-3.5" />
-              <span>Elite members enjoy maximum capacity and extended question lifetime.</span>
+              <span>Premium accounts enjoy larger capacity and permanent questions saving.</span>
             </div>
           )}
         </div>
@@ -159,4 +159,3 @@ export function CapacityGauge({ limits }: CapacityGaugeProps) {
     </div>
   );
 }
-

@@ -70,7 +70,6 @@ export function BookmarkExamLauncher({
               transition={{ duration: 0.4 }}
               className="relative overflow-hidden rounded-2xl border border-[var(--sb-gold)]/15 bg-gradient-to-br from-white/[0.02] to-white/[0.005] p-5 md:p-6"
             >
-              {/* Premium Glow effect */}
               <div className="pointer-events-none absolute -top-32 right-0 h-64 w-64 rounded-full bg-[var(--sb-gold)]/[0.04] blur-3xl" />
               
               <div className="space-y-5">
@@ -82,15 +81,15 @@ export function BookmarkExamLauncher({
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-white/95 tracking-wide">
-                        Elite Bookmark Exam Console
+                        Bookmark Exam (Premium)
                       </h3>
                       <p className="text-[10px] text-white/30 uppercase tracking-widest font-semibold mt-0.5">
-                        Premium Chamber
+                        Premium Feature
                       </p>
                     </div>
                   </div>
                   <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[var(--sb-gold)]/10 text-[var(--sb-gold)] border border-[var(--sb-gold)]/20">
-                    Gated
+                    Locked
                   </span>
                 </div>
 
@@ -100,27 +99,27 @@ export function BookmarkExamLauncher({
                     <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--sb-accent)]/10 text-[var(--sb-accent)]">
                       <Sparkles className="h-3.5 w-3.5" />
                     </div>
-                    <h4 className="text-[11px] font-semibold text-white/70">Weakness Drilling</h4>
-                    <p className="text-[10px] text-white/25 leading-normal">
-                      Isolate questions that tripped you up during practice exams.
+                    <h4 className="text-[11px] font-semibold text-white/70">Targeted Practice</h4>
+                    <p className="text-[10px] text-white/40 leading-normal">
+                      Practice only the questions you have saved.
                     </p>
                   </div>
                   <div className="rounded-xl border border-white/[0.03] bg-white/[0.005] p-3 space-y-1">
                     <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--sb-accent)]/10 text-[var(--sb-accent)]">
                       <Trophy className="h-3.5 w-3.5" />
                     </div>
-                    <h4 className="text-[11px] font-semibold text-white/70">Custom Timers</h4>
-                    <p className="text-[10px] text-white/25 leading-normal">
-                      Adjust exam pressure settings to simulate real UI entrance conditions.
+                    <h4 className="text-[11px] font-semibold text-white/70">Timed Sessions</h4>
+                    <p className="text-[10px] text-white/40 leading-normal">
+                      Choose to practice with or without a countdown timer.
                     </p>
                   </div>
                   <div className="rounded-xl border border-white/[0.03] bg-white/[0.005] p-3 space-y-1">
                     <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--sb-accent)]/10 text-[var(--sb-accent)]">
                       <Calendar className="h-3.5 w-3.5" />
                     </div>
-                    <h4 className="text-[11px] font-semibold text-white/70">Personalized Insights</h4>
-                    <p className="text-[10px] text-white/25 leading-normal">
-                      Track score curves directly computed from your bookmarked vault.
+                    <h4 className="text-[11px] font-semibold text-white/70">Track Progress</h4>
+                    <p className="text-[10px] text-white/40 leading-normal">
+                      See how your performance improves over time.
                     </p>
                   </div>
                 </div>
@@ -131,7 +130,7 @@ export function BookmarkExamLauncher({
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[var(--sb-gold)] via-[#c17a28] to-[#8b4f1a] shadow-[0_4px_20px_rgba(212,161,33,0.15)] hover:shadow-[0_4px_30px_rgba(212,161,33,0.22)] active:scale-[0.98] transition-all duration-300 border border-[var(--sb-gold)]/20 cursor-pointer"
                 >
                   <Crown className="h-4 w-4" />
-                  Unlock Elite Console
+                  Unlock Premium Features
                 </button>
               </div>
             </motion.div>
@@ -156,15 +155,15 @@ export function BookmarkExamLauncher({
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-white/95 tracking-wide">
-                        Bookmark Exam Console
+                        Bookmark Exam
                       </h3>
                       <p className="text-[10px] text-white/30 uppercase tracking-widest font-semibold mt-0.5">
-                        Vault Charge Level: {bookmarkCount} / {BOOKMARK_EXAM_MIN_QUESTIONS}
+                        {bookmarkCount} of {BOOKMARK_EXAM_MIN_QUESTIONS} questions saved
                       </p>
                     </div>
                   </div>
                   <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-white/40 border border-white/[0.05]">
-                    Elite Active
+                    Premium
                   </span>
                 </div>
 
@@ -179,14 +178,14 @@ export function BookmarkExamLauncher({
                     />
                   </div>
                   <div className="flex justify-between items-center text-[10px] text-white/20">
-                    <span>Charge level {bookmarkCount} questions</span>
-                    <span>Ready at {BOOKMARK_EXAM_MIN_QUESTIONS} questions</span>
+                    <span>{bookmarkCount} saved</span>
+                    <span>Requires {BOOKMARK_EXAM_MIN_QUESTIONS} saved questions</span>
                   </div>
                 </div>
 
                 {/* Recommendation instructions */}
                 <div className="rounded-xl border border-[var(--sb-accent)]/10 bg-[var(--sb-accent)]/[0.02] p-4 text-xs text-[var(--sb-accent-text)]/90 leading-relaxed">
-                  You need <span className="font-bold text-white">{BOOKMARK_EXAM_MIN_QUESTIONS - bookmarkCount} more</span> saved question{BOOKMARK_EXAM_MIN_QUESTIONS - bookmarkCount !== 1 ? "s" : ""} to calibrate your custom exam engine. Keep working through tests and bookmark items you want to drill.
+                  You need to save at least <span className="font-bold text-white">{BOOKMARK_EXAM_MIN_QUESTIONS - bookmarkCount} more</span> question{BOOKMARK_EXAM_MIN_QUESTIONS - bookmarkCount !== 1 ? "s" : ""} to start a practice test. Keep bookmarking questions while practicing.
                 </div>
 
                 {/* CTA disabled */}
@@ -195,7 +194,7 @@ export function BookmarkExamLauncher({
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold text-white/10 bg-white/[0.01] border border-white/[0.03] cursor-not-allowed"
                 >
                   <Lock className="h-3.5 w-3.5" />
-                  Engine Charging (Need {BOOKMARK_EXAM_MIN_QUESTIONS - bookmarkCount} Qs)
+                  Locked (Save {BOOKMARK_EXAM_MIN_QUESTIONS - bookmarkCount} more)
                 </button>
               </div>
             </motion.div>
@@ -211,7 +210,6 @@ export function BookmarkExamLauncher({
               transition={{ duration: 0.4 }}
               className="relative overflow-hidden rounded-2xl border border-[var(--sb-accent)]/20 bg-gradient-to-br from-white/[0.02] to-white/[0.005] p-5 md:p-6 shadow-[0_4px_30px_var(--sb-accent-glow)]"
             >
-              {/* Active glow */}
               <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-64 w-96 rounded-full bg-[var(--sb-accent)]/[0.08] blur-3xl animate-pulse" />
 
               <div className="space-y-4">
@@ -223,22 +221,22 @@ export function BookmarkExamLauncher({
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-white/95 tracking-wide">
-                        Bookmark Exam Forge
+                        Bookmark Exam
                       </h3>
                       <p className="text-[10px] text-white/30 uppercase tracking-widest font-semibold mt-0.5">
-                        Console Active · {bookmarkCount} Questions Total
+                        {bookmarkCount} Questions Saved
                       </p>
                     </div>
                   </div>
                   <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[var(--sb-accent)]/10 text-[var(--sb-accent-text)] border border-[var(--sb-accent)]/20">
-                    Unlocked
+                    Ready
                   </span>
                 </div>
 
                 {/* Sub-filtering */}
                 {availableSubjects.length > 1 && (
                   <div className="space-y-2 pt-1">
-                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Configure Exam Scope</p>
+                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Filter by Subject</p>
                     <div className="flex flex-wrap gap-1.5">
                       <button
                         onClick={() => setSelectedSubject(undefined)}
@@ -249,7 +247,7 @@ export function BookmarkExamLauncher({
                             : "border-white/[0.03] bg-white/[0.01] text-white/30 hover:border-white/[0.06] hover:text-white/60"
                         )}
                       >
-                        All Vault ({bookmarkCount})
+                        All Subjects ({bookmarkCount})
                       </button>
                       {availableSubjects.map((subject) => (
                         <button
@@ -297,12 +295,12 @@ export function BookmarkExamLauncher({
                   {isLaunching ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Forging Custom Session...
+                      Starting Exam...
                     </>
                   ) : (
                     <>
                       <Zap className="h-4 w-4 fill-current" />
-                      Ignite Custom Exam Session ({selectedSubject ? `${selectedSubject} Only` : `${bookmarkCount} Questions`})
+                      Start Bookmark Exam ({selectedSubject ? `${selectedSubject} Only` : `${bookmarkCount} Questions`})
                     </>
                   )}
                 </button>
@@ -322,4 +320,3 @@ export function BookmarkExamLauncher({
     </>
   );
 }
-
