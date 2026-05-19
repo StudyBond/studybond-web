@@ -15,6 +15,7 @@ import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-ov
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
 import { useReportViolationMutation } from "@/features/exam/hooks/use-exam-mutations";
 import { BookmarkReviewModal } from "@/features/bookmarks/components/bookmark-review-modal";
+import { motion } from "framer-motion";
 
 export function BookmarksPageClient() {
   const critical = useDashboardCriticalData();
@@ -89,22 +90,20 @@ export function BookmarksPageClient() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Study Vault</h1>
-            <p className="text-sm text-white/30">Your saved questions for focused review</p>
+            <p className="text-sm text-white/30 font-medium">Your saved questions for focused review</p>
           </div>
         </div>
 
-        {/* Capacity Gauge */}
+        {/* Bento Grid Header */}
         {bookmarksData?.limits && (
-          <CapacityGauge limits={bookmarksData.limits} />
-        )}
-
-        {/* Bookmark Exam Launcher */}
-        {bookmarksData?.limits && (
-          <BookmarkExamLauncher
-            bookmarkCount={bookmarksData.limits.activeBookmarks}
-            isPremium={isPremium}
-            availableSubjects={availableSubjects}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+            <CapacityGauge limits={bookmarksData.limits} />
+            <BookmarkExamLauncher
+              bookmarkCount={bookmarksData.limits.activeBookmarks}
+              isPremium={isPremium}
+              availableSubjects={availableSubjects}
+            />
+          </div>
         )}
 
         {/* Subject Filter */}
@@ -131,20 +130,37 @@ export function BookmarksPageClient() {
         ) : !bookmarksData?.bookmarks.length ? (
           <BookmarkEmptyState />
         ) : (
-          <div className="space-y-3">
-            {/* Bookmark Cards */}
-            {bookmarksData.bookmarks.map((bookmark, index) => (
-              <div
-                key={bookmark.id}
-                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
-                style={{ animationDelay: `${index * 50}ms`, animationFillMode: "backwards" }}
-              >
-                <BookmarkCard 
-                  bookmark={bookmark} 
-                  onReview={(id) => setReviewingBookmarkId(id)}
-                />
-              </div>
-            ))}
+          <div className="space-y-4">
+            {/* Bookmark Cards list with stagger container animation */}
+            <motion.div 
+              className="grid grid-cols-1 gap-4"
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.05
+                  }
+                }
+              }}
+            >
+              {bookmarksData.bookmarks.map((bookmark) => (
+                <motion.div
+                  key={bookmark.id}
+                  variants={{
+                    hidden: { opacity: 0, y: 15 },
+                    show: { opacity: 1, y: 0, transition: { type: "spring", damping: 20 } }
+                  }}
+                >
+                  <BookmarkCard 
+                    bookmark={bookmark} 
+                    onReview={(id) => setReviewingBookmarkId(id)}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
 
             {/* Pagination */}
             {bookmarksData.pagination.totalPages > 1 && (
