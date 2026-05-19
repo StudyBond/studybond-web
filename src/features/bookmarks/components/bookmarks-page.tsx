@@ -9,6 +9,7 @@ import { CapacityGauge } from "@/features/bookmarks/components/capacity-gauge";
 import { SubjectFilter } from "@/features/bookmarks/components/subject-filter";
 import { BookmarkCard } from "@/features/bookmarks/components/bookmark-card";
 import { BookmarkEmptyState } from "@/features/bookmarks/components/bookmark-empty-state";
+import { BookmarkExamLauncher } from "@/features/bookmarks/components/bookmark-exam-launcher";
 import { Bookmark, Loader2 } from "lucide-react";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
@@ -95,6 +96,15 @@ export function BookmarksPageClient() {
         {/* Capacity Gauge */}
         {bookmarksData?.limits && (
           <CapacityGauge limits={bookmarksData.limits} />
+        )}
+
+        {/* Bookmark Exam Launcher */}
+        {bookmarksData?.limits && (
+          <BookmarkExamLauncher
+            bookmarkCount={bookmarksData.limits.activeBookmarks}
+            isPremium={isPremium}
+            availableSubjects={availableSubjects}
+          />
         )}
 
         {/* Subject Filter */}

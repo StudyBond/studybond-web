@@ -10,7 +10,7 @@ import type {
 
 // ─── Shared Enums ───
 
-export type ExamType = "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED" | "ONE_V_ONE_DUEL" | "GROUP_COLLAB" | "DAILY_CHALLENGE";
+export type ExamType = "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED" | "ONE_V_ONE_DUEL" | "GROUP_COLLAB" | "DAILY_CHALLENGE" | "BOOKMARK_EXAM";
 export type Subject = "Mathematics" | "English" | "Physics" | "Chemistry" | "Biology";
 
 // ─── Payloads ───
@@ -158,4 +158,16 @@ export async function reportExamViolation(
     }
   );
   return { success: response.success };
+}
+
+/** Start a bookmark exam from the user's saved questions. */
+export async function startBookmarkExam(payload?: { subject?: string }) {
+  const response = await apiClient<SuccessEnvelope<ExamSessionData>>(
+    "/api/bookmark-exam/start",
+    {
+      method: "POST",
+      body: JSON.stringify(payload ?? {}),
+    },
+  );
+  return response.data;
 }
