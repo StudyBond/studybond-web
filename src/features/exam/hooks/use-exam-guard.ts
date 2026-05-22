@@ -8,7 +8,6 @@ import { toast } from "sonner";
 const EXAM_AUTO_SUBMIT_DELAY_MS = 5000; // 5 seconds countdown
 const MAX_VIOLATIONS_BEFORE_INSTANT_SUBMIT = 3;
 const DEVTOOLS_WIDTH_THRESHOLD = 250; // px sudden shrink
-const VIOLATION_REPORT_THROTTLE_MS = 10_000; // Backend rate-limit aligned
 const VIOLATION_DEDUP_WINDOW_MS = 300; // Dedup blur + visibilitychange
 const GUARD_STARTUP_GRACE_MS = 2000; // Suppress false positives during load
 
@@ -44,8 +43,6 @@ type UseExamGuardOptions = {
   mode: ExamGuardMode;
   /** Called when auto-submit is triggered (exam mode only) */
   onAutoSubmit?: () => void;
-  /** Called when any violation is detected so it can be reported to the backend */
-  onViolation?: (type: string, metadata?: any) => void;
   /** Whether the guard is active (set to false during loading states) */
   enabled?: boolean;
 };
@@ -55,7 +52,6 @@ type UseExamGuardOptions = {
 export function useExamGuard({
   mode,
   onAutoSubmit,
-  onViolation,
   enabled = true,
 }: UseExamGuardOptions) {
   const [state, setState] = useState<ExamGuardState>({
@@ -97,13 +93,6 @@ export function useExamGuard({
     }
   }, [mode]);
 
-  const onViolationRef = useRef(onViolation);
-  const lastReportTimeRef = useRef<number>(0);
-
-  useEffect(() => {
-    onViolationRef.current = onViolation;
-  }, [onViolation]);
-
   // Track when the guard becomes enabled to suppress startup false positives
   useEffect(() => {
     if (enabled) {
@@ -130,11 +119,6 @@ export function useExamGuard({
       violationCountRef.current += 1;
       const count = violationCountRef.current;
       
-      // Throttle backend reporting — aligned with server-side 10s rate-limit
-      if (now - lastReportTimeRef.current > VIOLATION_REPORT_THROTTLE_MS) {
-        onViolationRef.current?.(type, { count });
-        lastReportTimeRef.current = now;
-      }
 
       setState((s) => ({
         ...s,

@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useExamDetail } from "@/features/exam/hooks/use-exam-detail";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
 import { useReviewLockout } from "@/features/exam/hooks/use-review-lockout";
-import { useReportViolationMutation } from "@/features/exam/hooks/use-exam-mutations";
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData } from "@/features/dashboard/hooks/use-dashboard-data";
 import { ScoreSummary } from "@/features/exam/components/score-summary";
@@ -45,14 +44,9 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     requestLastChance,
   } = useReviewLockout(examId);
 
-  const reportViolationMutation = useReportViolationMutation();
-
   // ─── Anti-cheat guard (review mode) ───
   const { guardState, dismissViolation } = useExamGuard({
     mode: "review",
-    onViolation: (type, metadata) => {
-      reportViolationMutation.mutate({ examId, violationType: type, metadata });
-    },
     enabled: !isLocked && !!result,
   });
 

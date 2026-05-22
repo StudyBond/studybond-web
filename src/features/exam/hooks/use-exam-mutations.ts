@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { submitExam, abandonExam, reportExamViolation } from "@/lib/api/exams";
+import { submitExam, abandonExam } from "@/lib/api/exams";
 import { offlineStore } from "@/features/exam/stores/offline-store";
 import type { ExamResult, ExamAbandonResult, SubmitExamPayload } from "@/lib/api/types";
 import { toast } from "sonner";
@@ -59,13 +59,5 @@ export function useAbandonExamMutation() {
       queryClient.invalidateQueries({ queryKey: ["exam-history"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
-  });
-}
-
-/** Report an anti-cheat violation to the backend. */
-export function useReportViolationMutation() {
-  return useMutation<{ success: boolean }, ApiError, { examId: number; violationType: string; metadata?: Record<string, any> }>({
-    mutationFn: ({ examId, violationType, metadata }) => reportExamViolation(examId, violationType, metadata),
-    // We don't invalidate queries here because this is mostly a background audit action
   });
 }

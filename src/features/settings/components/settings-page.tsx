@@ -7,6 +7,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData } from "@/features/dashboard/hooks/use-dashboard-data";
+import { NotificationsSettingsTab } from "@/features/notifications/components/notifications-settings-tab";
+import { notificationsUiEnabled } from "@/features/notifications/notifications.config";
 import { useProfile } from "@/features/settings/hooks/use-settings";
 import { getSubscriptionStatus } from "@/lib/api/subscriptions";
 import { useVerifySubscription } from "@/features/settings/hooks/use-subscription";
@@ -22,16 +24,31 @@ import {
   Crown,
   AlertTriangle,
   Loader2,
+  BellRing,
 } from "lucide-react";
 
-const TABS = [
+const baseTabs = [
   { id: "profile", label: "Profile", icon: User },
   { id: "security", label: "Security", icon: Shield },
   { id: "subscription", label: "Plan", icon: Crown },
   { id: "danger", label: "Danger Zone", icon: AlertTriangle },
 ] as const;
 
-type TabId = (typeof TABS)[number]["id"];
+const notificationsTab = {
+  id: "notifications",
+  label: "Notifications",
+  icon: BellRing,
+} as const;
+
+const TABS = notificationsUiEnabled
+  ? [baseTabs[0], baseTabs[1], baseTabs[2], notificationsTab, baseTabs[3]]
+  : baseTabs;
+
+type TabId = "profile" | "security" | "subscription" | "notifications" | "danger";
+
+function isTabId(value: string): value is TabId {
+  return TABS.some((tab) => tab.id === value);
+}
 
 export function SettingsPageClient() {
   const critical = useDashboardCriticalData();
@@ -57,8 +74,8 @@ export function SettingsPageClient() {
     const reference = searchParams.get("reference");
     const tab = searchParams.get("tab");
 
-    if (tab === "subscription" && activeTab !== "subscription") {
-      setActiveTab("subscription");
+    if (tab && isTabId(tab) && activeTab !== tab) {
+      setActiveTab(tab);
     }
 
     if (reference && !hasVerified && !verifyMutation.isPending) {
@@ -211,6 +228,7 @@ export function SettingsPageClient() {
                   subscriptionData={subscriptionData ?? undefined}
                 />
               )}
+              {activeTab === "notifications" && <NotificationsSettingsTab />}
               {activeTab === "danger" && <DangerZone />}
             </div>
           </div>

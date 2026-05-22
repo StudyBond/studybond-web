@@ -12,7 +12,6 @@ import { BookmarkExamLauncher } from "@/features/bookmarks/components/bookmark-e
 import { BookmarkReviewModal } from "@/features/bookmarks/components/bookmark-review-modal";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
-import { useReportViolationMutation } from "@/features/exam/hooks/use-exam-mutations";
 import {
   Bookmark,
   Loader2,
@@ -364,13 +363,8 @@ export function BookmarksPageClient() {
   const [page, setPage] = useState(1);
   const [reviewingBookmarkId, setReviewingBookmarkId] = useState<number | null>(null);
 
-  const reportViolation = useReportViolationMutation();
-
   const { guardState, dismissViolation } = useExamGuard({
     mode: "review",
-    onViolation: (type, metadata) => {
-      reportViolation.mutate({ examId: 0, violationType: type, metadata });
-    },
     enabled: true,
   });
 

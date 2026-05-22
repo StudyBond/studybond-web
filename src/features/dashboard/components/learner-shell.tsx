@@ -1,11 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Logo, LogoLockup } from "@/components/ui/logo";
 import { PageTransition } from "@/components/ui/page-transition";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useLogoutMutation } from "@/features/auth/hooks/use-auth-mutations";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { useNotificationsRealtime } from "@/features/notifications/hooks/use-notifications";
 import { getSavedAvatarId } from "@/lib/avatars/avatar-collection";
 import type { SubscriptionStatus, UserProfile } from "@/lib/api/types";
 import { cn } from "@/lib/utils/cn";
@@ -19,9 +20,7 @@ import {
   Settings,
   Crown,
   AlertTriangle,
-  Zap,
   ChevronRight,
-  Bell,
   Swords,
   PanelLeftClose,
   PanelLeftOpen,
@@ -176,6 +175,8 @@ export function LearnerShell({
   subscriptionData,
   profile,
 }: Readonly<LearnerShellProps>) {
+  useNotificationsRealtime();
+
   const pathname = usePathname();
   const router = useRouter();
   const logout = useLogoutMutation();
@@ -212,14 +213,6 @@ export function LearnerShell({
   }
 
   const firstName = profile?.fullName.split(" ")[0] ?? "Student";
-  const initials = profile?.fullName
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() ?? "ST";
-
   const sidebarWidth = isCollapsed ? "72px" : "260px";
 
   return (
@@ -344,6 +337,7 @@ export function LearnerShell({
         </div>
 
         <div className="flex items-center gap-3 px-6">
+          <NotificationBell />
           {isPremium ? (
             <Badge tone="accent" className="text-[8px] bg-[var(--sb-gold)]/10 text-[var(--sb-gold)] ring-1 ring-[var(--sb-gold)]/20 shadow-[0_0_10px_var(--sb-gold-glow)]">
               <Crown className="h-2.5 w-2.5 mr-1" />
@@ -376,9 +370,7 @@ export function LearnerShell({
           </div>
 
           {/* Right: Notification Bell */}
-          <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.05] border border-white/[0.05] transition-colors hover:bg-white/[0.08]">
-            <Bell className="h-3.5 w-3.5 text-white/70" />
-          </button>
+          <NotificationBell mobile />
         </div>
       </div>
 

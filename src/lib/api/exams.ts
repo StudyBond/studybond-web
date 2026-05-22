@@ -145,21 +145,6 @@ export async function retakeExam(examId: number) {
   return response.data;
 }
 
-export async function reportExamViolation(
-  examId: number,
-  violationType: string,
-  metadata?: Record<string, any>
-): Promise<{ success: boolean }> {
-  const response = await apiClient<SuccessEnvelope<{ recorded: boolean }>>(
-    `/api/exams/${examId}/violations`,
-    {
-      method: "POST",
-      body: JSON.stringify({ violationType, metadata }),
-    }
-  );
-  return { success: response.success };
-}
-
 /** Start a bookmark exam from the user's saved questions. */
 export async function startBookmarkExam(payload?: { subject?: string }) {
   const response = await apiClient<SuccessEnvelope<ExamSessionData>>(
