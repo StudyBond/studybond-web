@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  context: OptionalSlugRouteContext
+  context: OptionalSlugRouteContext,
 ) {
   return forwardAuthorizedRoute(request, context, "notifications", "GET");
 }
@@ -18,7 +18,7 @@ export async function POST() {
 
 export async function PATCH(
   request: NextRequest,
-  context: OptionalSlugRouteContext
+  context: OptionalSlugRouteContext,
 ) {
   return forwardAuthorizedRoute(request, context, "notifications", "PATCH");
 }
@@ -29,7 +29,7 @@ export async function PUT() {
 
 export async function DELETE(
   request: NextRequest,
-  context: OptionalSlugRouteContext
+  context: OptionalSlugRouteContext,
 ) {
   return forwardAuthorizedRoute(request, context, "notifications", "DELETE");
 }
