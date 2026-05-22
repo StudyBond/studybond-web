@@ -46,11 +46,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 Set these in Vercel for `studybond-web`:
 
 ```env
-BACKEND_API_BASE_URL=https://your-railway-backend.up.railway.app
+BACKEND_API_BASE_URL=https://your-backend.onrender.com
 NEXT_PUBLIC_APP_URL=https://your-web-domain.vercel.app
 ```
 
-The learner app calls local `/api/*` routes first. Those route handlers then forward requests to `BACKEND_API_BASE_URL`, so this single backend URL is what connects the Vercel app to Railway.
+The learner app calls local `/api/*` routes first. Those route handlers then forward requests to `BACKEND_API_BASE_URL`, so this single backend URL is what connects the Vercel app to the deployed backend service.
 
 ## Architecture Rules
 

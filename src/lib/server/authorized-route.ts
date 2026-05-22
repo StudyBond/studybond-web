@@ -30,7 +30,8 @@ export async function forwardAuthorizedRoute(
     | "bookmarks"
     | "bookmark-exam"
     | "collaboration"
-    | "reports",
+    | "reports"
+    | "notifications",
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
 ) {
   const { slug } = await context.params;

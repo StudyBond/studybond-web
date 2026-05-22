@@ -694,3 +694,109 @@ export type QuestionReport = {
     imageUrl: string | null;
   };
 };
+
+// Notifications
+
+export type NotificationPreferences = {
+  streaks: boolean;
+  achievements: boolean;
+  collaboration: boolean;
+  subscription: boolean;
+  reports: boolean;
+  announcements: boolean;
+};
+
+export type NotificationSummaryCounts = {
+  unreadActivityCount: number;
+  unreadAnnouncementCount: number;
+  totalUnreadCount: number;
+};
+
+export type ActivityNotification = {
+  id: string;
+  kind: string;
+  category: string;
+  priority: "LOW" | "DEFAULT" | "HIGH" | "URGENT";
+  title: string;
+  body: string;
+  deeplink: string | null;
+  payload: unknown;
+  sourceType: string;
+  sourceId: string | null;
+  availableAt: string;
+  expiresAt: string | null;
+  readAt: string | null;
+  dismissedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isRead: boolean;
+  isDismissed: boolean;
+};
+
+export type AnnouncementNotification = {
+  id: string;
+  title: string;
+  body: string;
+  deeplink: string | null;
+  priority: "LOW" | "DEFAULT" | "HIGH" | "URGENT";
+  audience: "ALL" | "PREMIUM" | "FREE";
+  institutionId: number | null;
+  institutionCode: string | null;
+  institutionName: string | null;
+  verifiedOnly: boolean;
+  startAt: string;
+  expiresAt: string | null;
+  createdAt: string;
+  isRead: boolean;
+  isDismissed: boolean;
+  readAt: string | null;
+  dismissedAt: string | null;
+};
+
+export type NotificationsSummary = {
+  counts: NotificationSummaryCounts;
+  recentActivity: ActivityNotification[];
+  activeAnnouncements: AnnouncementNotification[];
+  preferences: NotificationPreferences;
+};
+
+export type NotificationsActivityList = {
+  items: ActivityNotification[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  counts: NotificationSummaryCounts;
+};
+
+export type NotificationsAnnouncementsList = {
+  items: AnnouncementNotification[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  counts: NotificationSummaryCounts;
+};
+
+export type NotificationPreferencesResponse = {
+  preferences: NotificationPreferences;
+};
+
+export type NotificationActivityMutation = {
+  notification: ActivityNotification;
+  counts: NotificationSummaryCounts;
+};
+
+export type NotificationAnnouncementMutation = {
+  announcement: AnnouncementNotification;
+  counts: NotificationSummaryCounts;
+};
+
+export type NotificationsReadAllResponse = {
+  updatedCount: number;
+  counts: NotificationSummaryCounts;
+};
