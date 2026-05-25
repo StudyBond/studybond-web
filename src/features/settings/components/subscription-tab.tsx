@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import {
   Crown,
@@ -14,8 +17,9 @@ import {
   Shield,
 } from "lucide-react";
 import type { SubscriptionStatus } from "@/lib/api/types";
+import { resumePaystackTransaction } from "@/lib/payments/paystack-inline";
 
-import { useInitiateSubscription } from "../hooks/use-subscription";
+import { useInitiateSubscription, useVerifySubscription } from "../hooks/use-subscription";
 
 type SubscriptionTabProps = {
   isPremium: boolean;
@@ -33,14 +37,93 @@ const PREMIUM_PERKS = [
 
 export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTabProps) {
   const sub = subscriptionData?.currentSubscription;
+  const queryClient = useQueryClient();
   const initiateMutation = useInitiateSubscription();
+  const verifyMutation = useVerifySubscription();
+  const [checkoutPhase, setCheckoutPhase] = useState<"idle" | "loading" | "checkout" | "verifying">("idle");
+
+  const isCheckoutBusy = initiateMutation.isPending || verifyMutation.isPending || checkoutPhase !== "idle";
+
+  const refreshPremiumState = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["settings", "subscription-status"] }),
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "subscription-status"] }),
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "profile"] }),
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "stats"] }),
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] }),
+    ]);
+  };
+
+  const checkoutLabel = () => {
+    if (initiateMutation.isPending) return "Preparing Checkout...";
+    if (checkoutPhase === "loading") return "Opening Secure Checkout...";
+    if (checkoutPhase === "checkout") return "Complete Payment...";
+    if (checkoutPhase === "verifying" || verifyMutation.isPending) return "Confirming Payment...";
+    return "Upgrade to Elite";
+  };
 
   const handleUpgrade = () => {
+    if (isCheckoutBusy) return;
+
     initiateMutation.mutate(
       { autoRenew: false },
       {
-        onSuccess: (data) => {
-          window.location.href = data.checkoutUrl;
+        onSuccess: async (data) => {
+          setCheckoutPhase("loading");
+
+          try {
+            await resumePaystackTransaction(data.accessCode, {
+              onLoad: () => {
+                setCheckoutPhase("checkout");
+              },
+              onSuccess: (transaction) => {
+                const reference = transaction.reference || data.reference;
+                setCheckoutPhase("verifying");
+
+                verifyMutation.mutate(
+                  { reference },
+                  {
+                    onSuccess: async (result) => {
+                      await refreshPremiumState();
+
+                      if (result.paymentStatus === "SUCCESS") {
+                        toast.success("Premium Activated!", {
+                          description: result.message,
+                        });
+                      } else {
+                        toast.error("Payment Not Successful", {
+                          description: result.message,
+                        });
+                      }
+
+                      setCheckoutPhase("idle");
+                    },
+                    onError: () => {
+                      setCheckoutPhase("idle");
+                    },
+                  },
+                );
+              },
+              onCancel: () => {
+                setCheckoutPhase("idle");
+                toast.info("Checkout closed", {
+                  description: "No payment was completed.",
+                });
+              },
+              onError: (error) => {
+                setCheckoutPhase("idle");
+                toast.error("Checkout could not load", {
+                  description: error.message || "Please try again.",
+                });
+              },
+            });
+          } catch {
+            setCheckoutPhase("idle");
+            toast.error("Embedded checkout unavailable", {
+              description: "Opening Paystack's secure checkout page instead.",
+            });
+            window.location.href = data.checkoutUrl;
+          }
         },
       }
     );
@@ -174,7 +257,7 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
         <div className="pt-2">
           <button
             onClick={handleUpgrade}
-            disabled={initiateMutation.isPending}
+            disabled={isCheckoutBusy}
             className={cn(
               "group relative flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-sm font-bold text-white overflow-hidden transition-all duration-300",
               "bg-gradient-to-r from-[var(--sb-gold)] via-[var(--sb-accent)] to-[#8b4f1a]",
@@ -183,18 +266,22 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
           >
             {/* Shimmer effect */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            {initiateMutation.isPending ? (
+            {isCheckoutBusy ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
             ) : (
               <Crown className="h-4 w-4 relative z-10" />
             )}
             <span className="relative z-10">
-              {initiateMutation.isPending ? "Preparing Checkout..." : "Upgrade to Elite"}
+              {checkoutLabel()}
             </span>
-            {!initiateMutation.isPending && (
+            {!isCheckoutBusy && (
               <ChevronRight className="h-4 w-4 relative z-10 group-hover:translate-x-0.5 transition-transform" />
             )}
           </button>
+          <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-white/30">
+            <Shield className="h-3.5 w-3.5 text-[var(--sb-gold)]/70" />
+            <span>Secure Paystack checkout opens inside StudyBond.</span>
+          </div>
         </div>
       )}
     </div>
