@@ -26,6 +26,8 @@ type SubscriptionTabProps = {
   subscriptionData?: SubscriptionStatus;
 };
 
+const PAYMENT_SUPPORT_EMAIL = "studybondapp@gmail.com";
+
 const PREMIUM_PERKS = [
   { icon: BookOpen, label: "Unlimited Practice Exams", free: false, premium: true },
   { icon: Target, label: "Subject-specific Real Exams", free: false, premium: true },
@@ -92,7 +94,7 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
                         });
                       } else {
                         toast.error("Payment Not Successful", {
-                          description: result.message,
+                          description: `${result.message} If money left your account, contact ${PAYMENT_SUPPORT_EMAIL}.`,
                         });
                       }
 
@@ -112,11 +114,11 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
               },
               onError: (error) => {
                 setCheckoutPhase("idle");
-                toast.error("Checkout could not load", {
-                  description: error.message || "Please try again.",
-                });
-              },
+            toast.error("Checkout could not load", {
+              description: error.message || `Please try again or contact ${PAYMENT_SUPPORT_EMAIL}.`,
             });
+          },
+        });
           } catch {
             setCheckoutPhase("idle");
             toast.error("Embedded checkout unavailable", {
@@ -282,6 +284,16 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
             <Shield className="h-3.5 w-3.5 text-[var(--sb-gold)]/70" />
             <span>Secure Paystack checkout opens inside StudyBond.</span>
           </div>
+          <p className="mt-2 text-center text-[11px] leading-relaxed text-white/25">
+            Payment issue? Contact{" "}
+            <a
+              href={`mailto:${PAYMENT_SUPPORT_EMAIL}?subject=StudyBond%20payment%20support`}
+              className="font-semibold text-[var(--sb-gold)]/80 transition-colors hover:text-[var(--sb-gold)]"
+            >
+              {PAYMENT_SUPPORT_EMAIL}
+            </a>
+            .
+          </p>
         </div>
       )}
     </div>
