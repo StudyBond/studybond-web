@@ -13,8 +13,6 @@ import {
   ChevronRight,
   Shield,
 } from "lucide-react";
-import Link from "next/link";
-import type { Route } from "next";
 import type { SubscriptionStatus } from "@/lib/api/types";
 
 import { useInitiateSubscription } from "../hooks/use-subscription";
@@ -38,10 +36,6 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
   const initiateMutation = useInitiateSubscription();
 
   const handleUpgrade = () => {
-    // TEMPORARY: Redirect to WhatsApp until Paystack is activated
-    window.location.href = "https://wa.link/cmo8uj";
-    
-    /* Original Paystack logic (disabled for now)
     initiateMutation.mutate(
       { autoRenew: false },
       {
@@ -50,7 +44,6 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
         },
       }
     );
-    */
   };
 
   return (
@@ -207,4 +200,3 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
     </div>
   );
 }
-

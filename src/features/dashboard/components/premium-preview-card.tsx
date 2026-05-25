@@ -172,7 +172,7 @@ export function PremiumPreviewCard() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <Button
             asChild
-            href={"https://wa.link/cmo8uj" as any}
+            href={"/dashboard/settings?tab=subscription" as Route}
             size="lg"
             className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-[#e09040] border-t border-yellow-400/40 shadow-[0_0_24px_rgba(251,191,36,0.2)] rounded-xl"
           >

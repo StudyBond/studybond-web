@@ -556,7 +556,7 @@ export function CollaborationPage({
                   </p>
                 </div>
                 {isPremiumLocked ? (
-                  <Button asChild size="lg" href={"https://wa.link/cmo8uj" as any}>
+                  <Button asChild size="lg" href={"/dashboard/settings?tab=subscription" as Route}>
                     <>
                       Upgrade to open rooms
                       <Crown className="h-4 w-4" />
