@@ -73,6 +73,8 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const setSubmitDialogOpen = useExamStore((s) => s.setSubmitDialogOpen);
   const setAbandonDialogOpen = useExamStore((s) => s.setAbandonDialogOpen);
   const setTimeExpiredModalOpen = useExamStore((s) => s.setTimeExpiredModalOpen);
+  const submitDialogOpen = useExamStore((s) => s.submitDialogOpen);
+  const timeExpiredModalOpen = useExamStore((s) => s.timeExpiredModalOpen);
 
   const submitMutation = useSubmitExamMutation();
   const abandonMutation = useAbandonExamMutation();
@@ -331,8 +333,16 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const { guardState, dismissViolation } = useExamGuard({
     mode: "exam",
     onAutoSubmit: () => autoSubmitRef.current(),
-    // Disable guard if we're waiting in the lobby so the user can switch tabs
-    enabled: !!session && !isLoading && storeExamId === examId && !isWaitingInLobby,
+    // Disable guard during intentional submission states so in-app confirmation
+    // and submit retries are not misclassified as leaving the exam.
+    enabled:
+      !!session &&
+      !isLoading &&
+      storeExamId === examId &&
+      !isWaitingInLobby &&
+      !submitDialogOpen &&
+      !timeExpiredModalOpen &&
+      !submitMutation.isPending,
   });
 
   const handleSubmit = useCallback(async () => {
@@ -382,9 +392,14 @@ export function ExamArena({ examId }: ExamArenaProps) {
       }
 
       router.push(`/exams/${examId}/results`);
-    } catch {
-      toast.error("Failed to submit exam. Your answers are saved, try again.");
-      dismissViolation();
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to submit exam. Your answers are saved, try again.";
+
+      toast.error(message);
+      dismissViolation({ showToast: false });
     }
   }, [
     session,

@@ -47,6 +47,10 @@ type UseExamGuardOptions = {
   enabled?: boolean;
 };
 
+type DismissViolationOptions = {
+  showToast?: boolean;
+};
+
 // ─── Hook ───
 
 export function useExamGuard({
@@ -74,7 +78,9 @@ export function useExamGuard({
   }, [onAutoSubmit]);
 
   // ─── Dismiss violation (return to exam) ───
-  const dismissViolation = useCallback(() => {
+  const dismissViolation = useCallback((options: DismissViolationOptions = {}) => {
+    const { showToast = true } = options;
+
     if (countdownRef.current) {
       clearInterval(countdownRef.current);
       countdownRef.current = null;
@@ -86,7 +92,7 @@ export function useExamGuard({
       countdownSeconds: Math.ceil(EXAM_AUTO_SUBMIT_DELAY_MS / 1000),
     }));
 
-    if (mode === "exam") {
+    if (mode === "exam" && showToast) {
       toast.warning("Stay focused — leaving the exam again may auto-submit your answers.", {
         duration: 4000,
       });
