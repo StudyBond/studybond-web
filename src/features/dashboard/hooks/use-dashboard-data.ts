@@ -12,24 +12,31 @@ import { useQuery } from "@tanstack/react-query";
 
 /** Critical data needed before any dashboard variant can render. */
 export function useDashboardCriticalData() {
+  // Auth check FIRST - wait for auth/me to succeed before other queries
   const me = useQuery({
     queryKey: ["auth", "me"],
     queryFn: getMe,
+    staleTime: Infinity, // Only fetch once per page load
+    retry: 3, // Retry 3 times on failure (handles transient auth issues)
   });
 
+  // Gate all other queries behind successful auth
   const profile = useQuery({
     queryKey: ["dashboard", "profile"],
     queryFn: getUserProfile,
+    enabled: me.isSuccess, // Only fetch after auth succeeds
   });
 
   const stats = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: getUserStats,
+    enabled: me.isSuccess, // Only fetch after auth succeeds
   });
 
   const streak = useQuery({
     queryKey: ["dashboard", "streak"],
     queryFn: getStreakSummary,
+    enabled: me.isSuccess, // Only fetch after auth succeeds
   });
 
   return {
@@ -37,7 +44,8 @@ export function useDashboardCriticalData() {
     profile,
     stats,
     streak,
-    isLoading: me.isLoading || profile.isLoading || stats.isLoading || streak.isLoading,
+    isLoading:
+      me.isLoading || profile.isLoading || stats.isLoading || streak.isLoading,
     isError: me.isError || profile.isError || stats.isError || streak.isError,
   };
 }

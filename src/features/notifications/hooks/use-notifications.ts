@@ -17,7 +17,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEffect } from "react";
 
-function invalidateNotifications(queryClient: ReturnType<typeof useQueryClient>) {
+function invalidateNotifications(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
   queryClient.invalidateQueries({ queryKey: ["notifications"] });
 }
 
@@ -34,7 +36,12 @@ export function useNotificationActivity(params?: {
   page?: number;
   limit?: number;
   state?: "all" | "unread";
-  category?: "STREAKS" | "ACHIEVEMENTS" | "COLLABORATION" | "SUBSCRIPTION" | "REPORTS";
+  category?:
+    | "STREAKS"
+    | "ACHIEVEMENTS"
+    | "COLLABORATION"
+    | "SUBSCRIPTION"
+    | "REPORTS";
 }) {
   return useQuery({
     queryKey: ["notifications", "activity", params ?? {}],
@@ -123,14 +130,44 @@ export function useNotificationsRealtime() {
     let socket: WebSocket | null = null;
     let cancelled = false;
     let reconnectTimer: number | null = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 10;
+    const INITIAL_BACKOFF_MS = 1000;
+
+    // Calculate exponential backoff with jitter
+    function getBackoffDelay(attempt: number): number {
+      const exponentialDelay = Math.min(
+        INITIAL_BACKOFF_MS * Math.pow(2, attempt),
+        30000, // Cap at 30 seconds
+      );
+      const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
+      return exponentialDelay + jitter;
+    }
 
     async function connect() {
+      if (cancelled) return;
+
       try {
         const response = await fetch("/api/auth/ws-token", {
           credentials: "include",
           cache: "no-store",
         });
+
+        // Better error handling instead of silent failure
         if (!response.ok) {
+          const delay = getBackoffDelay(retryCount);
+          console.warn(
+            `Failed to get WebSocket token (${response.status}), retrying in ${Math.round(delay)}ms`,
+          );
+
+          if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            reconnectTimer = window.setTimeout(connect, delay);
+          } else {
+            console.error(
+              "WebSocket token endpoint failed after max retries. Notifications will not work.",
+            );
+          }
           return;
         }
 
@@ -140,13 +177,31 @@ export function useNotificationsRealtime() {
           backendWsUrl?: string;
         };
 
-        if (!payload.success || !payload.token || !payload.backendWsUrl || cancelled) {
+        if (!payload.success || !payload.token || !payload.backendWsUrl) {
+          console.error(
+            "WebSocket token response missing required fields:",
+            payload,
+          );
+          const delay = getBackoffDelay(retryCount);
+          if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            reconnectTimer = window.setTimeout(connect, delay);
+          }
           return;
         }
 
+        if (cancelled) return;
+
+        // Reset retry count on successful connection
+        retryCount = 0;
+
         socket = new WebSocket(
-          `${payload.backendWsUrl}/api/notifications/ws?token=${encodeURIComponent(payload.token)}`
+          `${payload.backendWsUrl}/api/notifications/ws?token=${encodeURIComponent(payload.token)}`,
         );
+
+        socket.onopen = () => {
+          console.log("WebSocket connected for notifications");
+        };
 
         socket.onmessage = (event) => {
           const parsed = JSON.parse(event.data) as {
@@ -154,7 +209,10 @@ export function useNotificationsRealtime() {
             payload?: { title?: string; body?: string };
           };
 
-          if (parsed.type === "notification.activity.created" && parsed.payload?.title) {
+          if (
+            parsed.type === "notification.activity.created" &&
+            parsed.payload?.title
+          ) {
             toast(parsed.payload.title, {
               description: parsed.payload.body,
             });
@@ -169,12 +227,25 @@ export function useNotificationsRealtime() {
           }
         };
 
+        socket.onerror = (event) => {
+          console.error("WebSocket error:", event);
+        };
+
         socket.onclose = () => {
           if (cancelled) return;
-          reconnectTimer = window.setTimeout(connect, 3000);
+          const delay = getBackoffDelay(retryCount);
+          console.log(
+            `WebSocket closed, reconnecting in ${Math.round(delay)}ms`,
+          );
+          reconnectTimer = window.setTimeout(connect, delay);
         };
-      } catch {
-        reconnectTimer = window.setTimeout(connect, 5000);
+      } catch (error) {
+        console.error("WebSocket connection error:", error);
+        const delay = getBackoffDelay(retryCount);
+        if (retryCount < MAX_RETRIES) {
+          retryCount++;
+          reconnectTimer = window.setTimeout(connect, delay);
+        }
       }
     }
 
