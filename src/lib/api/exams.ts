@@ -35,6 +35,59 @@ export interface ExamEligibilityResult {
   freeSubjectsTaken?: string[];
 }
 
+function createSubmitIdempotencyKey(examId: number) {
+  const randomPart =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  return `exam-submit-${examId}-${randomPart}`;
+}
+
+function submitIdempotencyStorageKey(examId: number) {
+  return `studybond:exam-submit:${examId}:idempotency-key`;
+}
+
+function getSubmitIdempotencyKey(examId: number) {
+  if (typeof window === "undefined") {
+    return createSubmitIdempotencyKey(examId);
+  }
+
+  const storageKey = submitIdempotencyStorageKey(examId);
+  try {
+    const existing = window.localStorage.getItem(storageKey);
+    if (existing) return existing;
+
+    const next = createSubmitIdempotencyKey(examId);
+    window.localStorage.setItem(storageKey, next);
+    return next;
+  } catch {
+    return createSubmitIdempotencyKey(examId);
+  }
+}
+
+function clearSubmitIdempotencyKey(examId: number) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(submitIdempotencyStorageKey(examId));
+  } catch {
+    // Storage can be unavailable in private or locked-down browser contexts.
+  }
+}
+
+function shouldClearSubmitIdempotencyKeyOnError(error: unknown) {
+  const status =
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof (error as { status?: unknown }).status === "number"
+      ? (error as { status: number }).status
+      : 0;
+
+  return status > 0 && status < 500 && status !== 409 && status !== 429;
+}
+
 // ─── API Functions ───
 
 /** Check user's exam limits and credits. */
@@ -79,17 +132,27 @@ export async function getExamQuestions(examId: number) {
 
 /** Submit exam answers and receive scored results. */
 export async function submitExam(examId: number, payload: SubmitExamPayload) {
-  const response = await apiClient<SuccessEnvelope<ExamResult>>(
-    `/api/exams/${examId}/submit`,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: {
-        "idempotency-key": `exam-submit-${examId}-${Date.now()}`,
+  const idempotencyKey = getSubmitIdempotencyKey(examId);
+
+  try {
+    const response = await apiClient<SuccessEnvelope<ExamResult>>(
+      `/api/exams/${examId}/submit`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: {
+          "idempotency-key": idempotencyKey,
+        },
       },
-    },
-  );
-  return response.data;
+    );
+    clearSubmitIdempotencyKey(examId);
+    return response.data;
+  } catch (error) {
+    if (shouldClearSubmitIdempotencyKeyOnError(error)) {
+      clearSubmitIdempotencyKey(examId);
+    }
+    throw error;
+  }
 }
 
 /** Abandon an in-progress exam. No SP earned. */
