@@ -45,7 +45,7 @@ const EXAM_MODES: {
   {
     id: "REAL_PAST_QUESTION",
     title: "Official Past Questions",
-    description: "Simulate the exact Post-UTME testing environment under real timing conditions.",
+    description: "Practice with actual UI Post-UTME questions from previous years. Simulate real exam conditions, identify recurring patterns, and walk into the hall knowing you've seen it before.",
     icon: Sparkles,
     colorClass: "bg-gradient-to-br from-[var(--sb-gold)] to-[#a06520] text-yellow-900",
     glowClass: "shadow-[0_0_30px_var(--sb-gold-glow)]",
@@ -53,8 +53,8 @@ const EXAM_MODES: {
   },
   {
     id: "PRACTICE",
-    title: "Subject Practice",
-    description: "Focus on mastering specific subjects at your own pace.",
+    title: "Practice Questions",
+    description: "Focus on mastering specific subjects at your own pace. These are NOT the actual past questions but expertly crafted practice questions designed to build understanding, reinforce concepts, and prepare you for the real exam.",
     icon: Target,
     colorClass: "bg-gradient-to-br from-blue-400 to-indigo-600 text-white",
     glowClass: "shadow-[0_0_30px_rgba(96,165,250,0.15)]",
@@ -63,7 +63,7 @@ const EXAM_MODES: {
   {
     id: "MIXED",
     title: "Mixed Mode",
-    description: "Combine random questions from multiple subjects. Perfect for quick drills.",
+    description: "Get the best of both worlds with a blend of real past questions and practice questions. Perfect for those who want to experience the unpredictability of the real exam while still benefiting from targeted practice.",
     icon: BookOpen,
     colorClass: "bg-gradient-to-br from-emerald-400 to-teal-600 text-white",
     glowClass: "shadow-[0_0_30px_rgba(52,211,153,0.15)]",
