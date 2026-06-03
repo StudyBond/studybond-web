@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   BookOpen, 
   Sparkles, 
@@ -36,47 +35,59 @@ import type { UserProfile } from "@/lib/api/types";
 const EXAM_MODES: {
   id: ExamType;
   title: string;
-  description: string;
+  tagline: string;
+  features: string[];
   icon: React.ElementType;
-  colorClass: string;
-  glowClass: string;
-  borderClass: string;
+  colorFrom: string;
+  colorTo: string;
+  accentColor: string;
+  glowColor: string;
+  highlight?: boolean;
 }[] = [
   {
     id: "REAL_PAST_QUESTION",
     title: "Official Past Questions",
-    description: "Practice with actual UI Post-UTME questions from previous years. Simulate real exam conditions, identify recurring patterns, and walk into the hall knowing you've seen it before.",
+    tagline: "The real deal — actual UI Post-UTME questions",
+    features: ["Previous year papers", "Real exam simulation", "Pattern recognition", "Walk into the hall knowing you've seen it before."],
     icon: Sparkles,
-    colorClass: "bg-gradient-to-br from-[var(--sb-gold)] to-[#a06520] text-yellow-900",
-    glowClass: "shadow-[0_0_30px_var(--sb-gold-glow)]",
-    borderClass: "border-[var(--sb-gold)]/40",
+    colorFrom: "#d4a121",
+    colorTo: "#a06520",
+    accentColor: "var(--sb-gold)",
+    glowColor: "rgba(212, 161, 33, 0.25)",
+    highlight: true,
   },
   {
     id: "PRACTICE",
     title: "Practice Questions",
-    description: "Focus on mastering specific subjects at your own pace. These are NOT the actual past questions but expertly crafted practice questions designed to build understanding, reinforce concepts, and prepare you for the real exam.",
+    tagline: "Expertly crafted to build mastery (Not Actual Past Questions)",
+    features: ["Subject-focused drills", "Concept reinforcement", "Self-paced learning"],
     icon: Target,
-    colorClass: "bg-gradient-to-br from-blue-400 to-indigo-600 text-white",
-    glowClass: "shadow-[0_0_30px_rgba(96,165,250,0.15)]",
-    borderClass: "border-blue-400/30",
+    colorFrom: "#60a5fa",
+    colorTo: "#4f46e5",
+    accentColor: "#60a5fa",
+    glowColor: "rgba(96, 165, 250, 0.20)",
   },
   {
     id: "MIXED",
     title: "Mixed Mode",
-    description: "Get the best of both worlds with a blend of real past questions and practice questions. Perfect for those who want to experience the unpredictability of the real exam while still benefiting from targeted practice.",
+    tagline: "Real + practice questions blended",
+    features: ["Unpredictable like the exam", "Targeted practice built-in", "Best of both worlds"],
     icon: BookOpen,
-    colorClass: "bg-gradient-to-br from-emerald-400 to-teal-600 text-white",
-    glowClass: "shadow-[0_0_30px_rgba(52,211,153,0.15)]",
-    borderClass: "border-emerald-400/30",
+    colorFrom: "#34d399",
+    colorTo: "#0d9488",
+    accentColor: "#34d399",
+    glowColor: "rgba(52, 211, 153, 0.20)",
   },
   {
     id: "DAILY_CHALLENGE",
     title: "Daily Challenge",
-    description: "4 questions. 3 minutes. 1 chance per day. Earn 40 SP and prove your consistency.",
+    tagline: "4 questions · 3 minutes · 40 SP",
+    features: ["1 attempt per day", "Build consistency", "Climb the leaderboard"],
     icon: Flame,
-    colorClass: "bg-gradient-to-br from-fuchsia-500 to-purple-700 text-white",
-    glowClass: "shadow-[0_0_30px_rgba(192,38,211,0.25)]",
-    borderClass: "border-fuchsia-500/40",
+    colorFrom: "#d946ef",
+    colorTo: "#7c3aed",
+    accentColor: "#d946ef",
+    glowColor: "rgba(217, 70, 239, 0.25)",
   },
 ];
 
@@ -244,7 +255,8 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
         <p className="text-white/40 md:text-lg">Select the calibration mode for your practice protocol.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Bento grid: hero card on top, 3 smaller cards below */}
+      <div className="sb-mode-grid">
         {EXAM_MODES.map((mode, i) => {
           const isSelected = selectedMode === mode.id;
           const isPremiumMode = mode.id === "PRACTICE" || mode.id === "MIXED";
@@ -256,56 +268,108 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
               key={mode.id}
               onClick={() => !isLocked && handleSelectMode(mode.id)}
               className={cn(
-                "sb-enter group relative overflow-hidden rounded-[24px] border p-6 md:p-8 text-left transition-all duration-300",
-                isSelected 
-                  ? cn(`bg-white/[0.04] ${mode.borderClass} ${mode.glowClass} scale-[1.02]`)
-                  : "border-white/[0.05] bg-[var(--sb-bg-surface-1)] hover:bg-white/[0.04] hover:-translate-y-1 hover:border-white/10",
-                isLocked && "opacity-80 cursor-default"
+                "sb-enter sb-mode-card group relative overflow-hidden text-left transition-all duration-500",
+                mode.highlight && "sb-mode-card--hero",
+                isSelected && "sb-mode-card--selected",
+                isLocked && "sb-mode-card--locked"
               )}
-              style={{ animationDelay: `${200 + i * 100}ms` }}
+              style={{ 
+                animationDelay: `${200 + i * 100}ms`,
+                "--mode-color": mode.accentColor,
+                "--mode-glow": mode.glowColor,
+                "--mode-from": mode.colorFrom,
+                "--mode-to": mode.colorTo,
+              } as React.CSSProperties}
             >
+              {/* Ambient gradient backdrop */}
+              <div 
+                className="sb-mode-card__glow"
+                style={{
+                  background: `radial-gradient(ellipse at 30% 20%, ${mode.glowColor}, transparent 70%)`,
+                }}
+              />
+
+              {/* Shimmer sweep on selected */}
+              {isSelected && (
+                <div className="absolute inset-0 z-[1] overflow-hidden rounded-[inherit] pointer-events-none">
+                  <div className="sb-mode-card__shimmer" />
+                </div>
+              )}
+
               {/* Premium Lock Overlay */}
               {isLocked && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#09090b]/40 backdrop-blur-[2px] transition-all duration-300 group-hover:backdrop-blur-[4px]">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/20 shadow-xl backdrop-blur-md">
-                      <Lock className="h-5 w-5 text-yellow-500" />
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#09090b]/50 backdrop-blur-[3px] transition-all duration-300 group-hover:backdrop-blur-[6px]">
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.06] border border-white/[0.12] shadow-2xl backdrop-blur-xl">
+                      <Lock className="h-6 w-6 text-yellow-500" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-500/80">Premium</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-yellow-500/80">Upgrade to unlock</span>
                   </div>
                 </div>
               )}
 
-              {/* Animated mesh backdrop */}
-              {isSelected && (
-                <div 
-                  className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none animate-in fade-in"
-                />
-              )}
-              
-              <div className={cn(
-                "mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl transition-transform duration-500 group-hover:scale-110",
-                mode.colorClass
-              )}>
-                <Icon className="h-6 w-6" />
-              </div>
-              
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-xl font-semibold text-white tracking-tight">{mode.title}</h3>
-                {isPremiumMode && (
-                  <Badge className="bg-yellow-500/10 text-yellow-500 border-none text-[8px] h-4 px-1">PRO</Badge>
-                )}
-              </div>
-              <p className="text-sm leading-relaxed text-white/40">
-                {mode.description}
-              </p>
+              {/* Card content */}
+              <div className="relative z-10 flex flex-col h-full">
+                {/* Top row: icon + PRO badge */}
+                <div className="flex items-start justify-between mb-4">
+                  <div 
+                    className="sb-mode-card__icon"
+                    style={{
+                      background: `linear-gradient(135deg, ${mode.colorFrom}, ${mode.colorTo})`,
+                    }}
+                  >
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
 
-              {/* Selection indicator */}
-              <div className={cn(
-                "mt-6 flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-300",
-                isSelected ? `border-[var(--sb-accent)] bg-[var(--sb-accent)]/20 text-[var(--sb-accent)]` : "border-white/10"
-              )}>
-                {isSelected ? <div className="h-3 w-3 rounded-full bg-[var(--sb-accent)] animate-in fade-in zoom-in" /> : null}
+                  {isPremiumMode && (
+                    <span className="sb-mode-card__pro-badge">
+                      PRO
+                    </span>
+                  )}
+                </div>
+
+                {/* Title + Tagline */}
+                <h3 className="text-lg md:text-xl font-bold text-white tracking-tight mb-1.5 transition-colors">
+                  {mode.title}
+                </h3>
+                <p className="text-sm text-white/35 leading-relaxed mb-4 group-hover:text-white/50 transition-colors">
+                  {mode.tagline}
+                </p>
+
+                {/* Feature bullets */}
+                <ul className="space-y-2 mb-6 flex-1">
+                  {mode.features.map((feature, fi) => (
+                    <li key={fi} className="flex items-center gap-2.5 text-[13px] text-white/45 group-hover:text-white/60 transition-colors">
+                      <span 
+                        className="flex h-4 w-4 items-center justify-center rounded-full shrink-0"
+                        style={{ backgroundColor: `color-mix(in srgb, ${mode.colorFrom} 15%, transparent)` }}
+                      >
+                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none" className="opacity-80">
+                          <path d="M1 3L3 5L7 1" stroke={mode.colorFrom} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Select CTA */}
+                <div className={cn(
+                  "sb-mode-card__cta",
+                  isSelected && "sb-mode-card__cta--selected"
+                )}>
+                  {isSelected ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Selected</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Select</span>
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </>
+                  )}
+                </div>
               </div>
             </button>
           );

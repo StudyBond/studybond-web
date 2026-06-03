@@ -19,7 +19,6 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
 import { InlineError } from "@/components/ui/inline-error";
 import { Surface } from "@/components/ui/surface";
 import {
@@ -224,14 +223,25 @@ export function CollaborationPage({
     }
   }
 
-  return (
-    <div className="space-y-10">
-      <section className="relative overflow-hidden rounded-[32px] border border-white/[0.06] bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.10),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(224,144,64,0.14),transparent_30%),linear-gradient(135deg,#0b0c0f_0%,#0d0a08_48%,#09090b_100%)] px-5 py-8 sm:px-8 sm:py-10">
-        {/* Animated ambient layer */}
-        <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.02)_32%,transparent_64%)]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-red-500/[0.04] blur-[100px] pointer-events-none sb-duel-anticipation-pulse" />
+  // ─── Render ───────────────────────────────────────────────
 
-        <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+  return (
+    <div className="space-y-10 pb-8">
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* ═══ HERO BANNER                               ═══ */}
+      {/* ═══════════════════════════════════════════════════ */}
+      <section className="sb-enter sb-arena-hero">
+        {/* Floating background lights */}
+        <div className="sb-arena-hero__light sb-arena-hero__light--crimson" />
+        <div className="sb-arena-hero__light sb-arena-hero__light--violet" />
+        <div className="sb-arena-hero__light sb-arena-hero__light--amber" />
+        
+        {/* Ambient grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.015)_30%,transparent_60%)]" />
+
+        <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] items-center">
+          {/* Left: Content */}
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={isEligible ? "accent" : "neutral"} dot>
@@ -241,14 +251,14 @@ export function CollaborationPage({
               <Badge tone="success">{profile.isPremium ? "Premium active" : "Upgrade to unlock"}</Badge>
             </div>
 
-            <div className="space-y-4">
-              <h1 className="max-w-3xl text-3xl font-black tracking-tight text-white sm:text-5xl">
+            <div className="space-y-3">
+              <h1 className="max-w-3xl text-3.5xl font-extrabold tracking-tight text-white sm:text-5xl font-display">
                 {isEligible
                   ? "Enter the Arena."
                   : "Earn your right to fight."}
               </h1>
-              <p className="max-w-2xl text-sm leading-relaxed text-white/50 sm:text-base">
-                Challenge a friend to a head-to-head duel. Same paper, same clock, same pressure — only one walks away with the crown. Build a room, share the code, and let the exam decide who&apos;s built different.
+              <p className="max-w-xl text-sm leading-relaxed text-white/50 sm:text-base">
+                Challenge a friend to a head-to-head duel. Same paper, same clock, same pressure — only one walks away with the crown.
               </p>
             </div>
 
@@ -258,16 +268,16 @@ export function CollaborationPage({
                 return (
                   <div
                     key={chip.label}
-                    className="inline-flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 backdrop-blur-sm"
+                    className="inline-flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 backdrop-blur-md"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-white/70">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.04] text-white/70">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25">
                         {chip.label}
                       </p>
-                      <p className="text-sm font-medium text-white/80">
+                      <p className="text-sm font-semibold text-white/80">
                         {chip.value}
                       </p>
                     </div>
@@ -277,34 +287,32 @@ export function CollaborationPage({
             </div>
           </div>
 
-          {/* Duel visual — VS arena card */}
+          {/* Right: VS arena card */}
           <div className="relative flex items-center justify-center">
-            <div className="w-full max-w-[340px] rounded-[28px] border border-white/[0.06] bg-[#0c0c0f]/70 backdrop-blur-xl p-6 shadow-2xl">
+            <div className="sb-arena-vs-card">
               {/* VS badge */}
-              <div className="flex items-center justify-center mb-5">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-red-500/20 blur-xl rounded-full scale-150" />
-                  <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-600 shadow-[0_0_30px_rgba(239,68,68,0.25)] border-4 border-[#0c0c0f]">
-                    <Swords className="h-6 w-6 text-white" />
-                  </div>
+              <div className="sb-arena-vs-card__ring-container">
+                <div className="sb-arena-vs-card__ring-glow" />
+                <div className="sb-arena-vs-card__ring">
+                  <Swords className="h-5 w-5 text-red-400" />
                 </div>
               </div>
 
               {/* Fighter slots */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.04] p-4 text-center">
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-500/10 text-lg font-bold text-white">
+                <div className="sb-arena-fighter sb-arena-fighter--you">
+                  <div className="sb-arena-avatar sb-arena-avatar--you">
                     {profile.fullName.charAt(0).toUpperCase()}
                   </div>
-                  <p className="text-xs font-bold text-white/80 truncate">{profile.fullName.split(" ")[0]}</p>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400/50 mt-0.5">You</p>
+                  <p className="text-xs font-bold text-white/90 truncate">{profile.fullName.split(" ")[0]}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-amber-500/60 mt-0.5">You</p>
                 </div>
-                <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] p-4 text-center">
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04] text-lg text-white/20">
+                <div className="sb-arena-fighter sb-arena-fighter--rival">
+                  <div className="sb-arena-avatar sb-arena-avatar--rival">
                     ?
                   </div>
-                  <p className="text-xs font-medium text-white/30">Awaiting</p>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-red-400/30 mt-0.5">Rival</p>
+                  <p className="text-xs font-semibold text-white/40">Awaiting</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-white/20 mt-0.5">Rival</p>
                 </div>
               </div>
 
@@ -321,44 +329,48 @@ export function CollaborationPage({
         </div>
       </section>
 
-      <section className="grid gap-6 lg:gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/25">
-              Create a Room
-            </p>
-            <h2 className="text-2xl font-semibold tracking-tight text-white">
-              Forge your arena before the battle begins.
-            </h2>
-          </div>
 
-          <Surface tone={formTone} className="overflow-hidden">
-            <div className="border-b border-white/[0.05] bg-white/[0.02] px-5 py-5 sm:px-6">
-              <div className="flex items-start justify-between gap-4">
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* ═══ CREATE ROOM                               ═══ */}
+      {/* ═══════════════════════════════════════════════════ */}
+      <section className="sb-enter" style={{ animationDelay: "150ms" }}>
+        <div className="mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/25 mb-2">
+            Create a Room
+          </p>
+          <h2 className="text-2xl font-bold tracking-tight text-white font-display">
+            Forge your arena before the battle begins.
+          </h2>
+        </div>
+
+        <Surface tone={formTone} className="overflow-hidden bg-[#0d0e12]/30 backdrop-blur-md">
+          <div className="space-y-8 px-5 py-6 sm:px-8 sm:py-8">
+
+            {/* ─── Question Source Selector ─── */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm font-medium text-white/80">
-                    {sourceMeta.label}
-                  </p>
-                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-white/45">
-                    {sourceMeta.description}
+                  <p className="text-sm font-semibold text-white/80">Question Source</p>
+                  <p className="mt-1 text-[13px] text-white/40">
+                    Choose the type of questions for your duel.
                   </p>
                 </div>
                 <div
                   className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-[0_0_24px_rgba(224,144,64,0.12)]",
+                    "flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-[0_0_20px_rgba(224,144,64,0.10)]",
                     sourceMeta.accentClass,
                   )}
                 >
-                  <SourceIcon className="h-5 w-5" />
+                  <SourceIcon className="h-4 w-4" />
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6 px-5 py-5 sm:px-6">
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="sb-arena-mode-grid">
                 {collaborationQuestionSources.map((source) => {
                   const Icon = source.icon;
                   const isActive = questionSource === source.value;
+                  const accentColor = source.value === "REAL_PAST_QUESTION" ? "#d4a121" : source.value === "PRACTICE" ? "#60a5fa" : "#f43f5e";
+                  const glowColor = source.value === "REAL_PAST_QUESTION" ? "rgba(212, 161, 33, 0.15)" : source.value === "PRACTICE" ? "rgba(96, 165, 250, 0.12)" : "rgba(244, 63, 94, 0.12)";
 
                   return (
                     <button
@@ -372,189 +384,183 @@ export function CollaborationPage({
                         }
                       }}
                       className={cn(
-                        "rounded-2xl border px-4 py-4 text-left transition-all duration-300",
-                        isActive
-                          ? "border-[var(--sb-accent)]/30 bg-[var(--sb-accent)]/10 shadow-[0_0_16px_var(--sb-accent-glow)]"
-                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]",
+                        "sb-arena-mode-card",
+                        isActive && "sb-arena-mode-card--active",
                       )}
+                      style={{
+                        "--mode-accent": accentColor,
+                        "--mode-glow": glowColor,
+                      } as React.CSSProperties}
                     >
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
-                          {source.eyebrow}
-                        </span>
-                        <Icon
-                          className={cn(
-                            "h-4 w-4",
-                            isActive ? "text-[var(--sb-accent)]" : "text-white/35",
-                          )}
-                        />
+                      <div className="sb-arena-mode-card__glow" />
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[9px] font-bold tracking-[0.2em] text-white/30 uppercase">
+                            {source.eyebrow}
+                          </span>
+                          <Icon className={cn("h-4 w-4", isActive ? "text-[var(--mode-accent)]" : "text-white/20")} style={{ color: isActive ? accentColor : undefined }} />
+                        </div>
+                        <h4 className="text-[14px] font-bold text-white/90 mb-1">{source.label}</h4>
+                        <p className="text-[12px] text-white/40 leading-relaxed">{source.description}</p>
                       </div>
-                      <p className="text-sm font-medium text-white/85">
-                        {source.label}
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-white/40">
-                        {source.description}
-                      </p>
                     </button>
                   );
                 })}
               </div>
+            </div>
 
-              <div className="grid gap-5 md:gap-6 md:grid-cols-[1.1fr_0.9fr]">
-                <div className="space-y-4">
-                  <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white/75">
-                        Subject stack
-                      </p>
-                      <p className="mt-1 text-sm text-white/40">
-                        {playlistLine}
-                      </p>
-                    </div>
-                    <div className="flex flex-shrink-0 gap-1.5">
-                      {Array.from({ length: maxSubjects }).map((_, index) => (
-                        <span
-                          key={index}
-                          className={cn(
-                            "h-2 w-8 rounded-full transition-all duration-300",
-                            index < seatsFilled
-                              ? "bg-[var(--sb-accent)] shadow-[0_0_12px_var(--sb-accent-glow)]"
-                              : "bg-white/[0.06]",
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
-                    {collaborationSubjects.map((subject) => {
-                      const Icon = subject.icon;
-                      const isSelected = selectedSubjects.includes(subject.value);
-
-                      return (
-                        <button
-                          key={subject.value}
-                          type="button"
-                          onClick={() => toggleSubject(subject.value)}
-                          className={cn(
-                            "flex items-center gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-300",
-                            isSelected
-                              ? "border-[var(--sb-accent)]/30 bg-[var(--sb-accent)]/10 shadow-[0_0_14px_var(--sb-accent-glow)]"
-                              : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]",
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "flex h-11 w-11 items-center justify-center rounded-2xl",
-                              isSelected
-                                ? "bg-[var(--sb-accent)]/18 text-white"
-                                : "bg-white/[0.05]",
-                            )}
-                          >
-                            <Icon
-                              className={cn(
-                                "h-5 w-5",
-                                isSelected ? "text-white" : subject.colorClass,
-                              )}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-white/85">
-                              {subject.label}
-                            </p>
-                            <p className="mt-1 text-xs text-white/35">
-                              {isSelected ? "In the duel mix" : "Tap to include"}
-                            </p>
-                          </div>
-                          {isSelected ? (
-                            <CheckCircle2 className="h-4 w-4 text-[var(--sb-accent)]" />
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
+            {/* ─── Subject Selection ─── */}
+            <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-sm font-semibold text-white/80">Lobby Loadout</p>
+                  <p className="mt-1 text-[13px] text-white/40 max-w-md">
+                    {playlistLine}
+                  </p>
                 </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-white/70">Room Name <span className="text-white/30 font-normal">(optional)</span></label>
-                      <button
-                        type="button"
-                        onClick={() => setCustomName(generateDuelName(selectedSubjects))}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-amber-400/70 hover:text-amber-400 bg-amber-500/[0.06] hover:bg-amber-500/[0.12] border border-amber-500/10 hover:border-amber-500/20 transition-all duration-200 active:scale-95"
-                      >
-                        <Dices className="h-3 w-3" />
-                        Generate name
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Eg. Saturday Physics face-off"
-                      maxLength={60}
-                      value={customName}
-                      onChange={(event) => setCustomName(event.target.value)}
-                      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white/90 outline-none transition-all duration-200 placeholder:text-white/20 hover:border-white/[0.1] focus:border-[#e09040]/50 focus:ring-2 focus:ring-[#e09040]/15 focus:bg-white/[0.05]"
-                    />
+                
+                {/* Visual Loadout tracker slots */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">Slots:</span>
+                  <div className="sb-arena-loadout-tracker">
+                    {Array.from({ length: maxSubjects }).map((_, index) => (
+                      <div
+                        key={index}
+                        className={cn(
+                          "sb-arena-loadout-tracker__slot",
+                          index < seatsFilled && "sb-arena-loadout-tracker__slot--filled",
+                        )}
+                      />
+                    ))}
                   </div>
-
-                  <Surface className="rounded-[24px] bg-[linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] p-5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/25">
-                        Live Preview
-                      </p>
-                      <Badge tone="accent">2 seats</Badge>
-                    </div>
-                    <p className="mt-3 text-xl font-semibold text-white">
-                      {customName.trim() || "Untitled collaboration room"}
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-white/42">
-                      {sourceMeta.label} with {selectedSubjects.length} selected
-                      {selectedSubjects.length === 1 ? " subject" : " subjects"}.
-                    </p>
-
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {selectedSubjects.map((subject) => (
-                        <Badge key={subject} tone="neutral">
-                          {subject}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/20">
-                          Host
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-white/75">
-                          {profile.fullName}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-3">
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/20">
-                          Challenger
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-white/40">
-                          Awaiting invite
-                        </p>
-                      </div>
-                    </div>
-                  </Surface>
                 </div>
               </div>
 
-              {formError ? <InlineError message={formError} /> : null}
+              <div className="sb-arena-loadout-grid">
+                {collaborationSubjects.map((subject) => {
+                  const Icon = subject.icon;
+                  const isSelected = selectedSubjects.includes(subject.value);
+                  const subjectColor = 
+                    subject.value === "English" ? "#fb7185" : 
+                    subject.value === "Mathematics" ? "#38bdf8" : 
+                    subject.value === "Physics" ? "#a78bfa" : 
+                    subject.value === "Chemistry" ? "#34d399" : 
+                    "#a3e635";
+                  const subjectGlow = 
+                    subject.value === "English" ? "rgba(251, 113, 133, 0.15)" :
+                    subject.value === "Mathematics" ? "rgba(56, 189, 248, 0.15)" :
+                    subject.value === "Physics" ? "rgba(167, 139, 250, 0.15)" :
+                    subject.value === "Chemistry" ? "rgba(52, 211, 153, 0.15)" :
+                    "rgba(163, 230, 53, 0.15)";
 
-              <div className="flex flex-col gap-3 border-t border-white/[0.05] pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  return (
+                    <button
+                      key={subject.value}
+                      type="button"
+                      onClick={() => toggleSubject(subject.value)}
+                      className={cn(
+                        "sb-arena-loadout-item",
+                        isSelected && "sb-arena-loadout-item--selected",
+                      )}
+                      style={{
+                        "--subject-color": subjectColor,
+                        "--subject-glow": subjectGlow,
+                      } as React.CSSProperties}
+                    >
+                      {isSelected && (
+                        <div className="sb-arena-loadout-check">
+                          <CheckCircle2 className="h-3 w-3 text-white fill-current" />
+                        </div>
+                      )}
+                      <div className="sb-arena-loadout-item__icon-container">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <span className="sb-arena-loadout-item__label">{subject.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ─── Room Settings + Match Ticket Summary ─── */}
+            <div className="grid gap-6 lg:grid-cols-2 items-end">
+              {/* Settings */}
+              <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-white/70">
-                    Collaboration unlock rules
-                  </p>
-                  <p className="mt-1 text-sm text-white/40">
-                    Premium plus two completed real exams keeps the room honest
-                    and competitive.
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-semibold text-white/70">
+                      Lobby Title <span className="text-white/30 font-normal text-xs">(optional)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setCustomName(generateDuelName(selectedSubjects))}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-500/[0.06] hover:bg-amber-500/[0.12] border border-amber-500/10 hover:border-amber-500/20 transition-all duration-200 active:scale-95"
+                    >
+                      <Dices className="h-3 w-3" />
+                      Roll Name
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Eg. Physics face-off"
+                    maxLength={60}
+                    value={customName}
+                    onChange={(event) => setCustomName(event.target.value)}
+                    className="w-full rounded-xl border border-white/[0.06] bg-[#0c0d11]/70 px-4 py-3 text-sm text-white/90 outline-none transition-all duration-200 placeholder:text-white/20 hover:border-white/[0.1] focus:border-[#e09040]/50 focus:ring-2 focus:ring-[#e09040]/15"
+                  />
                 </div>
+              </div>
+
+              {/* Match Ticket */}
+              <div className="sb-arena-ticket">
+                <div className="sb-arena-ticket__scanlines" />
+                <div className="sb-arena-ticket__section">
+                  <div className="sb-arena-ticket__icon">
+                    <SourceIcon className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">Lobby Title</span>
+                    <strong className="text-sm font-bold text-white/90 truncate max-w-[200px]">
+                      {customName.trim() || "Untitled Lobby"}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="sb-arena-ticket__divider" />
+
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">Protocol</span>
+                  <span className="text-xs font-semibold text-white/70 mt-0.5">{sourceMeta.label}</span>
+                </div>
+
+                <div className="sb-arena-ticket__divider" />
+
+                <div className="sb-arena-ticket__code-strip">
+                  <div className="flex flex-col align-start">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">Deck</span>
+                    <span className="text-xs font-semibold text-white/70 mt-0.5 truncate max-w-[120px]">
+                      {selectedSubjects.length > 0 ? selectedSubjects.join(", ") : "No subjects select"}
+                    </span>
+                  </div>
+                  <div className="sb-arena-ticket__barcode" />
+                </div>
+              </div>
+            </div>
+
+            {/* ─── Error ─── */}
+            {formError ? <InlineError message={formError} /> : null}
+
+            {/* ─── CTA ─── */}
+            <div className="flex flex-col gap-4 border-t border-white/[0.05] pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white/70">
+                  Lobby Admission Protocol
+                </p>
+                <p className="mt-1 text-[13px] text-white/40">
+                  Room access requires a premium credential and at least two official exam completions.
+                </p>
+              </div>
+              <div className="shrink-0">
                 {isPremiumLocked ? (
                   <Button asChild size="lg" href={"/dashboard/settings?tab=subscription" as Route}>
                     <>
@@ -581,147 +587,177 @@ export function CollaborationPage({
                 )}
               </div>
             </div>
-          </Surface>
-        </div>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/25">
+          </div>
+        </Surface>
+      </section>
+
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* ═══ JOIN + RECENT ROOMS                       ═══ */}
+      {/* ═══════════════════════════════════════════════════ */}
+      <section className="sb-enter grid gap-6 lg:grid-cols-2" style={{ animationDelay: "250ms" }}>
+
+        {/* ─── Join a Duel ─── */}
+        <div>
+          <div className="mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/25 mb-2">
               Join a Duel
             </p>
-            <h2 className="text-2xl font-semibold tracking-tight text-white">
+            <h2 className="text-xl font-bold tracking-tight text-white font-display">
               Step into a live arena with a code.
             </h2>
           </div>
 
-          <Surface className="overflow-hidden">
-            <div className="border-b border-white/[0.05] bg-white/[0.02] px-5 py-5 sm:px-6">
-              <p className="text-sm font-medium text-white/80">
-                Paste a room code
+          <Surface className="px-5 py-5 sm:px-6 space-y-5 bg-[#0d0e12]/30 backdrop-blur-md">
+            <div>
+              <p className="text-sm font-semibold text-white/80 mb-1">
+                Room Code
               </p>
-              <p className="mt-1 text-sm leading-relaxed text-white/40">
-                Shareable, human-readable, and built for quick phone-to-phone
-                invites after class.
+              <p className="text-[13px] text-white/40 mb-4">
+                Paste a shareable code to jump into a friend&apos;s room instantly.
               </p>
-            </div>
 
-            <div className="space-y-4 px-5 py-5 sm:px-6">
-              <Field
-                label="Room Code"
-                placeholder="SB-DUEL-1A2B"
-                value={joinCode}
-                onChange={(event) => setJoinCode(sanitizeCode(event.target.value))}
-              />
-
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sb-collab-join-input">
+                <input
+                  type="text"
+                  placeholder="SB-DUEL-1A2B"
+                  value={joinCode}
+                  onChange={(event) => setJoinCode(sanitizeCode(event.target.value))}
+                  className="w-full rounded-xl border border-white/[0.06] bg-[#0c0d11]/70 px-4 py-3 text-sm text-white/90 outline-none transition-all duration-200 placeholder:text-white/20 hover:border-white/[0.1] focus:border-[#e09040]/50 focus:ring-2 focus:ring-[#e09040]/15 font-mono tracking-wider"
+                />
                 <Button
                   variant="secondary"
-                  size="lg"
+                  size="md"
                   onClick={handlePasteCode}
+                  className="shrink-0"
                 >
                   <Clipboard className="h-4 w-4" />
-                  Paste code
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={handleJoinRoom}
-                  isLoading={joinMutation.isPending}
-                  disabled={!isEligible}
-                >
-                  Join room
-                  <DoorOpen className="h-4 w-4" />
+                  Paste
                 </Button>
               </div>
-
-              {!isEligible ? (
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 text-sm text-white/45">
-                  {isPremiumLocked ? (
-                    <span>
-                      Collaboration rooms are premium-only for now. Upgrade and
-                      this join path opens instantly.
-                    </span>
-                  ) : (
-                    <span>
-                      Finish {Math.max(0, 2 - stats.realExamsCompleted)} more real
-                      exam{stats.realExamsCompleted === 1 ? "" : "s"} to join a
-                      duel room.
-                    </span>
-                  )}
-                </div>
-              ) : null}
             </div>
+
+            <Button
+              size="lg"
+              onClick={handleJoinRoom}
+              isLoading={joinMutation.isPending}
+              disabled={!isEligible}
+              className="w-full"
+            >
+              Join room
+              <DoorOpen className="h-4 w-4" />
+            </Button>
+
+            {!isEligible ? (
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-[13px] text-white/45 leading-relaxed">
+                {isPremiumLocked ? (
+                  <span>
+                    Collaboration rooms are premium-only for now. Upgrade and
+                    this join path opens instantly.
+                  </span>
+                ) : (
+                  <span>
+                    Finish {Math.max(0, 2 - stats.realExamsCompleted)} more real
+                    exam{stats.realExamsCompleted === 1 ? "" : "s"} to join a
+                    duel room.
+                  </span>
+                )}
+              </div>
+            ) : null}
           </Surface>
+        </div>
 
-          <Surface className="px-5 py-5 sm:px-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-white/80">Recent rooms</p>
-                <p className="mt-1 text-sm text-white/40">
-                  Jump back into lobbies you touched recently.
-                </p>
-              </div>
-            </div>
+        {/* ─── Recent Rooms ─── */}
+        <div>
+          <div className="mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/25 mb-2">
+              Recent Rooms
+            </p>
+            <h2 className="text-xl font-bold tracking-tight text-white font-display">
+              Jump back into a lobby.
+            </h2>
+          </div>
 
-            {recentRooms.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-8 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.05] text-white/30">
-                  <Lock className="h-5 w-5" />
-                </div>
-                <p className="mt-4 text-base font-semibold text-white/82">
-                  No recent rooms yet
-                </p>
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-white/42">
-                  Once you create or join a collaboration room, it will stay
-                  here for quick re-entry.
-                </p>
+          {recentRooms.length === 0 ? (
+            <Surface className="px-5 py-10 text-center bg-[#0d0e12]/30 backdrop-blur-md">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.05] text-white/30 mb-4">
+                <Lock className="h-5 w-5" />
               </div>
-            ) : (
-              <div className="space-y-3">
-                {recentRooms.map((room) => (
+              <p className="text-base font-semibold text-white/80">
+                No recent rooms yet
+              </p>
+              <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-white/42">
+                Once you create or join a collaboration room, it will appear here for quick re-entry.
+              </p>
+            </Surface>
+          ) : (
+            <div className="space-y-3">
+              {recentRooms.map((room) => {
+                const roomColor = 
+                  room.questionSource === "REAL_PAST_QUESTION" ? "#d4a121" : 
+                  room.questionSource === "PRACTICE" ? "#60a5fa" : 
+                  "#f43f5e";
+
+                return (
                   <Link
                     key={room.code}
                     href={`/dashboard/collaboration/${room.code}` as Route}
-                    className="block rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]"
+                    className="sb-arena-room-card"
+                    style={{
+                      "--room-color": roomColor,
+                    } as React.CSSProperties}
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-4 pr-6">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-white/82">
+                        <p className="truncate text-sm font-bold text-white/85">
                           {room.effectiveDisplayName}
                         </p>
-                        <p className="mt-1 text-xs text-white/35">
+                        <p className="mt-1 text-xs text-white/35 font-medium tracking-wide">
                           {room.code} • {room.questionSource.replaceAll("_", " ")}
                         </p>
                       </div>
-                      <Badge
-                        tone={
-                          room.status === "COMPLETED"
-                            ? "success"
-                            : room.status === "CANCELLED"
-                              ? "danger"
-                              : "accent"
-                        }
-                      >
-                        {room.status.replaceAll("_", " ")}
-                      </Badge>
+                      
+                      <div className="sb-arena-room-card__header-right">
+                        <Badge
+                          tone={
+                            room.status === "COMPLETED"
+                              ? "success"
+                              : room.status === "CANCELLED"
+                                ? "danger"
+                                : "accent"
+                          }
+                        >
+                          {room.status === "WAITING" && (
+                            <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#e09040] animate-pulse" />
+                          )}
+                          {room.status.replaceAll("_", " ")}
+                        </Badge>
+                      </div>
+
+                      <div className="sb-arena-room-card__arrow">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-1.5">
                       {room.subjects.map((subject) => (
                         <span
                           key={subject}
-                          className="rounded-full bg-white/[0.05] px-2.5 py-1 text-[11px] text-white/45"
+                          className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40 border border-white/[0.02]"
                         >
                           {subject}
                         </span>
                       ))}
                     </div>
                   </Link>
-                ))}
-              </div>
-            )}
-          </Surface>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
+
     </div>
   );
 }
