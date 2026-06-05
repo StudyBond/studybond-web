@@ -26,6 +26,7 @@ import {
 import { useExamStore } from "@/features/exam/stores/exam-store";
 import type { ExamQuestion } from "@/lib/api/types";
 import { getUserProfile } from "@/lib/api/users";
+import { offlineStore } from "@/features/exam/stores/offline-store";
 import { useCollaborationSession } from "@/features/collaboration/hooks/use-collaboration";
 import { useDuelWebsocket } from "@/features/collaboration/hooks/use-duel-websocket";
 import { DuelWaitingLobby } from "@/features/collaboration/components/duel-waiting-lobby";
@@ -70,6 +71,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const recordTimeSpent = useExamStore((s) => s.recordTimeSpent);
   const buildSubmitPayload = useExamStore((s) => s.buildSubmitPayload);
   const reset = useExamStore((s) => s.reset);
+  const restoreFromIDB = useExamStore((s) => s.restoreFromIDB);
   const setSubmitDialogOpen = useExamStore((s) => s.setSubmitDialogOpen);
   const setAbandonDialogOpen = useExamStore((s) => s.setAbandonDialogOpen);
   const setTimeExpiredModalOpen = useExamStore((s) => s.setTimeExpiredModalOpen);
@@ -212,7 +214,12 @@ export function ExamArena({ examId }: ExamArenaProps) {
       session.startedAt,
       questionSubjects,
     );
-  }, [session, needsSessionInit, examId, initSession]);
+
+    // After session init, attempt to restore any saved answer progress from IDB.
+    // This handles the crash-recovery scenario: user was mid-exam, tab crashed,
+    // user reopens — answers are recovered from IndexedDB.
+    restoreFromIDB();
+  }, [session, needsSessionInit, examId, initSession, restoreFromIDB]);
 
   useEffect(() => {
     if (!session) return;
@@ -365,6 +372,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
       setTimeExpiredModalOpen(false);
       reset();
 
+      // Clean up IDB answer progress after successful submission
+      offlineStore.clearAnswerProgress(examId).catch(() => {});
+
       if ("queued" in result) {
         router.push("/dashboard");
         return;
@@ -429,6 +439,11 @@ export function ExamArena({ examId }: ExamArenaProps) {
       await abandonMutation.mutateAsync(examId);
       setAbandonDialogOpen(false);
       reset();
+
+      // Clean up all IDB state for this exam
+      offlineStore.clearAnswerProgress(examId).catch(() => {});
+      offlineStore.clearExamSession(examId).catch(() => {});
+
       router.push("/dashboard");
       toast.success("Exam abandoned.");
     } catch {

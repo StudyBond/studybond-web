@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster } from "sonner";
 import { useState } from "react";
+import { OfflineSyncProvider } from "@/providers/offline-sync-provider";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 
 export function AppProviders({
   children,
@@ -35,7 +37,10 @@ export function AppProviders({
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <OfflineSyncProvider>
+        {children}
+        <OfflineBanner />
+      </OfflineSyncProvider>
       <Toaster
         position="top-right"
         theme="dark"

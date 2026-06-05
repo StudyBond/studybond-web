@@ -1,6 +1,8 @@
 "use client";
 
 import { create } from "zustand";
+import { offlineStore } from "@/features/exam/stores/offline-store";
+import type { PersistedQuestionState } from "@/features/exam/stores/offline-store";
 
 // ─── Types ───
 
@@ -119,6 +121,12 @@ type ExamStoreActions = {
   /** Get the per-subject question index (0-based) for a given global index */
   getSubjectQuestionIndex: (index: number) => number;
 
+  /** Persist current answer state to IDB (debounced, crash recovery) */
+  persistToIDB: () => void;
+
+  /** Restore answer state from IDB after session init (crash recovery) */
+  restoreFromIDB: () => Promise<void>;
+
   /** Full reset */
   reset: () => void;
 };
@@ -126,6 +134,9 @@ type ExamStoreActions = {
 const TIMER_WARNING_THRESHOLD = 300; // 5 minutes
 const TIMER_CRITICAL_THRESHOLD = 120; // 2 minutes
 const TIMER_FINAL_THRESHOLD = 10; // 10 seconds
+const PERSIST_DEBOUNCE_MS = 500; // IDB write debounce
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
 function computeTimerTier(remaining: number): ExamStoreState["timerTier"] {
   if (remaining <= 0) return "expired";
@@ -133,6 +144,24 @@ function computeTimerTier(remaining: number): ExamStoreState["timerTier"] {
   if (remaining <= TIMER_CRITICAL_THRESHOLD) return "critical";
   if (remaining <= TIMER_WARNING_THRESHOLD) return "warning";
   return "normal";
+}
+
+/**
+ * Serialize the in-memory Map<number, QuestionState> to a plain object
+ * suitable for IDB persistence. Excludes volatile fields (enteredAt).
+ */
+function serializeStatesForPersistence(
+  states: Map<number, QuestionState>,
+): Record<number, PersistedQuestionState> {
+  const out: Record<number, PersistedQuestionState> = {};
+  states.forEach((s, qId) => {
+    out[qId] = {
+      answer: s.answer,
+      flagged: s.flagged,
+      timeSpentSeconds: s.timeSpentSeconds,
+    };
+  });
+  return out;
 }
 
 const initialState: ExamStoreState = {
@@ -215,6 +244,7 @@ export const useExamStore = create<ExamStoreState & ExamStoreActions>()((set, ge
       }
       return { questionStates: next };
     });
+    get().persistToIDB();
   },
 
   toggleFlag: (questionId) => {
@@ -226,6 +256,7 @@ export const useExamStore = create<ExamStoreState & ExamStoreActions>()((set, ge
       }
       return { questionStates: next };
     });
+    get().persistToIDB();
   },
 
   goToQuestion: (index) => {
@@ -274,6 +305,7 @@ export const useExamStore = create<ExamStoreState & ExamStoreActions>()((set, ge
       }
       return { questionStates: next };
     });
+    get().persistToIDB();
   },
 
   tick: () => {
@@ -379,5 +411,70 @@ export const useExamStore = create<ExamStoreState & ExamStoreActions>()((set, ge
     return index;
   },
 
-  reset: () => set(initialState),
+  persistToIDB: () => {
+    // Debounced write — coalesce rapid updates (e.g. quick answer changes)
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      const { examId, questionStates } = get();
+      if (!examId) return;
+      const serialized = serializeStatesForPersistence(questionStates);
+      offlineStore.saveAnswerProgress(examId, serialized).catch(() => {
+        // Non-critical — best-effort persistence
+      });
+    }, PERSIST_DEBOUNCE_MS);
+  },
+
+  restoreFromIDB: async () => {
+    const { examId, questionStates } = get();
+    if (!examId) return;
+
+    try {
+      const saved = await offlineStore.getAnswerProgress(examId);
+      if (!saved || saved.examId !== examId) return;
+
+      // Only restore if saved data is for the same set of questions
+      const currentIds = new Set(questionStates.keys());
+      const savedIds = Object.keys(saved.states).map(Number);
+      const allMatch = savedIds.every((id) => currentIds.has(id));
+      if (!allMatch) return;
+
+      set((state) => {
+        const next = new Map(state.questionStates);
+        for (const [qIdStr, persisted] of Object.entries(saved.states)) {
+          const qId = Number(qIdStr);
+          const current = next.get(qId);
+          if (current) {
+            // Only restore if the question hasn't already been answered
+            // (server-resumed sessions may have more recent data)
+            if (current.answer === null && persisted.answer !== null) {
+              next.set(qId, {
+                ...current,
+                answer: persisted.answer as OptionKey | null,
+                flagged: persisted.flagged,
+                timeSpentSeconds: Math.max(current.timeSpentSeconds, persisted.timeSpentSeconds),
+              });
+            } else if (current.answer !== null) {
+              // Keep current answer but merge flags/time
+              next.set(qId, {
+                ...current,
+                flagged: current.flagged || persisted.flagged,
+                timeSpentSeconds: Math.max(current.timeSpentSeconds, persisted.timeSpentSeconds),
+              });
+            }
+          }
+        }
+        return { questionStates: next };
+      });
+    } catch {
+      // Non-critical — if IDB read fails, the user just starts fresh
+    }
+  },
+
+  reset: () => {
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    set(initialState);
+  },
 }));

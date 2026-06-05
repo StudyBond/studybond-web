@@ -31,6 +31,8 @@ export function useSubmitExamMutation() {
     onSuccess: async (data, variables) => {
       // Clean up local cache since exam is done or securely queued
       await offlineStore.clearExamSession(variables.examId);
+      // Clear answer progress — no longer needed
+      offlineStore.clearAnswerProgress(variables.examId).catch(() => {});
 
       if ("queued" in data) {
          toast.success("Network unstable. Your answers are saved securely and will submit upon reconnection.", { duration: 6000 });
@@ -39,6 +41,9 @@ export function useSubmitExamMutation() {
       }
 
       await offlineStore.clearQueuedSubmit(variables.examId);
+
+      // Cache the exam result for offline review
+      offlineStore.saveExamResult(variables.examId, data).catch(() => {});
 
       queryClient.invalidateQueries({ queryKey: ["exam-history"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
@@ -55,9 +60,14 @@ export function useAbandonExamMutation() {
 
   return useMutation<ExamAbandonResult, ApiError, number>({
     mutationFn: (examId) => abandonExam(examId),
-    onSuccess: () => {
+    onSuccess: (_data, examId) => {
+      // Clean up all offline state for abandoned exam
+      offlineStore.clearAnswerProgress(examId).catch(() => {});
+      offlineStore.clearExamSession(examId).catch(() => {});
+
       queryClient.invalidateQueries({ queryKey: ["exam-history"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
+

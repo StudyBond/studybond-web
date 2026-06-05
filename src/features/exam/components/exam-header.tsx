@@ -2,8 +2,9 @@
 
 import { ExamTimer } from "@/features/exam/components/exam-timer";
 import { useExamStore } from "@/features/exam/stores/exam-store";
+import { useOfflineStatus } from "@/providers/offline-sync-provider";
 import { cn } from "@/lib/utils/cn";
-import { Grid3X3, LogOut, SendHorizontal, Calculator } from "lucide-react";
+import { Grid3X3, LogOut, SendHorizontal, Calculator, WifiOff } from "lucide-react";
 
 type ExamHeaderProps = {
   displayName: string;
@@ -19,6 +20,7 @@ export function ExamHeader({ displayName, subjects, isCalculatorOpen, onToggleCa
   const toggleNavigator = useExamStore((s) => s.toggleNavigator);
   const setSubmitDialogOpen = useExamStore((s) => s.setSubmitDialogOpen);
   const setAbandonDialogOpen = useExamStore((s) => s.setAbandonDialogOpen);
+  const { isOnline } = useOfflineStatus();
 
   const answered = getAnsweredCount();
   const progress = totalQuestions > 0 ? (answered / totalQuestions) * 100 : 0;
@@ -67,12 +69,18 @@ export function ExamHeader({ displayName, subjects, isCalculatorOpen, onToggleCa
           </div>
         </div>
 
-        {/* Center: Timer + progress counter */}
+        {/* Center: Timer + progress counter + offline indicator */}
         <div className="flex items-center gap-3">
           <ExamTimer />
           <span className="hidden md:inline-flex sb-mono text-[11px] font-semibold text-white/20">
             {answered}/{totalQuestions}
           </span>
+          {!isOnline && (
+            <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 animate-in fade-in zoom-in-95 duration-300">
+              <WifiOff className="h-3 w-3 text-amber-400" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400">Offline</span>
+            </div>
+          )}
         </div>
 
         {/* Right: Navigator toggle + Submit */}
