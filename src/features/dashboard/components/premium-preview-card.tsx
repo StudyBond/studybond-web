@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -9,6 +10,7 @@ import {
   Sparkles,
   Lock,
   ArrowRight,
+  Clock,
 } from "lucide-react";
 import type { Route } from "next";
 
@@ -122,7 +124,39 @@ function BlurredChartPreview() {
   );
 }
 
+const SALE_END_TIME = new Date("2026-06-06T15:00:00+01:00").getTime();
+
 export function PremiumPreviewCard() {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [isActive, setIsActive] = useState<boolean>(true);
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = Date.now();
+      const distance = SALE_END_TIME - now;
+
+      if (distance <= 0) {
+        setIsActive(false);
+        setTimeLeft("");
+        return;
+      }
+
+      const hours = Math.floor(distance / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      const hDisplay = hours.toString().padStart(2, "0");
+      const mDisplay = minutes.toString().padStart(2, "0");
+      const sDisplay = seconds.toString().padStart(2, "0");
+
+      setTimeLeft(`${hDisplay}h ${mDisplay}m ${sDisplay}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="relative overflow-hidden rounded-3xl border border-yellow-400/10 bg-gradient-to-br from-[#14120d] via-[#09090b] to-[#0d0b14]">
       {/* Animated gradient border sweep */}
@@ -133,6 +167,16 @@ export function PremiumPreviewCard() {
 
       {/* Content */}
       <div className="relative z-10 p-6 sm:p-8">
+        {isActive && (
+          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-400 shadow-[0_0_12px_rgba(234,179,8,0.15)]">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-yellow-500"></span>
+            </span>
+            ⚡ Flash Sale — 20% OFF (ends in {timeLeft || "24h"})
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-2 mb-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400/10 text-yellow-400 shadow-[0_0_16px_rgba(251,191,36,0.15)]">
@@ -178,12 +222,27 @@ export function PremiumPreviewCard() {
           >
             <div className="flex items-center justify-center px-4 font-bold text-[#09090b]">
               <Sparkles className="mr-2 h-4 w-4" />
-              <span>Unlock Premium — ₦5,000</span>
+              <span>
+                Unlock Premium —{" "}
+                {isActive ? (
+                  <>
+                    <span className="line-through opacity-50 mr-1.5 text-xs">₦5,000</span>
+                    <span>₦4,000</span>
+                  </>
+                ) : (
+                  "₦5,000"
+                )}
+              </span>
               <ArrowRight className="ml-2 h-4 w-4" />
             </div>
           </Button>
-          <div className="flex items-center justify-center sm:justify-start">
-            <span className="text-[11px] text-white/25">5 months of full access</span>
+          <div className="flex flex-col items-center sm:items-start justify-center">
+            <span className="text-[11px] text-white/25 font-medium">5 months of full access</span>
+            {isActive && timeLeft && (
+              <span className="text-[10px] font-bold text-yellow-400 flex items-center gap-1 mt-0.5">
+                <Clock className="h-3.5 w-3.5 text-yellow-400" /> {timeLeft} left!
+              </span>
+            )}
           </div>
         </div>
       </div>

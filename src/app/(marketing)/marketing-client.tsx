@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import {
@@ -31,6 +32,8 @@ const featureHeadingClassName = "sb-display mt-4 text-sm font-semibold tracking-
 const planHeadingClassName = "sb-display text-lg font-bold tracking-tight";
 const stepHeadingClassName = "sb-display mt-3 text-sm font-semibold tracking-tight text-white/90";
 
+const SALE_END_TIME = new Date("2026-06-06T15:00:00+01:00").getTime();
+
 export function MarketingClient({
   leaderboardCard,
   streakCard,
@@ -41,6 +44,36 @@ export function MarketingClient({
   pricingFree,
   pricingPremium,
 }: MarketingClientProps) {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [isActive, setIsActive] = useState<boolean>(true);
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = Date.now();
+      const distance = SALE_END_TIME - now;
+
+      if (distance <= 0) {
+        setIsActive(false);
+        setTimeLeft("");
+        return;
+      }
+
+      const hours = Math.floor(distance / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      const hDisplay = hours.toString().padStart(2, "0");
+      const mDisplay = minutes.toString().padStart(2, "0");
+      const sDisplay = seconds.toString().padStart(2, "0");
+
+      setTimeLeft(`${hDisplay}h ${mDisplay}m ${sDisplay}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="sb-marketing-copy">
       {/* ══ HERO ══ */}
@@ -313,16 +346,35 @@ export function MarketingClient({
               <div className="rounded-2xl border border-[#e09040]/20 bg-linear-to-br from-[#e09040]/6 to-transparent p-7 relative overflow-hidden h-full flex flex-col">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-[#e09040]/5ded-full blur-3xl -mr-10 -mt-10" />
                 <div className="relative z-10">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <h3 className={`${planHeadingClassName} text-[#e09040]`}>Premium</h3>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e09040]/10 border border-[#e09040]/15 px-2.5 py-0.5 text-[0.6rem] font-bold text-[#e09040] uppercase tracking-wider">
-                      <Star className="h-3 w-3" /> Popular
-                    </span>
+                    {isActive ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-0.5 text-[0.6rem] font-bold text-yellow-400 uppercase tracking-wider animate-pulse">
+                        ⚡ Flash Sale
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#e09040]/10 border border-[#e09040]/15 px-2.5 py-0.5 text-[0.6rem] font-bold text-[#e09040] uppercase tracking-wider">
+                        <Star className="h-3 w-3" /> Popular
+                      </span>
+                    )}
                   </div>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="font-mono text-4xl font-bold text-white">₦5,000</span>
+                  <div className="mt-2 flex items-baseline gap-2 flex-wrap">
+                    {isActive ? (
+                      <>
+                        <span className="font-mono text-4xl font-bold text-white">₦4,000</span>
+                        <span className="font-mono text-lg text-white/35 line-through">₦5,000</span>
+                      </>
+                    ) : (
+                      <span className="font-mono text-4xl font-bold text-white">₦5,000</span>
+                    )}
                     <span className="text-sm text-white/25">/ 5-months</span>
                   </div>
+                  {isActive && timeLeft && (
+                    <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-yellow-400">
+                      <Clock className="h-3.5 w-3.5 text-yellow-400" />
+                      <span>Ends in {timeLeft}</span>
+                    </div>
+                  )}
                   <p className="mt-3 text-xs text-white/30">Unlimited practice. Full power.</p>
                 </div>
                 <ul className="mt-6 space-y-3 flex-1 relative z-10">
