@@ -9,7 +9,7 @@ const subjects = [
   { slug: "biology", label: "Biology" },
 ] as const;
 
-const years = [2025, 2024, 2023, 2022, 2021, 2020, 2019] as const;
+const years = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019] as const;
 
 const guides = [
   { slug: "how-to-pass-ui-post-utme", label: "How to Pass UI Post-UTME" },

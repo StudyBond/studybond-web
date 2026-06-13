@@ -8,6 +8,19 @@ import {
   Trophy, Flame, Timer, ChevronDown, Swords, Sparkles, Star, Crown, Clock
 } from "lucide-react";
 
+const parseMarkdown = (s: string) => {
+  let html = s;
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong class='text-white/70 font-semibold'>$1</strong>");
+  html = html.replace(/\[(.+?)\]\((.+?)\)/g, (match, text, url) => {
+    const isInternal = url.startsWith("/");
+    const targetAttr = isInternal ? "" : "target='_blank' rel='noopener noreferrer'";
+    return `<a href="${url}" class="text-[#e09040] hover:underline" ${targetAttr}>${text}</a>`;
+  });
+  html = html.replace(/\*(.+?)\*/g, "<em class='text-white/40 italic font-medium'>$1</em>");
+  html = html.replace(/\n/g, "<br />");
+  return html;
+};
+
 type MarketingClientProps = {
   leaderboardCard: React.ReactNode;
   streakCard: React.ReactNode;
@@ -136,7 +149,7 @@ export function MarketingClient({
       </Reveal>
 
       {/* ══ LEADERBOARD ══ */}
-      <section className="py-20 md:py-28">
+      <section id="leaderboard" className="py-20 md:py-28">
         <Section>
           <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-center">
             <div className="flex-1 text-center lg:text-left">
@@ -278,7 +291,7 @@ export function MarketingClient({
       </section>
 
       {/* ══ FEATURES GRID ══ */}
-      <section className="py-20 md:py-28 border-y border-white/6 bg-white/1.5">
+      <section id="features" className="py-20 md:py-28 border-y border-white/6 bg-white/1.5">
         <Section>
           <Reveal>
             <div className="mx-auto max-w-2xl text-center mb-14">
@@ -304,7 +317,7 @@ export function MarketingClient({
       </section>
 
       {/* ══ PRICING ══ */}
-      <section className="py-20 md:py-28">
+      <section id="pricing" className="py-20 md:py-28">
         <Section>
           <Reveal>
             <div className="mx-auto max-w-2xl text-center mb-14">
@@ -394,7 +407,7 @@ export function MarketingClient({
       </section>
 
       {/* ══ HOW IT WORKS ══ */}
-      <section className="border-y border-white/6 bg-white/1.5 py-20 md:py-28">
+      <section id="how-it-works" className="border-y border-white/6 bg-white/1.5 py-20 md:py-28">
         <Section>
           <Reveal>
             <div className="mx-auto max-w-2xl text-center mb-14">
@@ -426,7 +439,7 @@ export function MarketingClient({
       </section>
 
       {/* ══ FAQ ══ */}
-      <section className="py-20 md:py-28">
+      <section id="faq" className="py-20 md:py-28">
         <Section>
           <div className="mx-auto max-w-2xl">
             <Reveal>
@@ -446,7 +459,7 @@ export function MarketingClient({
                       {item.question}
                       <ChevronDown className="h-4 w-4 shrink-0 text-white/20 transition-transform duration-200 group-open:rotate-180" />
                     </summary>
-                    <div className="pb-5 text-sm leading-relaxed text-white/40">{item.answer}</div>
+                    <div className="pb-5 text-sm leading-relaxed text-white/45" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.answer) }} />
                   </details>
                 </Reveal>
               ))}

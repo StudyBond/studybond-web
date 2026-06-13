@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://studybond.app";
 
 const subjects = ["english", "mathematics", "chemistry", "physics", "biology"] as const;
-const years = [2019, 2020, 2021, 2022, 2023, 2024, 2025] as const;
+const years = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026] as const;
 
 const blogSlugs = [
   "how-to-pass-ui-post-utme",
@@ -33,6 +33,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.95,
+    },
+    // Blog Hub page
+    {
+      url: `${appUrl}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
     },
   ];
 

@@ -85,14 +85,33 @@ export function faqJsonLd(items: ReadonlyArray<{ question: string; answer: strin
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: items.map((item) => ({
-      "@type": "Question",
-      name: item.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: item.answer,
-      },
-    })),
+    mainEntity: items.map((item) => {
+      let htmlAnswer = item.answer;
+
+      // 1. Convert bold (**text** -> <strong>text</strong>)
+      htmlAnswer = htmlAnswer.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+      // 2. Convert markdown links [text](url) to HTML absolute anchors <a href="...">text</a>
+      htmlAnswer = htmlAnswer.replace(/\[(.+?)\]\((.+?)\)/g, (match, text, url) => {
+        const fullUrl = url.startsWith("/") ? `https://studybond.app${url}` : url;
+        return `<a href="${fullUrl}">${text}</a>`;
+      });
+
+      // 3. Convert italics (*text* -> <em>text</em>)
+      htmlAnswer = htmlAnswer.replace(/\*(.+?)\*/g, "<em>$1</em>");
+
+      // 4. Convert newlines to HTML break lines
+      htmlAnswer = htmlAnswer.replace(/\n/g, "<br />");
+
+      return {
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: htmlAnswer,
+        },
+      };
+    }),
   };
 }
 
@@ -175,3 +194,54 @@ export function aggregateRatingJsonLd(params: {
     },
   };
 }
+
+// ─── Quiz / Practice Problems ────────────────────────────────────────
+
+export function quizJsonLd(params: {
+  name: string;
+  description: string;
+  url: string;
+  questions: ReadonlyArray<{
+    q?: string; // support both q and question keys
+    question?: string;
+    options: ReadonlyArray<string>;
+    correctAnswer: string;
+    explanation: string;
+  }>;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Quiz",
+    name: params.name,
+    description: params.description,
+    url: params.url,
+    about: {
+      "@type": "Thing",
+      name: "University of Ibadan Post-UTME Past Questions",
+    },
+    hasPart: params.questions.map((quest) => {
+      const questionText = quest.q || quest.question || "";
+      const correctOptionLetter = quest.correctAnswer.charAt(0);
+      return {
+        "@type": "Question",
+        name: questionText,
+        suggestedAnswer: quest.options.map((opt) => {
+          const isCorrect = opt.trim().startsWith(correctOptionLetter);
+          return {
+            "@type": "Answer",
+            text: opt,
+            value: isCorrect ? 1 : 0,
+            ...(isCorrect && {
+              correct: true,
+            }),
+            comment: {
+              "@type": "Comment",
+              text: quest.explanation,
+            },
+          };
+        }),
+      };
+    }),
+  };
+}
+

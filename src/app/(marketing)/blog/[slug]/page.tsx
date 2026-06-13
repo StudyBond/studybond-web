@@ -7,6 +7,20 @@ import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { articleJsonLd, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { getArticle, getAllSlugs } from "@/lib/seo/blog-content";
 
+/* ── Markdown Parser Helper ── */
+export const parseMarkdown = (s: string) => {
+  let html = s;
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong class='text-white/70 font-semibold'>$1</strong>");
+  html = html.replace(/\[(.+?)\]\((.+?)\)/g, (match, text, url) => {
+    const isInternal = url.startsWith("/");
+    const targetAttr = isInternal ? "" : "target='_blank' rel='noopener noreferrer'";
+    return `<a href="${url}" class="text-[#e09040] hover:underline" ${targetAttr}>${text}</a>`;
+  });
+  html = html.replace(/\*(.+?)\*/g, "<em class='text-white/40 italic font-medium'>$1</em>");
+  html = html.replace(/\n/g, "<br />");
+  return html;
+};
+
 /* ── Static Params ── */
 export function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
@@ -21,6 +35,8 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
   if (!article) return {};
 
   const appUrl = getPublicAppUrl();
+  const ogUrl = `${appUrl}/api/og?title=${encodeURIComponent(article.metaTitle)}&desc=${encodeURIComponent(article.metaDescription)}`;
+
   return {
     title: article.metaTitle,
     description: article.metaDescription,
@@ -34,11 +50,13 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
       publishedTime: article.datePublished,
       modifiedTime: article.dateModified,
       authors: ["StudyBond"],
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: article.metaTitle }],
     },
     twitter: {
       card: "summary_large_image",
       title: article.metaTitle,
       description: article.metaDescription,
+      images: [ogUrl],
     },
   };
 }
@@ -134,9 +152,6 @@ export default async function BlogPage({ params }: BlogPageProps) {
               <h2 className="text-xl font-bold tracking-tight mb-4">{section.heading}</h2>
               <div className="prose-custom text-sm md:text-base text-white/55 leading-relaxed">
                 {section.content.split("\n\n").map((block, bi) => {
-                  const bold = (s: string) =>
-                    s.replace(/\*\*(.+?)\*\*/g, "<strong class='text-white/70 font-semibold'>$1</strong>");
-
                   const lines = block.split("\n");
 
                   // Pure dash list (every line starts with "- ")
@@ -147,7 +162,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                         {lines.filter((l) => l.startsWith("- ")).map((line, li) => (
                           <li key={li} className="flex items-start gap-2 text-white/50">
                             <span className="text-[#e09040]/60 mt-0.5 shrink-0">•</span>
-                            <span dangerouslySetInnerHTML={{ __html: bold(line.slice(2)) }} />
+                            <span dangerouslySetInnerHTML={{ __html: parseMarkdown(line.slice(2)) }} />
                           </li>
                         ))}
                       </ul>
@@ -161,12 +176,12 @@ export default async function BlogPage({ params }: BlogPageProps) {
                     const items = lines.slice(dashStart).filter((l) => l.startsWith("- "));
                     return (
                       <div key={bi} className="mb-4">
-                        <p className="mb-2" dangerouslySetInnerHTML={{ __html: bold(header) }} />
+                        <p className="mb-2" dangerouslySetInnerHTML={{ __html: parseMarkdown(header) }} />
                         <ul className="space-y-1.5 list-none">
                           {items.map((line, li) => (
                             <li key={li} className="flex items-start gap-2 text-white/50">
                               <span className="text-[#e09040]/60 mt-0.5 shrink-0">•</span>
-                              <span dangerouslySetInnerHTML={{ __html: bold(line.slice(2)) }} />
+                              <span dangerouslySetInnerHTML={{ __html: parseMarkdown(line.slice(2)) }} />
                             </li>
                           ))}
                         </ul>
@@ -182,7 +197,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                         {lines.filter((l) => /^\d+\.\s/.test(l)).map((line, li) => (
                           <li key={li} className="flex items-start gap-2.5 text-white/50">
                             <span className="font-mono text-xs text-[#e09040]/50 mt-0.5 shrink-0 min-w-[1.25rem]">{li + 1}.</span>
-                            <span dangerouslySetInnerHTML={{ __html: bold(line.replace(/^\d+\.\s*/, "")) }} />
+                            <span dangerouslySetInnerHTML={{ __html: parseMarkdown(line.replace(/^\d+\.\s*/, "")) }} />
                           </li>
                         ))}
                       </ol>
@@ -191,7 +206,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
 
                   // Regular paragraph
                   return (
-                    <p key={bi} className="mb-4" dangerouslySetInnerHTML={{ __html: bold(block) }} />
+                    <p key={bi} className="mb-4" dangerouslySetInnerHTML={{ __html: parseMarkdown(block) }} />
                   );
                 })}
               </div>
@@ -226,7 +241,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                     {item.question}
                     <ArrowRight className="h-4 w-4 shrink-0 text-white/20 transition-transform duration-200 group-open:rotate-90" />
                   </summary>
-                  <div className="pb-4 text-sm leading-relaxed text-white/50">{item.answer}</div>
+                  <div className="pb-4 text-sm leading-relaxed text-white/50" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.answer) }} />
                 </details>
               ))}
             </div>

@@ -91,6 +91,14 @@ export const metadata: Metadata = {
       "Practice with real University of Ibadan Post-UTME past questions. Free CBT simulation, score analytics, leaderboards, and 1v1 duels. Start free.",
     url: appUrl,
     siteName: "StudyBond",
+    images: [
+      {
+        url: "/api/og",
+        width: 1200,
+        height: 630,
+        alt: "StudyBond — UI Post-UTME CBT Practice",
+      },
+    ],
     type: "website",
     locale: "en_NG",
   },
@@ -99,6 +107,7 @@ export const metadata: Metadata = {
     title: "StudyBond — UI Post-UTME Past Questions & Practice",
     description:
       "Nigeria's #1 Post-UTME exam prep platform. Real past questions, timed CBT, score analytics. Free to start.",
+    images: ["/api/og"],
   },
 };
 

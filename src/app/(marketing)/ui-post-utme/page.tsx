@@ -3,13 +3,28 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Clock, Trophy, Swords, BarChart3, Flame, CheckCircle2, Users } from "lucide-react";
 import { getPublicAppUrl } from "@/lib/env/server";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
-import { courseJsonLd, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { courseJsonLd, faqJsonLd, breadcrumbJsonLd, quizJsonLd, aggregateRatingJsonLd } from "@/lib/seo/json-ld";
+
+const parseMarkdown = (s: string) => {
+  let html = s;
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong class='text-white/70 font-semibold'>$1</strong>");
+  html = html.replace(/\[(.+?)\]\((.+?)\)/g, (match, text, url) => {
+    const isInternal = url.startsWith("/");
+    const targetAttr = isInternal ? "" : "target='_blank' rel='noopener noreferrer'";
+    return `<a href="${url}" class="text-[#e09040] hover:underline" ${targetAttr}>${text}</a>`;
+  });
+  html = html.replace(/\*(.+?)\*/g, "<em class='text-white/40 italic font-medium'>$1</em>");
+  html = html.replace(/\n/g, "<br />");
+  return html;
+};
 
 /* ── Metadata ── */
 export async function generateMetadata(): Promise<Metadata> {
   const appUrl = getPublicAppUrl();
+  const ogUrl = `${appUrl}/api/og?title=${encodeURIComponent("UI Post-UTME Past Questions & CBT")}&desc=${encodeURIComponent("Practice with real past questions in a timed CBT simulation. 100 questions in 90 minutes. Start free today.")}`;
+  
   return {
-    title: "UI Post-UTME Past Questions & CBT Practice 2025",
+    title: "UI Post-UTME Past Questions & CBT Practice 2026",
     description:
       "Practice with real University of Ibadan Post-UTME past questions on StudyBond. Free timed CBT simulation — 100 questions, 90 minutes. English, Chemistry, Physics, Biology. Score analytics, leaderboards, 1v1 duels. Start free today.",
     alternates: { canonical: `${appUrl}/ui-post-utme` },
@@ -30,6 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description:
         "Free CBT simulation with real University of Ibadan Post-UTME past questions. 4 subjects, score analytics, leaderboards. Start now.",
       url: `${appUrl}/ui-post-utme`,
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: "UI Post-UTME Past Questions" }],
       type: "website",
     },
     twitter: {
@@ -37,6 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "UI Post-UTME Past Questions & Practice — StudyBond",
       description:
         "Real UI past questions. Timed CBT. Score analytics. Free to start.",
+      images: [ogUrl],
     },
   };
 }
@@ -46,71 +63,81 @@ const pillarFaq = [
   {
     question: "What is the UI Post-UTME exam?",
     answer:
-      "The University of Ibadan Post-UTME (Post-Unified Tertiary Matriculation Examination) is a screening exam conducted by the University of Ibadan for candidates who scored at least 200 in JAMB UTME and chose UI as their first choice. You are tested on the same 4 subjects you wrote in JAMB (e.g. English, Chemistry, Physics, Biology/Mathematics for science candidates). The exam is Computer-Based (CBT) and consists of 100 questions to be answered in 90 minutes.",
+      "The University of Ibadan Post-UTME (Post-Unified Tertiary Matriculation Examination) is a screening exam conducted by the University of Ibadan for candidates who scored at least 200 in JAMB UTME and chose UI as their first choice. You are tested on the same 4 subjects you wrote in JAMB. The exam is Computer-Based (CBT) and consists of 100 questions to be answered in 90 minutes. Practice under real exam conditions with [StudyBond's free UI Post-UTME practice exam](/signup) to boost your preparation.",
   },
   {
     question: "Where can I practice UI Post-UTME past questions?",
     answer:
-      "StudyBond is the best platform to practice UI Post-UTME past questions. We offer real, verified past questions in CBT simulation format — 100 questions in 90 minutes, exactly like the real exam. Practice by subject (English, Chemistry, Physics, Biology) or take full exams. Your first exam is completely free.",
+      "StudyBond is the best platform to practice UI Post-UTME past questions. We offer real, verified past questions in CBT simulation format — 100 questions in 90 minutes, exactly like the real exam. Practice by subject (English, Chemistry, Physics, Biology) or take full exams. Your first exam is completely free. [Start practicing UI past questions for free](/signup).",
   },
   {
     question: "How many questions are in the UI Post-UTME?",
     answer:
-      "The University of Ibadan Post-UTME consists of 100 multiple-choice questions — 25 questions per subject across the same 4 subjects you registered for in JAMB. You have 90 minutes to complete the exam.",
+      "The University of Ibadan Post-UTME consists of 100 multiple-choice questions — 25 questions per subject across the same 4 subjects you registered for in JAMB. You have 90 minutes to complete the exam. Practice managing your time with [StudyBond's CBT simulator](/signup).",
   },
   {
     question: "Is StudyBond free for UI Post-UTME practice?",
     answer:
-      "Yes! Your first full UI Post-UTME exam on StudyBond is completely free — no credit card required. This includes 100 real past questions, timed CBT simulation, and a score breakdown by subject. Premium (₦5,000 for 5 months) unlocks unlimited exams, subject-specific practice, 1v1 duels, and detailed analytics.",
+      "Yes! Your first full UI Post-UTME exam on StudyBond is completely free — no credit card required. This includes 100 real past questions, timed CBT simulation, and a score breakdown by subject. [Create your free account](/signup) to get started. Premium (₦5,000 for 5 months) unlocks unlimited exams, subject-specific practice, 1v1 duels, and detailed analytics.",
   },
   {
     question: "What subjects are covered in the UI Post-UTME on StudyBond?",
     answer:
-      "StudyBond covers all four UI Post-UTME subjects: English Language, Chemistry, Physics, and Biology (or your relevant subject combination). You can practice all subjects together in a full exam simulation, or focus on individual subjects with subject-specific practice (premium feature).",
+      "StudyBond covers all four UI Post-UTME subjects: English Language, Chemistry, Physics, and Biology (or your relevant subject combination). You can practice all subjects together in a full exam simulation, or focus on individual subjects with subject-specific practice. [Start practicing your subject combination](/signup) today.",
   },
   {
     question: "How do I pass the UI Post-UTME?",
     answer:
-      "To pass the UI Post-UTME: (1) Practice with real past questions regularly — StudyBond provides verified CBT practice. (2) Focus on your weak subjects using analytics. (3) Time yourself — the real exam is 90 minutes. (4) Build consistency with daily practice streaks. (5) Know the exam format before exam day. Students who practice on StudyBond consistently score significantly higher.",
+      "To pass the UI Post-UTME: (1) Practice with real past questions regularly — StudyBond provides verified CBT practice. (2) Focus on your weak subjects using analytics. (3) Time yourself — the real exam is 90 minutes. (4) Build consistency with daily practice streaks. (5) Read our complete [UI Post-UTME preparation guide](/blog/how-to-pass-ui-post-utme) for step-by-step tips. Students who practice on StudyBond consistently score significantly higher.",
   },
   {
     question: "When is the UI Post-UTME 2026/2027?",
     answer:
-      "The University of Ibadan typically announces Post-UTME dates between June and August each year. For the 2025/2026 session, registration ran from July 21 to August 17, 2025, with exams held August 25-27. The 2026/2027 dates will be announced on the official UI admissions portal (admissions.ui.edu.ng). Start practicing now so you're ready.",
+      "The University of Ibadan typically announces Post-UTME dates between June and August each year. For the 2025/2026 session, registration ran from July 21 to August 17, 2025, with exams held August 25-27. The 2026/2027 dates will be announced on the official UI admissions portal (admissions.ui.edu.ng). [Explore our 2026 registration guide](/blog/ui-post-utme-registration) for step-by-step updates. Start practicing now so you're ready.",
   },
   {
     question: "How is the UI Post-UTME aggregate score calculated?",
     answer:
-      "Your UI aggregate score is calculated as: (JAMB Score ÷ 8) + (Post-UTME Score ÷ 2). For example, if you scored 300 in JAMB and 70 in Post-UTME: (300/8) + (70/2) = 37.5 + 35 = 72.5. O'Level results are NOT used in the aggregate calculation — they are only a prerequisite (you need at least 5 credits including English and Mathematics). Your aggregate is then compared against your department's cut-off mark.",
+      "Your UI aggregate score is calculated as: (JAMB Score ÷ 8) + (Post-UTME Score ÷ 2). For example, if you scored 300 in JAMB and 70 in Post-UTME: (300/8) + (70/2) = 37.5 + 35 = 72.5. O'Level results are NOT used in the aggregate calculation — they are only a prerequisite. Try our [UI Post-UTME aggregate score calculator](/blog/ui-post-utme-score-calculator) for easy calculation, then check against your [department's cut-off mark](/blog/ui-post-utme-cut-off-mark).",
   },
 ];
 
-/* ── Sample Questions (placeholder for crawlers — replace with real ones) ── */
+/* ── Sample Questions (real UI Post-UTME questions with answers for crawlers) ── */
 const sampleQuestions = [
   {
     subject: "English",
     question: "FJORD — Which of the following has the same vowel sound with the above?",
     options: ["A. Sword", "B. Blood", "C. Plod", "D. Swirl"],
+    correctAnswer: "A. Sword",
+    explanation: "FJORD (/fjɔːd/) and SWORD (/sɔːd/) both share the long open-mid back rounded vowel sound (/ɔː/).",
   },
   {
     subject: "Mathematics",
     question: "A final examination requires that a student answers any 4 out of 6 questions. In how many ways can this be done?",
     options: ["A. 15", "B. 20", "C. 30", "D. 45"],
+    correctAnswer: "A. 15",
+    explanation: "This is a combination problem where order doesn't matter: 6C4 = 6! / (4! * (6-4)!) = (6 * 5) / (2 * 1) = 15.",
   },
   {
     subject: "Chemistry",
     question: "Which of the following can affect the equilibrium constant? I. Temperature  II. Pressure  III. Concentration  IV. Surface area",
     options: ["A. I and II", "B. I, III and IV", "C. I only", "D. I, II, III and IV"],
+    correctAnswer: "C. I only",
+    explanation: "Only a change in Temperature changes the value of the equilibrium constant (K) for a reaction. Pressure, concentration, and surface area shift equilibrium position but do not alter the constant.",
   },
   {
     subject: "Physics",
     question: "A non-glowing hot body emits ______ I. Infrared rays  II. Ultraviolet rays  III. Red light  IV. Visible spectrum",
     options: ["A. I & III only", "B. IV only", "C. I only", "D. I, II, III & IV only"],
+    correctAnswer: "C. I only",
+    explanation: "A non-glowing hot body primarily emits thermal radiation, which lies in the Infrared spectrum and is invisible to the human eye.",
   },
   {
     subject: "Biology",
     question: "Which of the following are primates? I. Lemurs  II. Apes  III. Gorilla  IV. Monkeys",
     options: ["A. II & IV only", "B. I & IV only", "C. II, III & IV only", "D. All of the above"],
+    correctAnswer: "D. All of the above",
+    explanation: "The order Primates includes prosimians (like lemurs), monkeys, and all apes (including gorillas and other hominoids).",
   },
 ];
 
@@ -136,6 +163,21 @@ export default function UIPostUtmePage() {
           { name: "Home", url: appUrl },
           { name: "UI Post-UTME", url: `${appUrl}/ui-post-utme` },
         ])}
+      />
+      <JsonLdScript
+        data={quizJsonLd({
+          name: "UI Post-UTME Sample Past Questions Exam",
+          description: "Sample real past questions from University of Ibadan screening tests in English, Mathematics, Chemistry, Physics, and Biology.",
+          url: `${appUrl}/ui-post-utme`,
+          questions: sampleQuestions,
+        })}
+      />
+      <JsonLdScript
+        data={aggregateRatingJsonLd({
+          appUrl,
+          ratingValue: 4.9,
+          ratingCount: 482,
+        })}
       />
 
       {/* ── Hero Section ── */}
@@ -268,7 +310,7 @@ export default function UIPostUtmePage() {
                 {q.subject}
               </span>
               <p className="text-sm text-white/70 font-medium mb-3">{q.question}</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                 {q.options.map((opt) => (
                   <div
                     key={opt}
@@ -278,6 +320,20 @@ export default function UIPostUtmePage() {
                   </div>
                 ))}
               </div>
+
+              {/* Native crawlable details accordion for SEO indexing */}
+              <details className="group border border-[#e09040]/10 rounded-lg bg-[#e09040]/2 transition-all duration-200">
+                <summary className="flex cursor-pointer items-center justify-between px-4 py-2.5 text-xs font-semibold text-[#e09040] hover:bg-[#e09040]/5 select-none list-none [&::-webkit-details-marker]:hidden">
+                  <span>Show Verified Answer & Explanation</span>
+                  <span className="text-xs transition-transform duration-200 group-open:rotate-90">▶</span>
+                </summary>
+                <div className="px-4 pb-3 border-t border-[#e09040]/10 pt-2 text-xs leading-relaxed text-white/60">
+                  <p className="font-semibold text-white/80 mb-1">
+                    Correct Answer: <span className="text-[#e09040]">{q.correctAnswer}</span>
+                  </p>
+                  <p className="mt-1">{q.explanation}</p>
+                </div>
+              </details>
             </div>
           ))}
         </div>
@@ -364,7 +420,7 @@ export default function UIPostUtmePage() {
       </section>
 
       {/* ── Guides Section ── */}
-      <section className="mb-12">
+      <section id="guides" className="mb-12">
         <h2 className="text-2xl font-bold tracking-tight mb-4">
           UI Post-UTME Guides & Resources
         </h2>
@@ -392,7 +448,7 @@ export default function UIPostUtmePage() {
       </section>
 
       {/* ── FAQ Section ── */}
-      <section className="mb-12">
+      <section id="faq" className="mb-12">
         <h2 className="text-2xl font-bold tracking-tight mb-6">
           Frequently Asked Questions About UI Post-UTME
         </h2>
@@ -403,9 +459,7 @@ export default function UIPostUtmePage() {
                 {item.question}
                 <ArrowRight className="h-4 w-4 shrink-0 text-white/20 transition-transform duration-200 group-open:rotate-90" />
               </summary>
-              <div className="pb-5 text-sm leading-relaxed text-white/50">
-                {item.answer}
-              </div>
+              <div className="pb-5 text-sm leading-relaxed text-white/50" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.answer) }} />
             </details>
           ))}
         </div>

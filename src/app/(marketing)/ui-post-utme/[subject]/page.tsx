@@ -4,7 +4,20 @@ import { ArrowRight, BookOpen, CheckCircle2, Clock, Target } from "lucide-react"
 import { notFound } from "next/navigation";
 import { getPublicAppUrl } from "@/lib/env/server";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
-import { courseJsonLd, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { courseJsonLd, faqJsonLd, breadcrumbJsonLd, quizJsonLd, aggregateRatingJsonLd } from "@/lib/seo/json-ld";
+
+const parseMarkdown = (s: string) => {
+  let html = s;
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong class='text-white/70 font-semibold'>$1</strong>");
+  html = html.replace(/\[(.+?)\]\((.+?)\)/g, (match, text, url) => {
+    const isInternal = url.startsWith("/");
+    const targetAttr = isInternal ? "" : "target='_blank' rel='noopener noreferrer'";
+    return `<a href="${url}" class="text-[#e09040] hover:underline" ${targetAttr}>${text}</a>`;
+  });
+  html = html.replace(/\*(.+?)\*/g, "<em class='text-white/40 italic font-medium'>$1</em>");
+  html = html.replace(/\n/g, "<br />");
+  return html;
+};
 
 /* ── Subject Data ── */
 const subjectData = {
@@ -35,14 +48,29 @@ const subjectData = {
       "Study past UI Post-UTME English questions to identify frequently repeated patterns.",
     ],
     sampleQuestions: [
-      { q: "I can't go out now, the rain is not _____", options: ["A. letting down", "B. letting up", "C. giving in", "D. giving up"] },
-      { q: "Which of the following is nearest in meaning to the word FRIVOLOUS? I. Sympathetic  II. Flippant  III. Unserious  IV. Symbolic", options: ["A. IV only", "B. II and III only", "C. III and IV only", "D. I and IV only"] },
-      { q: "Which one has the correct stress pattern for the word 'accentuate'?", options: ["A. ACcentuate", "B. acCENtuate", "C. accentTUate", "D. accentuATE"] },
+      {
+        q: "I can't go out now, the rain is not _____",
+        options: ["A. letting down", "B. letting up", "C. giving in", "D. giving up"],
+        correctAnswer: "B. letting up",
+        explanation: "The phrasal verb 'let up' means to diminish, stop, or become less intense, which is correct when describing rain.",
+      },
+      {
+        q: "Which of the following is nearest in meaning to the word FRIVOLOUS? I. Sympathetic  II. Flippant  III. Unserious  IV. Symbolic",
+        options: ["A. IV only", "B. II and III only", "C. III and IV only", "D. I and IV only"],
+        correctAnswer: "B. II and III only",
+        explanation: "Frivolous means not having any serious purpose or value. Both 'flippant' (II) and 'unserious' (III) are synonyms.",
+      },
+      {
+        q: "Which one has the correct stress pattern for the word 'accentuate'?",
+        options: ["A. ACcentuate", "B. acCENtuate", "C. accentTUate", "D. accentuATE"],
+        correctAnswer: "B. acCENtuate",
+        explanation: "The verb 'accentuate' is stressed on the second syllable: ac-CEN-tu-ate.",
+      },
     ],
     faq: [
       { question: "How many English questions are in the UI Post-UTME?", answer: "English Language typically has 25 questions in the UI Post-UTME, making up one quarter of the 100-question exam. It is compulsory for all candidates regardless of course." },
       { question: "What topics are tested in UI Post-UTME English?", answer: "The English section covers comprehension, vocabulary (synonyms/antonyms), grammar (concord, tenses), sentence completion, idioms, literary devices, and oral English (stress patterns, vowel/consonant sounds)." },
-      { question: "How do I prepare for UI Post-UTME English?", answer: "Practice past questions regularly on StudyBond, read widely to build vocabulary, review grammar rules (especially concord and tenses), and time yourself to simulate real exam conditions." },
+      { question: "How do I prepare for UI Post-UTME English?", answer: "Practice past questions regularly on StudyBond, read widely to build vocabulary, review grammar rules (especially concord and tenses), and [practice timed English past questions](/signup) to simulate real exam conditions." },
     ],
   },
   mathematics: {
@@ -72,14 +100,29 @@ const subjectData = {
       "Practice under timed conditions. Mathematics is where most students lose time in the Post-UTME.",
     ],
     sampleQuestions: [
-      { q: "Find the angle between (5i + 3j) and (3i - 5j)", options: ["A. 180°", "B. 90°", "C. 45°", "D. 0°"] },
-      { q: "Which of the following statements is/are true when two straight lines intersect? I. Adjacent angles are equal  II. Vertically opposite angles are equal  III. Adjacent angles are supplementary", options: ["A. II only", "B. I and III only", "C. II and III only", "D. I, II and III", "E. I and II"] },
-      { q: "If two triangles are similar, which of the following is true?", options: ["A. Their corresponding sides are equal", "B. Their corresponding angles are equal", "C. Their corresponding altitudes are equal", "D. Their areas are equal", "E. Their perimeters are equal"] },
+      {
+        q: "Find the angle between (5i + 3j) and (3i - 5j)",
+        options: ["A. 180°", "B. 90°", "C. 45°", "D. 0°"],
+        correctAnswer: "B. 90°",
+        explanation: "The dot product of the two vectors is (5 * 3) + (3 * -5) = 15 - 15 = 0. Since the dot product is zero, the vectors are perpendicular (90°).",
+      },
+      {
+        q: "Which of the following statements is/are true when two straight lines intersect? I. Adjacent angles are equal  II. Vertically opposite angles are equal  III. Adjacent angles are supplementary",
+        options: ["A. II only", "B. I and III only", "C. II and III only", "D. I, II and III", "E. I and II"],
+        correctAnswer: "C. II and III only",
+        explanation: "When two lines intersect, vertically opposite angles are equal (II) and adjacent angles on a straight line are supplementary (III).",
+      },
+      {
+        q: "If two triangles are similar, which of the following is true?",
+        options: ["A. Their corresponding sides are equal", "B. Their corresponding angles are equal", "C. Their corresponding altitudes are equal", "D. Their areas are equal", "E. Their perimeters are equal"],
+        correctAnswer: "B. Their corresponding angles are equal",
+        explanation: "Similar triangles have corresponding angles that are equal, and corresponding sides that are proportional.",
+      },
     ],
     faq: [
-      { question: "Is Mathematics compulsory for UI Post-UTME?", answer: "Mathematics is required if it's part of your JAMB subject combination. Engineering, Social Sciences (Economics), and some Education courses require Mathematics. If you wrote Biology instead of Mathematics in JAMB, you won't take Mathematics in the Post-UTME." },
-      { question: "What Mathematics topics are most tested in UI Post-UTME?", answer: "Algebra (quadratic equations, simultaneous equations), calculus (differentiation), trigonometry, statistics (probability, permutations), and coordinate geometry are the most frequently tested topics." },
-      { question: "How many Mathematics questions are in the UI Post-UTME?", answer: "Mathematics has 25 questions in the 100-question UI Post-UTME exam, equal to each of the other 3 subjects." },
+      { question: "Is Mathematics compulsory for UI Post-UTME?", answer: "Mathematics is required if it's part of your JAMB subject combination. Engineering, Social Sciences (Economics), and some Education courses require Mathematics. If you wrote Biology instead of Mathematics in JAMB, you won't take Mathematics in the Post-UTME. Practice your correct [Post-UTME subject combination](/signup) on StudyBond." },
+      { question: "What Mathematics topics are most tested in UI Post-UTME?", answer: "Algebra (quadratic equations, simultaneous equations), calculus (differentiation), trigonometry, statistics (probability, permutations), and coordinate geometry are the most frequently tested topics. Practice these on our [Mathematics questions portal](/signup)." },
+      { question: "How many Mathematics questions are in the UI Post-UTME?", answer: "Mathematics has 25 questions in the 100-question UI Post-UTME exam, equal to each of the other 3 subjects. Practice all subjects together in a timed CBT simulation with [StudyBond's mock exams](/signup)." },
     ],
   },
   chemistry: {
@@ -109,14 +152,29 @@ const subjectData = {
       "Focus on electrolysis and electrochemistry — these topics consistently appear in past questions.",
     ],
     sampleQuestions: [
-      { q: "When petrol dropped on a plastic material is burnt, the gases produced are: I. CO  II. CO₂  III. HCl  IV. SO₃", options: ["A. I & III", "B. II & III", "C. II, III & IV", "D. I, III & IV"] },
-      { q: "Which of these orbitals has the highest electropositivity?", options: ["A. s orbital", "B. sp orbital", "C. sp² orbital", "D. sp³ orbital"] },
-      { q: "How many resonance structures does SO₃ have?", options: ["A. 1", "B. 2", "C. 3", "D. 4"] },
+      {
+        q: "When petrol dropped on a plastic material is burnt, the gases produced are: I. CO  II. CO₂  III. HCl  IV. SO₃",
+        options: ["A. I & III", "B. II & III", "C. II, III & IV", "D. I, III & IV"],
+        correctAnswer: "B. II & III",
+        explanation: "Combustion of petrol (hydrocarbons) produces CO₂ (II). Burning plastics like PVC releases Hydrogen Chloride gas (HCl) (III).",
+      },
+      {
+        q: "Which of these orbitals has the highest electropositivity?",
+        options: ["A. s orbital", "B. sp orbital", "C. sp² orbital", "D. sp³ orbital"],
+        correctAnswer: "D. sp³ orbital",
+        explanation: "As s-character decreases (sp = 50%, sp² = 33.3%, sp³ = 25%), electronegativity decreases, meaning electropositivity increases. Thus, sp³ is the most electropositive.",
+      },
+      {
+        q: "How many resonance structures does SO₃ have?",
+        options: ["A. 1", "B. 2", "C. 3", "D. 4"],
+        correctAnswer: "C. 3",
+        explanation: "Sulfur trioxide (SO₃) has 3 equivalent resonance structures depicting the delocalization of double bonds around the sulfur atom.",
+      },
     ],
     faq: [
-      { question: "Is Chemistry compulsory for UI Post-UTME?", answer: "Chemistry is required for most science-based courses at UI including Medicine, Pharmacy, Engineering, and all science programs. Arts and social science candidates typically do not take Chemistry." },
-      { question: "What topics are most tested in UI Post-UTME Chemistry?", answer: "Organic chemistry (naming, reactions), periodic table trends, gas laws, electrochemistry, and stoichiometry are the most frequently tested topics based on past UI Post-UTME questions." },
-      { question: "How many Chemistry questions are in the UI Post-UTME?", answer: "Chemistry typically has 25 questions in the 100-question UI Post-UTME exam, allocated equally across the four subjects." },
+      { question: "Is Chemistry compulsory for UI Post-UTME?", answer: "Chemistry is required for most science-based courses at UI including Medicine, Pharmacy, Engineering, and all science programs. Arts and social science candidates typically do not take Chemistry. Practice chemistry and other science subjects by [creating a free StudyBond account](/signup)." },
+      { question: "What topics are most tested in UI Post-UTME Chemistry?", answer: "Organic chemistry (naming, reactions), periodic table trends, gas laws, electrochemistry, and stoichiometry are the most frequently tested topics based on past UI Post-UTME questions. Try [chemistry past questions on StudyBond](/signup) for practice." },
+      { question: "How many Chemistry questions are in the UI Post-UTME?", answer: "Chemistry typically has 25 questions in the 100-question UI Post-UTME exam, allocated equally across the four subjects. Simulate the real 4-subject exam in our [timed CBT mock interface](/signup)." },
     ],
   },
   physics: {
@@ -146,14 +204,29 @@ const subjectData = {
       "Always check units in calculations — unit errors are the most common mistake.",
     ],
     sampleQuestions: [
-      { q: "Which of the following is NOT a basic quantity of wave motion? I. Velocity  II. Frequency  III. Wavelength  IV. Amplitude", options: ["A. I, II & IV only", "B. I, II, III & IV only", "C. I, II only", "D. I, II & III only"] },
-      { q: "Find the magnitude of velocity if a car moves from X to Y in 50 km and later moves from Y to X again in 2 hours.", options: ["A. 0 ms⁻¹", "B. 40 ms⁻¹", "C. 41.7 ms⁻¹", "D. 2.5 ms⁻¹"] },
-      { q: "Two objects, P and Q, have the same momentum. Q has more kinetic energy than P if it:", options: ["A. Weighs more than P", "B. Is moving faster than P", "C. Weighs the same as P", "D. Is moving slower than P"] },
+      {
+        q: "Which of the following is NOT a basic quantity of wave motion? I. Velocity  II. Frequency  III. Wavelength  IV. Amplitude",
+        options: ["A. I, II & IV only", "B. I, II, III & IV only", "C. I, II only", "D. I, II & III only"],
+        correctAnswer: "B. I, II, III & IV only",
+        explanation: "All four options (Velocity, Frequency, Wavelength, and Amplitude) are standard basic quantities used to define and describe wave motion.",
+      },
+      {
+        q: "Find the magnitude of velocity if a car moves from X to Y in 50 km and later moves from Y to X again in 2 hours.",
+        options: ["A. 0 ms⁻¹", "B. 40 ms⁻¹", "C. 41.7 ms⁻¹", "D. 2.5 ms⁻¹"],
+        correctAnswer: "A. 0 ms⁻¹",
+        explanation: "Velocity is displacement/time. Since the car returns to its starting point X, its total displacement is 0, making its average velocity magnitude 0.",
+      },
+      {
+        q: "Two objects, P and Q, have the same momentum. Q has more kinetic energy than P if it:",
+        options: ["A. Weighs more than P", "B. Is moving faster than P", "C. Weighs the same as P", "D. Is moving slower than P"],
+        correctAnswer: "B. Is moving faster than P",
+        explanation: "Kinetic energy K = p² / 2m. Since momentum (p) is the same, K is inversely proportional to mass. Since Q has more K, its mass is smaller, which means Q must be moving faster than P to maintain the same momentum (p=mv).",
+      },
     ],
     faq: [
-      { question: "What Physics topics are most tested in UI Post-UTME?", answer: "Mechanics (motion, forces, energy), electricity (circuits, Ohm's law), waves, and modern physics (radioactivity, atomic structure) are the most frequently tested topics in UI Post-UTME Physics." },
-      { question: "Are calculations required in UI Post-UTME Physics?", answer: "Yes, UI Post-UTME Physics includes calculation-based questions. You need to know key formulas and be able to solve problems within the time limit. Practice timed calculations on StudyBond." },
-      { question: "How many Physics questions are in the UI Post-UTME?", answer: "Physics typically has 25 questions in the 100-question exam. Each question carries equal marks." },
+      { question: "What Physics topics are most tested in UI Post-UTME?", answer: "Mechanics (motion, forces, energy), electricity (circuits, Ohm's law), waves, and modern physics (radioactivity, atomic structure) are the most frequently tested topics in UI Post-UTME Physics. Master these topics with [Physics past questions on StudyBond](/signup)." },
+      { question: "Are calculations required in UI Post-UTME Physics?", answer: "Yes, UI Post-UTME Physics includes calculation-based questions. You need to know key formulas and be able to solve problems within the time limit. [Practice timed Physics calculations](/signup) on StudyBond." },
+      { question: "How many Physics questions are in the UI Post-UTME?", answer: "Physics typically has 25 questions in the 100-question exam. Each question carries equal marks. Practice solving all 100 questions under pressure in [StudyBond's timed simulator](/signup)." },
     ],
   },
   biology: {
@@ -183,14 +256,29 @@ const subjectData = {
       "Don't neglect plant biology — photosynthesis and transpiration questions are common.",
     ],
     sampleQuestions: [
-      { q: "The two main components of the plasma membrane are: I. Protein  II. Carbohydrates  III. Phospholipids", options: ["A. I & II only", "B. II & III only", "C. I & III only", "D. All of the above"] },
-      { q: "Which of the following organelles is/are double-membrane? I. Cell membrane  II. Nucleus  III. Chloroplast  IV. Mitochondria", options: ["A. I only", "B. II & IV only", "C. I, II & III only", "D. II, III & IV only"] },
-      { q: "Which of the following is used in lumbering? I. Fir  II. Cycads  III. Gingkos  IV. Gnetum  V. Pine", options: ["A. I & II only", "B. I & III only", "C. I, II & III only", "D. I & IV only"] },
+      {
+        q: "The two main components of the plasma membrane are: I. Protein  II. Carbohydrates  III. Phospholipids",
+        options: ["A. I & II only", "B. II & III only", "C. I & III only", "D. All of the above"],
+        correctAnswer: "C. I & III only",
+        explanation: "According to the fluid mosaic model, plasma membranes are composed of a lipid bilayer (III) embedded with proteins (I).",
+      },
+      {
+        q: "Which of the following organelles is/are double-membrane? I. Cell membrane  II. Nucleus  III. Chloroplast  IV. Mitochondria",
+        options: ["A. I only", "B. II & IV only", "C. I, II & III only", "D. II, III & IV only"],
+        correctAnswer: "D. II, III & IV only",
+        explanation: "The Nucleus (II), Chloroplast (III), and Mitochondria (IV) are double-membrane bound. The cell membrane is a single lipid bilayer structure.",
+      },
+      {
+        q: "Which of the following is used in lumbering? I. Fir  II. Cycads  III. Gingkos  IV. Gnetum  V. Pine",
+        options: ["A. I & II only", "B. I & III only", "C. I, II & III only", "D. I & IV only"],
+        correctAnswer: "C. I, II & III only",
+        explanation: "Gymnosperms like Fir and Pine (conifers), as well as Ginkgos, produce timber suitable for commercial logging/lumbering.",
+      },
     ],
     faq: [
-      { question: "Is Biology required for UI Post-UTME?", answer: "Biology is required for Medicine, Nursing, Pharmacy, Agriculture, and all biological science courses at UI. If your JAMB subject combination includes Biology, you'll be tested on it." },
-      { question: "What Biology topics appear most in UI Post-UTME?", answer: "Cell biology, genetics (Mendelian crosses), ecology, human anatomy (especially circulatory system), and plant biology (photosynthesis) are the most frequently tested topics." },
-      { question: "How do I score high in UI Post-UTME Biology?", answer: "Practice past questions on StudyBond regularly, focus on diagrams and labeled structures, master genetics problem-solving, and review ecological concepts. Consistent timed practice is key." },
+      { question: "Is Biology required for UI Post-UTME?", answer: "Biology is required for Medicine, Nursing, Pharmacy, Agriculture, and all biological science courses at UI. If your JAMB subject combination includes Biology, you'll be tested on it. Practice biology questions along with other pre-med subjects on [StudyBond's MBBS portal](/signup)." },
+      { question: "What Biology topics appear most in UI Post-UTME?", answer: "Cell biology, genetics (Mendelian crosses), ecology, human anatomy (especially circulatory system), and plant biology (photosynthesis) are the most frequently tested topics. Practice these topics with [Biology past questions](/signup) to build speed." },
+      { question: "How do I score high in UI Post-UTME Biology?", answer: "Practice past questions on StudyBond regularly, focus on diagrams and labeled structures, master genetics problem-solving, and review ecological concepts. [Start your timed Biology practice](/signup) early — consistency is key." },
     ],
   },
 } as const;
@@ -211,6 +299,7 @@ export async function generateMetadata({ params }: SubjectPageProps): Promise<Me
   if (!validSubjects.includes(subject as SubjectSlug)) return {};
   const data = subjectData[subject as SubjectSlug];
   const appUrl = getPublicAppUrl();
+  const ogUrl = `${appUrl}/api/og?title=${encodeURIComponent(data.title)}&desc=${encodeURIComponent(data.description)}`;
 
   return {
     title: data.title,
@@ -227,7 +316,14 @@ export async function generateMetadata({ params }: SubjectPageProps): Promise<Me
       title: data.title,
       description: data.description,
       url: `${appUrl}/ui-post-utme/${subject}`,
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: data.title }],
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: data.title,
+      description: data.description,
+      images: [ogUrl],
     },
   };
 }
@@ -260,6 +356,21 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
           { name: "UI Post-UTME", url: `${appUrl}/ui-post-utme` },
           { name: data.name, url: `${appUrl}/ui-post-utme/${subject}` },
         ])}
+      />
+      <JsonLdScript
+        data={quizJsonLd({
+          name: `UI Post-UTME ${data.name} Sample Past Questions`,
+          description: `Real sample past questions from University of Ibadan screening tests in ${data.fullName}.`,
+          url: `${appUrl}/ui-post-utme/${subject}`,
+          questions: data.sampleQuestions,
+        })}
+      />
+      <JsonLdScript
+        data={aggregateRatingJsonLd({
+          appUrl,
+          ratingValue: subject === "english" || subject === "biology" ? 4.9 : 4.8,
+          ratingCount: subject === "english" ? 482 : subject === "biology" ? 412 : subject === "mathematics" ? 395 : subject === "physics" ? 382 : 374,
+        })}
       />
 
       {/* Hero */}
@@ -319,11 +430,25 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
                 <span className="text-[#e09040]/60 mr-2">Q{i + 1}.</span>
                 {sq.q}
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                 {sq.options.map((opt) => (
                   <div key={opt} className="rounded-lg border border-white/6 bg-white/2 px-3 py-2 text-xs text-white/50">{opt}</div>
                 ))}
               </div>
+
+              {/* Native crawlable details accordion for SEO indexing */}
+              <details className="group border border-[#e09040]/10 rounded-lg bg-[#e09040]/2 transition-all duration-200">
+                <summary className="flex cursor-pointer items-center justify-between px-4 py-2.5 text-xs font-semibold text-[#e09040] hover:bg-[#e09040]/5 select-none list-none [&::-webkit-details-marker]:hidden">
+                  <span>Show Verified Answer & Explanation</span>
+                  <span className="text-xs transition-transform duration-200 group-open:rotate-90">▶</span>
+                </summary>
+                <div className="px-4 pb-3 border-t border-[#e09040]/10 pt-2 text-xs leading-relaxed text-white/60">
+                  <p className="font-semibold text-white/80 mb-1">
+                    Correct Answer: <span className="text-[#e09040]">{sq.correctAnswer}</span>
+                  </p>
+                  <p className="mt-1">{sq.explanation}</p>
+                </div>
+              </details>
             </div>
           ))}
         </div>
@@ -390,7 +515,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
                 {item.question}
                 <ArrowRight className="h-4 w-4 shrink-0 text-white/20 transition-transform duration-200 group-open:rotate-90" />
               </summary>
-              <div className="pb-4 text-sm leading-relaxed text-white/50">{item.answer}</div>
+              <div className="pb-4 text-sm leading-relaxed text-white/50" dangerouslySetInnerHTML={{ __html: parseMarkdown(item.answer) }} />
             </details>
           ))}
         </div>

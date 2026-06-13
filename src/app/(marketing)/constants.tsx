@@ -23,11 +23,11 @@ export const features = [
 ];
 
 export const faq = [
-  { question: "What is StudyBond?", answer: "StudyBond is a focused exam preparation platform for Nigerian students preparing for Post-UTME exams. We start with UI and expanding soon." },
-  { question: "Is it really free to start?", answer: "Yes. Every student gets a free full UI Post-UTME exam. No credit card, no trial period. Premium unlocks subject practice, more exams, and duels." },
-  { question: "Does it simulate real exam conditions?", answer: "Absolutely — 100 questions, 90 minutes, just like the real thing. Sprint sessions also available." },
-  { question: "What subjects are covered?", answer: "All four UI Post-UTME subjects. Practice together or focus on individual subjects (premium)." },
-  { question: "Will you support other universities?", answer: "Yes! OAU, UNILAG, and others are coming soon — each with their own question banks." },
+  { question: "What is StudyBond?", answer: "StudyBond is Nigeria's #1 exam preparation platform for students preparing for Post-UTME exams. Practice with [real UI Post-UTME past questions](/ui-post-utme) in a timed CBT simulation to score high." },
+  { question: "Is it really free to start?", answer: "Yes. Every student gets a free full UI Post-UTME exam. No credit card, no trial period. [Create a free account](/signup) to take your first full exam today. Premium unlocks subject practice, more exams, and duels." },
+  { question: "Does it simulate real exam conditions?", answer: "Absolutely — 100 questions, 90 minutes, just like the real exam. [Try our timed CBT exam simulation](/signup) now to practice under time pressure." },
+  { question: "What subjects are covered?", answer: "All four UI Post-UTME subjects: English Language, Chemistry, Physics, and Biology. [Select your subject combination](/signup) to start practicing." },
+  { question: "Will you support other universities?", answer: "Yes! OAU, UNILAG, and others are coming soon — each with their own question banks. Sign up to [start practicing UI past questions](/signup) in the meantime." },
 ];
 
 export const pricingFree = [
@@ -50,16 +50,16 @@ export const pricingPremium = [
 
 export const footerLinks = {
   product: [
-    { label: "Features", href: "#" },
-    { label: "Pricing", href: "#" },
-    { label: "How it works", href: "#" },
+    { label: "Features", href: "/#features" },
+    { label: "Pricing", href: "/#pricing" },
+    { label: "How it works", href: "/#how-it-works" },
     { label: "For schools/tutorials", href: "#" },
   ],
   learn: [
-    { label: "Blog", href: "#" },
-    { label: "Resources", href: "#" },
-    { label: "Guides", href: "#" },
-    { label: "FAQ", href: "#" },
+    { label: "Blog", href: "/ui-post-utme#guides" },
+    { label: "Resources", href: "/ui-post-utme" },
+    { label: "Guides", href: "/ui-post-utme#guides" },
+    { label: "FAQ", href: "/#faq" },
   ],
   company: [
     { label: "About us", href: "#" },

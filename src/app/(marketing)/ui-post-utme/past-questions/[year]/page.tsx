@@ -7,14 +7,34 @@ import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/json-ld";
 
 /* ── Valid years ── */
-const validYears = [2019, 2020, 2021, 2022, 2023, 2024, 2025] as const;
+const validYears = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026] as const;
 type ValidYear = (typeof validYears)[number];
 
-const currentYear = 2025;
+const currentYear = 2026;
 
 /* ── Year-specific content ── */
 function getYearContent(year: number) {
   const isCurrent = year >= currentYear;
+  if (year === 2026) {
+    return {
+      intro: `The University of Ibadan (UI) Post-UTME 2026/2027 registration form is not yet officially out. Prospective students are advised to monitor the official UI admissions portal (admissions.ui.edu.ng) for registration dates. In the meantime, the single best way to prepare is to practice with real, verified UI Post-UTME past questions from previous years. StudyBond's exact CBT simulation (100 questions, 90 minutes) is designed to help you score high and secure admission.`,
+      faq: [
+        {
+          question: "Is the UI Post-UTME 2026 registration form out?",
+          answer: "No, the University of Ibadan has not yet released the Post-UTME form for the 2026/2027 academic session. Registration dates are typically announced between June and August. Avoid third-party portals and only register on admissions.ui.edu.ng when it opens.",
+        },
+        {
+          question: "How can I prepare for the UI Post-UTME 2026?",
+          answer: "The best preparation strategy is practicing with real past questions in timed CBT format. StudyBond offers verified past questions from 2019 to 2025. Start practicing early on StudyBond to build speed and accuracy.",
+        },
+        {
+          question: "What is the cut-off mark for UI Post-UTME 2026?",
+          answer: "The official cut-off marks for the 2026/2027 session will be determined after the screening exams. However, competitive courses like Medicine and Law typically require aggregate scores above 70-78. Review our department-specific cut-off marks guide to set your target score.",
+        },
+      ],
+    };
+  }
+
   return {
     intro: isCurrent
       ? `The University of Ibadan Post-UTME ${year} screening exam is ${year === currentYear ? "expected later this year" : "upcoming"}. Start preparing now with real past questions from previous years on StudyBond. Our CBT simulation mirrors the exact format — 100 questions, 90 minutes, 4 subjects. Students who practice consistently on StudyBond score significantly higher.`
@@ -50,9 +70,13 @@ export async function generateMetadata({ params }: YearPageProps): Promise<Metad
   if (!validYears.includes(year as ValidYear)) return {};
 
   const appUrl = getPublicAppUrl();
+  const title = `UI Post-UTME ${year} Past Questions`;
+  const description = `Practice with real University of Ibadan Post-UTME ${year} past questions on StudyBond. Free timed CBT simulation with 100 questions in 90 minutes. English, Chemistry, Physics, Biology.`;
+  const ogUrl = `${appUrl}/api/og?title=${encodeURIComponent(title)}&desc=${encodeURIComponent(description)}`;
+
   return {
-    title: `UI Post-UTME ${year} Past Questions`,
-    description: `Practice with real University of Ibadan Post-UTME ${year} past questions on StudyBond. Free timed CBT simulation with 100 questions in 90 minutes. English, Chemistry, Physics, Biology.`,
+    title,
+    description,
     alternates: { canonical: `${appUrl}/ui-post-utme/past-questions/${year}` },
     keywords: [
       `UI post utme ${year}`,
@@ -61,9 +85,16 @@ export async function generateMetadata({ params }: YearPageProps): Promise<Metad
       `UI past questions ${year}`,
     ],
     openGraph: {
-      title: `UI Post-UTME ${year} Past Questions — StudyBond`,
+      title: `${title} — StudyBond`,
       description: `Real UI Post-UTME ${year} past questions in CBT format. Practice free on StudyBond.`,
       url: `${appUrl}/ui-post-utme/past-questions/${year}`,
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} — StudyBond`,
+      description: `Real UI Post-UTME ${year} past questions in CBT format. Practice free on StudyBond.`,
+      images: [ogUrl],
     },
   };
 }

@@ -7,10 +7,12 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const navLinks = [
-  { name: "Features", href: "#features" },
-  { name: "Leaderboard", href: "#leaderboard" },
-  { name: "Pricing", href: "#pricing" },
-  { name: "FAQ", href: "#faq" },
+  { name: "Features", href: "/#features" },
+  { name: "Leaderboard", href: "/#leaderboard" },
+  { name: "Pricing", href: "/#pricing" },
+  { name: "FAQ", href: "/#faq" },
+  { name: "UI Post-UTME", href: "/ui-post-utme" },
+  { name: "Blog", href: "/blog" },
 ];
 
 export function MarketingNavbar() {
