@@ -12,7 +12,7 @@ export default function MarketingLayout({
       <MarketingNavbar />
 
       {/* Main Content Area */}
-      <div className="flex-grow pt-16 md:pt-20">
+      <div className="flex-grow pt-24 md:pt-28">
         {children}
       </div>
 

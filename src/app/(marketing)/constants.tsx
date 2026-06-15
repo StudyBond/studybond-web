@@ -23,6 +23,7 @@ export const features = [
 ];
 
 export const faq = [
+  { question: "Is the UI Post-UTME 2026 form officially out?", answer: "Yes! The University of Ibadan (UI) Post-UTME 2026/2027 form is officially out. Registration opens on Monday, June 22, 2026, and closes on Sunday, July 19, 2026. The CBT exams run from Monday, July 27 to Wednesday, July 29, 2026. Read our full [UI Post-UTME 2026 registration guide](/blog/ui-post-utme-registration) for details." },
   { question: "What is StudyBond?", answer: "StudyBond is Nigeria's #1 exam preparation platform for students preparing for Post-UTME exams. Practice with [real UI Post-UTME past questions](/ui-post-utme) in a timed CBT simulation to score high." },
   { question: "Is it really free to start?", answer: "Yes. Every student gets a free full UI Post-UTME exam. No credit card, no trial period. [Create a free account](/signup) to take your first full exam today. Premium unlocks subject practice, more exams, and duels." },
   { question: "Does it simulate real exam conditions?", answer: "Absolutely — 100 questions, 90 minutes, just like the real exam. [Try our timed CBT exam simulation](/signup) now to practice under time pressure." },

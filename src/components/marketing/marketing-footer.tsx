@@ -165,13 +165,7 @@ export function MarketingFooter() {
               <p className="text-xs text-white/25">
                 &copy; {new Date().getFullYear()} StudyBond. Built for serious students. All rights reserved.
               </p>
-              <div className="flex items-center gap-4 text-xs text-white/20">
-                <span>Made with 🔥 in Nigeria</span>
-                <div className="h-3 w-px bg-white/10" />
-                <a href="#" className="text-white/25 hover:text-[#e09040] transition-colors">
-                  Status page
-                </a>
-              </div>
+              
             </div>
           </div>
         </div>

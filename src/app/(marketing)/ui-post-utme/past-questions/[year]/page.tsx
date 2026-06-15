@@ -17,19 +17,19 @@ function getYearContent(year: number) {
   const isCurrent = year >= currentYear;
   if (year === 2026) {
     return {
-      intro: `The University of Ibadan (UI) Post-UTME 2026/2027 registration form is not yet officially out. Prospective students are advised to monitor the official UI admissions portal (admissions.ui.edu.ng) for registration dates. In the meantime, the single best way to prepare is to practice with real, verified UI Post-UTME past questions from previous years. StudyBond's exact CBT simulation (100 questions, 90 minutes) is designed to help you score high and secure admission.`,
+      intro: `The University of Ibadan (UI) Post-UTME 2026/2027 registration form is officially OUT! The admissions portal opens on Monday, 22 June 2026 and closes on Sunday, 19 July 2026. The CBT screening exams will take place from Monday, 27 July 2026 to Wednesday, 29 July, 2026. UI Registrar G. O. Saliu has stated there will be no extension of the registration period. Start preparing immediately by practicing with real UI past questions. StudyBond's exact CBT simulation (100 questions, 90 minutes) is designed to help you score high and secure admission.`,
       faq: [
         {
           question: "Is the UI Post-UTME 2026 registration form out?",
-          answer: "No, the University of Ibadan has not yet released the Post-UTME form for the 2026/2027 academic session. Registration dates are typically announced between June and August. Avoid third-party portals and only register on admissions.ui.edu.ng when it opens.",
+          answer: "Yes! The University of Ibadan has officially released the Post-UTME form for the 2026/2027 academic session. Registration starts Monday, June 22, 2026, and closes Sunday, July 19, 2026. Register only on admissions.ui.edu.ng before the deadline.",
         },
         {
-          question: "How can I prepare for the UI Post-UTME 2026?",
-          answer: "The best preparation strategy is practicing with real past questions in timed CBT format. StudyBond offers verified past questions from 2019 to 2025. Start practicing early on StudyBond to build speed and accuracy.",
+          question: "When is the UI Post-UTME 2026 exam date?",
+          answer: "The computer-based (CBT) screening exam is scheduled to run from Monday, July 27, 2026, to Wednesday, July 29, 2026. Start practicing now with [StudyBond's timed exams](/signup) to build speed and accuracy.",
         },
         {
-          question: "What is the cut-off mark for UI Post-UTME 2026?",
-          answer: "The official cut-off marks for the 2026/2027 session will be determined after the screening exams. However, competitive courses like Medicine and Law typically require aggregate scores above 70-78. Review our department-specific cut-off marks guide to set your target score.",
+          question: "What is the registration deadline for UI Post-UTME 2026?",
+          answer: "The registration portal closes on Sunday, July 19, 2026. The Registrar has confirmed that there will be no extensions to this registration period.",
         },
       ],
     };
@@ -83,6 +83,17 @@ export async function generateMetadata({ params }: YearPageProps): Promise<Metad
       `UI post utme ${year} past questions`,
       `university of ibadan post utme ${year}`,
       `UI past questions ${year}`,
+      ...(year === 2026 ? [
+        "ui 2026 post utme date",
+        "ui post utme 2026 date",
+        "ui post utme exam date 2026",
+        "is ui post utme form out 2026",
+        "ui post utme 2026 registration date",
+        "ui post utme registration deadline 2026",
+        "ui post utme registration portal 2026",
+        "university of ibadan post utme 2026/2027 form",
+        "ui post utme form 2026",
+      ] : []),
     ],
     openGraph: {
       title: `${title} — StudyBond`,
@@ -160,6 +171,41 @@ export default async function YearPage({ params }: YearPageProps) {
           </Link>
         </div>
       </header>
+
+      {/* 2026 Official Schedule Info Box */}
+      {year === 2026 && (
+        <section className="mb-10 rounded-2xl border border-[#e09040]/30 bg-[#e09040]/5 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
+            <h2 className="text-lg font-bold text-white/95">Official UI Post-UTME 2026/2027 Timeline & Schedule</h2>
+          </div>
+          <p className="text-sm text-white/50 leading-relaxed mb-4">
+            The University of Ibadan has officially announced the registration schedule and exam dates for the 2026/2027 academic session, signed by Registrar <strong>G. O. Saliu</strong>:
+          </p>
+          <div className="space-y-3">
+            <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
+              <span className="text-white/40">Registration Opens</span>
+              <span className="font-semibold text-white/80">Monday, 22 June 2026</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
+              <span className="text-white/40">Registration Closes (Deadline)</span>
+              <span className="font-bold text-[#e09040]">Sunday, 19 July 2026 (No Extension)</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
+              <span className="text-white/40">Post-UTME Exam Date (CBT)</span>
+              <span className="font-semibold text-white/80">Monday, 27 July – Wednesday, 29 July 2026</span>
+            </div>
+            <div className="flex justify-between pb-2 text-sm">
+              <span className="text-white/40">Registration Portal</span>
+              <span className="font-semibold text-white/80">
+                <a href="https://admissions.ui.edu.ng" target="_blank" rel="noopener noreferrer" className="text-[#e09040] hover:underline font-semibold">
+                  admissions.ui.edu.ng
+                </a>
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* What to Expect */}
       <section className="mb-10">

@@ -39,6 +39,15 @@ export async function generateMetadata(): Promise<Metadata> {
       "how to pass UI post utme",
       "best site for UI post utme",
       "UI post utme CBT practice",
+      "ui 2026 post utme date",
+      "ui post utme 2026 date",
+      "ui post utme exam date 2026",
+      "is ui post utme form out 2026",
+      "ui post utme 2026 registration date",
+      "ui post utme registration deadline 2026",
+      "ui post utme registration portal 2026",
+      "university of ibadan post utme 2026/2027 form",
+      "ui post utme form 2026",
     ],
     openGraph: {
       title: "UI Post-UTME Past Questions & CBT Practice — StudyBond",
@@ -93,7 +102,7 @@ const pillarFaq = [
   {
     question: "When is the UI Post-UTME 2026/2027?",
     answer:
-      "The University of Ibadan typically announces Post-UTME dates between June and August each year. For the 2025/2026 session, registration ran from July 21 to August 17, 2025, with exams held August 25-27. The 2026/2027 dates will be announced on the official UI admissions portal (admissions.ui.edu.ng). [Explore our 2026 registration guide](/blog/ui-post-utme-registration) for step-by-step updates. Start practicing now so you're ready.",
+      "The University of Ibadan has officially released the Post-UTME screening form for the 2026/2027 academic session. Registration opens on Monday, June 22, 2026, and closes on Sunday, July 19, 2026. The CBT screening examination will take place from Monday, July 27, 2026, to Wednesday, July 29, 2026. Candidates are advised to register early as there will be no extension. Read our comprehensive [UI Post-UTME 2026 registration guide](/blog/ui-post-utme-registration) for details.",
   },
   {
     question: "How is the UI Post-UTME aggregate score calculated?",
@@ -232,6 +241,36 @@ export default function UIPostUtmePage() {
           </div>
         ))}
       </div>
+
+      {/* ── UI Post-UTME 2026 Official Registration Dates & CBT Schedule ── */}
+      <section className="mb-12 rounded-2xl border border-[#e09040]/30 bg-[#e09040]/5 p-6 md:p-8">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white/95">
+            UI Post-UTME 2026 Registration Dates & CBT Exam Schedule
+          </h2>
+        </div>
+        <p className="text-sm md:text-base text-white/60 leading-relaxed mb-6">
+          The University of Ibadan has officially released the registration timeline and CBT screening dates for the <strong className="text-white/80">UI Post-UTME 2026/2027 admission exercise</strong>. Registrar <strong className="text-white/80">G. O. Saliu</strong> has explicitly stated there will be no extension of the registration period. Candidates are urged to register within the stipulated dates via the official portal <strong className="text-white/80">admissions.ui.edu.ng</strong>.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-white/5 bg-white/2 p-4">
+            <span className="text-xs text-white/40 block mb-1">Registration Portal Opens</span>
+            <span className="text-sm md:text-base font-semibold text-white/80">Monday, 22 June 2026</span>
+          </div>
+          <div className="rounded-xl border border-[#e09040]/20 bg-[#e09040]/5 p-4">
+            <span className="text-xs text-white/40 block mb-1">Registration Closes (Deadline)</span>
+            <span className="text-sm md:text-base font-bold text-[#e09040]">Sunday, 19 July 2026</span>
+          </div>
+          <div className="rounded-xl border border-white/5 bg-white/2 p-4">
+            <span className="text-xs text-white/40 block mb-1">Post-UTME CBT Exam Date</span>
+            <span className="text-sm md:text-base font-semibold text-white/80">Monday, 27 July – Wednesday, 29 July 2026</span>
+          </div>
+        </div>
+        <div className="mt-6 text-xs text-white/45">
+          * Admission aggregate is computed as (JAMB Score / 8) + (Post-UTME Score / 2). Prepare with real exam materials to meet your department&apos;s cut-off. Take a timed <Link href="/signup" className="text-[#e09040] hover:underline font-semibold">UI Post-UTME Mock CBT practice exam</Link> today.
+        </div>
+      </section>
 
       {/* ── What is the UI Post-UTME? ── */}
       <section className="mb-12">

@@ -69,6 +69,14 @@ export function MarketingNavbar() {
             : "border-b border-transparent bg-transparent"
         )}
       >
+        {/* Announcement Banner */}
+        <div className="bg-gradient-to-r from-[#e09040] via-[#f5c890] to-[#c06830] text-[#09090b] text-[11px] md:text-xs font-bold py-2 px-5 text-center flex items-center justify-center gap-2 relative z-50">
+          <span>⚡ UI Post-UTME 2026 Form is officially OUT! Registration runs June 22 to July 19.</span>
+          <a href="/blog/ui-post-utme-registration" className="underline hover:text-black/80 font-extrabold shrink-0">
+            Read Guide & Apply →
+          </a>
+        </div>
+
         <div className="mx-auto flex h-16 md:h-20 max-w-6xl items-center justify-between px-5">
           <div className="flex items-center gap-8">
             <a href="/" className="relative z-50">
