@@ -70,10 +70,12 @@ export function MarketingNavbar() {
         )}
       >
         {/* Announcement Banner */}
-        <div className="bg-gradient-to-r from-[#e09040] via-[#f5c890] to-[#c06830] text-[#09090b] text-[11px] md:text-xs font-bold py-2 px-5 text-center flex items-center justify-center gap-2 relative z-50">
-          <span>⚡ UI Post-UTME 2026 Form is officially OUT! Registration runs June 22 to July 19.</span>
+        <div className="bg-gradient-to-r from-[#e09040] via-[#f5c890] to-[#c06830] text-[#09090b] text-[10px] md:text-xs font-bold py-1.5 md:py-2 px-4 md:px-5 text-center flex items-center justify-center gap-1.5 md:gap-2 relative z-50 leading-tight">
+          <span className="hidden md:inline">⚡ UI Post-UTME 2026 Form is officially OUT! Registration runs June 22 to July 19.</span>
+          <span className="inline md:hidden">⚡ UI Post-UTME 2026 Form is OUT!</span>
           <a href="/blog/ui-post-utme-registration" className="underline hover:text-black/80 font-extrabold shrink-0">
-            Read Guide & Apply →
+            <span className="hidden md:inline">Read Guide & Apply →</span>
+            <span className="inline md:hidden">Read Guide →</span>
           </a>
         </div>
 
