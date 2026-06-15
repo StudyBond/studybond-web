@@ -4,6 +4,7 @@ import { AchievementRail } from "@/features/dashboard/components/achievement-rai
 import { AnalyticsPanel } from "@/features/dashboard/components/analytics-panel";
 import { CollaborationCard } from "@/features/dashboard/components/collaboration-card";
 import { CommandBar } from "@/features/dashboard/components/command-bar";
+import { ExamCountdown } from "@/features/dashboard/components/exam-countdown";
 import { ExamHistoryPanel } from "@/features/dashboard/components/exam-history-panel";
 import { RankPanel } from "@/features/dashboard/components/rank-panel";
 import { StatTile } from "@/features/dashboard/components/stat-tile";
@@ -190,6 +191,11 @@ export function PremiumDashboard({
         streak={streak}
         subscription={subscription}
       />
+
+      {/* ── Exam Countdown ── */}
+      <section className="sb-enter mt-6">
+        <ExamCountdown />
+      </section>
 
       {/* ── Study Insights (Elite exclusive) ── */}
       <section className="sb-enter mt-6 sb-stagger-1">

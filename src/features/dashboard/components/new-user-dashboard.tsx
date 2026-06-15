@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { Route } from "next";
 import { useState } from "react";
+import { ExamCountdown } from "@/features/dashboard/components/exam-countdown";
 
 type NewUserDashboardProps = {
   profile: UserProfile;
@@ -147,6 +148,11 @@ export function NewUserDashboard({
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ── Exam Countdown ── */}
+      <section className="sb-enter mt-6">
+        <ExamCountdown />
       </section>
 
       {/* ── How It Works — Journey Steps ── */}

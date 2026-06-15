@@ -1,6 +1,7 @@
 "use client";
 
 import { CommandBar } from "@/features/dashboard/components/command-bar";
+import { ExamCountdown } from "@/features/dashboard/components/exam-countdown";
 import { ExamHistoryPanel } from "@/features/dashboard/components/exam-history-panel";
 import { PremiumPreviewCard } from "@/features/dashboard/components/premium-preview-card";
 import { RankPanel } from "@/features/dashboard/components/rank-panel";
@@ -60,6 +61,11 @@ export function ExplorerDashboard({
     <>
       {/* ── Welcome Hero ── */}
       <CommandBar profile={profile} stats={stats} streak={streak} />
+
+      {/* ── Exam Countdown ── */}
+      <section className="sb-enter mt-6">
+        <ExamCountdown />
+      </section>
 
       {/* ── Core Stats — Bento Grid ── */}
       <section className="sb-enter mt-6 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 sb-stagger-1">
