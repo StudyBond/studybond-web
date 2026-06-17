@@ -91,7 +91,7 @@ function getGreetingPool(): string[] {
       "Keep the momentum from this morning",
       "Midday motivation loading…",
       "The afternoon shift belongs to the dedicated",
-      "In 4 months you'll thank yourself for this",
+      "In 2 months you'll thank yourself for this",
       "Today's afternoon is someone else's missed opportunity",
       "You're not just passing time — you're building your future",
       "That admission letter doesn't write itself — let's work",
