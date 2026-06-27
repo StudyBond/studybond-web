@@ -23,8 +23,10 @@ import type {
   Leaderboard,
 } from "@/lib/api/types";
 import { formatCompact, formatInteger, formatPercent } from "@/lib/utils/format";
-import { Zap, CheckCircle, Bookmark, TrendingUp, Crown, Brain, Sparkles, Clock } from "lucide-react";
+import { Zap, CheckCircle, Bookmark, TrendingUp, Crown, Brain, Sparkles, Clock, MessageCircle } from "lucide-react";
 import type { UseQueryResult } from "@tanstack/react-query";
+
+const PREMIUM_WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/HGHGmxBYOtzDwzOyrb6GVx?s=sh&p=a&ilr=1';
 
 interface PracticeTimeResult {
   value: string;
@@ -205,6 +207,38 @@ export function PremiumDashboard({
           examsQuery={examsQuery}
           rankQuery={rankQuery}
         />
+      </section>
+
+      {/* ── Premium Community Group ── */}
+      <section className="sb-enter mt-6 sb-stagger-1">
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-400/10 bg-gradient-to-r from-emerald-400/[0.03] to-transparent p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-400 shrink-0 shadow-[0_0_16px_rgba(52,211,153,0.1)]">
+              <MessageCircle className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <h3 className="text-xs font-bold text-white/70">Premium Community</h3>
+                <span className="text-[8px] font-bold uppercase tracking-widest text-emerald-400/50 bg-emerald-400/[0.06] px-1.5 py-0.5 rounded-md">
+                  Members Only
+                </span>
+              </div>
+              <p className="text-[12px] text-white/45 leading-relaxed mb-3">
+                Connect with other premium students in our private WhatsApp group. Brainstorm, share tips, and push each other forward.
+              </p>
+              <a
+                href={PREMIUM_WHATSAPP_GROUP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-400/10 text-emerald-400 text-[11px] font-semibold transition-all duration-200 hover:bg-emerald-400/15 hover:shadow-[0_0_12px_rgba(52,211,153,0.1)]"
+              >
+                <MessageCircle className="h-3 w-3" />
+                Join Group
+              </a>
+            </div>
+          </div>
+          <div className="pointer-events-none absolute -right-6 -bottom-6 h-20 w-20 rounded-full bg-emerald-400/[0.05] blur-[30px]" />
+        </div>
       </section>
 
       {/* ── Performance Bento Grid ── */}
