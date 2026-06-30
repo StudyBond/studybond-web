@@ -203,6 +203,7 @@ export type ExamSummary = {
   startedAt: string;
   completedAt: string | null;
   timeTakenSeconds: number | null;
+  collaborationSessionCode?: string | null;
 };
 
 // ─── Exam Session Types (for active exam-taking) ───

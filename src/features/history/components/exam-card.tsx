@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils/cn";
 import { Timer, ArrowRight, Target, Clock } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 import type { ExamSummary } from "@/lib/api/types";
 
 type ExamCardProps = {
@@ -46,9 +47,13 @@ export function ExamCard({ exam }: ExamCardProps) {
     return "group-hover:bg-red-400/[0.03]";
   }, [isAbandoned, exam.percentage]);
 
+  const resultHref = exam.collaborationSessionCode
+    ? (`/exams/${exam.id}/results?collab=${exam.collaborationSessionCode}` as Route)
+    : (`/exams/${exam.id}/results` as Route);
+
   return (
     <Link
-      href={`/exams/${exam.id}/results`}
+      href={resultHref}
       className={cn(
         "group relative block overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-300",
         "hover:-translate-y-1 hover:border-white/[0.15] hover:shadow-2xl",
