@@ -20,6 +20,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useCollaborationSession } from "@/features/collaboration/hooks/use-collaboration";
 import { DuelResultsPage } from "@/features/collaboration/components/duel-results-page";
+import { DuelWaitingLobby } from "@/features/collaboration/components/duel-waiting-lobby";
 
 export function ResultsPageClient({ examId }: { examId: number }) {
   const router = useRouter();
@@ -135,6 +136,30 @@ export function ResultsPageClient({ examId }: { examId: number }) {
 
   // ─── Duel Results View ───
   if (result.examType === "ONE_V_ONE_DUEL" && collabSession) {
+    const profile = critical.profile.data;
+    const me = profile
+      ? collabSession.participants.find((participant) => participant.userId === profile.id)
+      : undefined;
+    const opponent = profile
+      ? collabSession.participants.find((participant) => participant.userId !== profile.id)
+      : undefined;
+    const isDuelComplete = collabSession.status === "COMPLETED";
+
+    if (!isDuelComplete) {
+      return (
+        <LearnerShell profile={critical.profile.data}>
+          <DuelWaitingLobby
+            opponentName={opponent?.fullName ?? "Your opponent"}
+            opponentProgress={null}
+            opponentFinished={opponent?.participantState === "FINISHED"}
+            myScore={result.score}
+            myTotalQuestions={result.totalQuestions}
+            myTimeTaken={result.timeTakenSeconds}
+          />
+        </LearnerShell>
+      );
+    }
+
     return (
       <LearnerShell profile={critical.profile.data}>
         <div className="sb-print-watermark" />
