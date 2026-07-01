@@ -26,11 +26,17 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const collabCode = searchParams.get("collab");
-  
-  const critical = useDashboardCriticalData();
-  const { data: result, isLoading: isResultLoading, isError, error } = useExamDetail(examId);
 
-  const { data: collabData, isLoading: isCollabLoading } = useCollaborationSession(collabCode || "", !!collabCode);
+  const critical = useDashboardCriticalData();
+  const {
+    data: result,
+    isLoading: isResultLoading,
+    isError,
+    error,
+  } = useExamDetail(examId);
+
+  const { data: collabData, isLoading: isCollabLoading } =
+    useCollaborationSession(collabCode || "", !!collabCode);
   const collabSession = collabData?.session;
 
   // ─── Progressive review lockout ───
@@ -62,15 +68,21 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     if (nowLocked) {
       // Small delay so the user sees the toast before redirect
       if (isPermanentlyLocked) {
-        toast.error("Review access has been permanently revoked due to repeated violations.", {
-          duration: 5000,
-          icon: "🔒",
-        });
+        toast.error(
+          "Review access has been permanently revoked due to repeated violations.",
+          {
+            duration: 5000,
+            icon: "🔒",
+          },
+        );
       } else {
-        toast.error("Review access has been temporarily locked due to suspicious activity.", {
-          duration: 5000,
-          icon: "⚠️",
-        });
+        toast.error(
+          "Review access has been temporarily locked due to suspicious activity.",
+          {
+            duration: 5000,
+            icon: "⚠️",
+          },
+        );
       }
     } else if (isInLastChance) {
       toast.warning(
@@ -83,7 +95,13 @@ export function ResultsPageClient({ examId }: { examId: number }) {
         { duration: 3000, icon: "🛡️" },
       );
     }
-  }, [dismissViolation, recordViolation, isPermanentlyLocked, isInLastChance, violationsBeforeLockout]);
+  }, [
+    dismissViolation,
+    recordViolation,
+    isPermanentlyLocked,
+    isInLastChance,
+    violationsBeforeLockout,
+  ]);
 
   // ─── Loading ───
   if (critical.isLoading || isResultLoading || isCollabLoading) {
@@ -99,7 +117,9 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   if (critical.isError || !critical.profile.data) {
     return (
       <LearnerShell>
-        <div className="p-8 text-center text-red-400">Failed to load essential data.</div>
+        <div className="p-8 text-center text-red-400">
+          Failed to load essential data.
+        </div>
       </LearnerShell>
     );
   }
@@ -108,12 +128,15 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     return (
       <LearnerShell profile={critical.profile.data}>
         <div className="py-12">
-           <ErrorState 
-              title="Failed to load results." 
-              description={(error as Error)?.message || "The results for this exam session could not be found."} 
-              onAction={() => router.push("/dashboard")}
-              actionLabel="Return Home"
-           />
+          <ErrorState
+            title="Failed to load results."
+            description={
+              (error as Error)?.message ||
+              "The results for this exam session could not be found."
+            }
+            onAction={() => router.push("/dashboard")}
+            actionLabel="Return Home"
+          />
         </div>
       </LearnerShell>
     );
@@ -138,10 +161,14 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   if (result.examType === "ONE_V_ONE_DUEL" && collabSession) {
     const profile = critical.profile.data;
     const me = profile
-      ? collabSession.participants.find((participant) => participant.userId === profile.id)
+      ? collabSession.participants.find(
+          (participant) => participant.userId === profile.id,
+        )
       : undefined;
     const opponent = profile
-      ? collabSession.participants.find((participant) => participant.userId !== profile.id)
+      ? collabSession.participants.find(
+          (participant) => participant.userId !== profile.id,
+        )
       : undefined;
     const isDuelComplete = collabSession.status === "COMPLETED";
 
@@ -168,7 +195,11 @@ export function ResultsPageClient({ examId }: { examId: number }) {
           onDismiss={handleDismissViolation}
           mode="review"
         />
-        <DuelResultsPage result={result} collabSession={collabSession} myUserId={critical.profile.data.id} />
+        <DuelResultsPage
+          result={result}
+          collabSession={collabSession}
+          myUserId={critical.profile.data.id}
+        />
       </LearnerShell>
     );
   }
@@ -187,7 +218,6 @@ export function ResultsPageClient({ examId }: { examId: number }) {
       />
 
       <div className="mx-auto max-w-5xl px-4 py-8 md:py-12 pb-24 space-y-8 md:space-y-12 sb-exam-content">
-        
         {/* Restricted phase warning banner */}
         {isInLastChance && (
           <div className="flex items-center gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.04] px-5 py-3 animate-in fade-in slide-in-from-top-4 duration-500 z-10 relative">
@@ -195,22 +225,32 @@ export function ResultsPageClient({ examId }: { examId: number }) {
               🛡️
             </span>
             <p className="text-[11px] text-amber-400/70 font-medium leading-relaxed">
-              You're in a <span className="font-bold text-amber-400">restricted phase</span>.
-              Further screenshot attempts will lock your access to this review with escalating penalties.
+              You're in a{" "}
+              <span className="font-bold text-amber-400">restricted phase</span>
+              . Further screenshot attempts will lock your access to this review
+              with escalating penalties.
             </p>
           </div>
         )}
 
         {/* Top Actions */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-           <Button asChild variant="ghost" size="sm" href="/dashboard" className="-ml-2 text-white/50 hover:text-white">
-             <><ArrowLeft className="h-4 w-4" /> Back to Dashboard</>
-           </Button>
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            href="/dashboard"
+            className="-ml-2 text-white/50 hover:text-white"
+          >
+            <>
+              <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+            </>
+          </Button>
 
-           <div className="flex items-center gap-3">
-              <ShareResultCard result={result} />
-              <RetakeButton examId={examId} />
-           </div>
+          <div className="flex items-center gap-3">
+            <ShareResultCard result={result} />
+            <RetakeButton examId={examId} />
+          </div>
         </div>
 
         {/* Hero: Score & Summary */}
@@ -218,19 +258,16 @@ export function ResultsPageClient({ examId }: { examId: number }) {
 
         {/* Breakdown Row */}
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-           
-           {/* Detailed Review */}
-           <div className="w-full lg:flex-1 order-2 lg:order-1 min-w-0">
-             <AnswerReview result={result} />
-           </div>
+          {/* Detailed Review */}
+          <div className="w-full lg:flex-1 order-2 lg:order-1 min-w-0">
+            <AnswerReview result={result} />
+          </div>
 
-           {/* Sidebar: Subject breakdown */}
-           <div className="w-full lg:w-[300px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-24">
-              <SubjectBreakdown result={result} />
-           </div>
-           
+          {/* Sidebar: Subject breakdown */}
+          <div className="w-full lg:w-[300px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-24">
+            <SubjectBreakdown result={result} />
+          </div>
         </div>
-
       </div>
     </LearnerShell>
   );
