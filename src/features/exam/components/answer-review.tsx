@@ -88,7 +88,7 @@ function OptionView({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-xl border p-3 md:p-4 text-sm transition-colors",
+        "flex items-start gap-2.5 rounded-lg border p-3 text-sm transition-colors sm:gap-3 sm:rounded-xl md:p-4",
         styleClass,
       )}
     >
@@ -107,7 +107,7 @@ function OptionView({
       </span>
 
       {/* Content */}
-      <div className="flex-1 pt-0.5">
+      <div className="min-w-0 flex-1 pt-0.5">
         {text ? (
           <div className="mb-2 leading-relaxed">
             <MathMarkdown content={text} />
@@ -140,16 +140,16 @@ export function QuestionReviewItem({
   const options: ("A" | "B" | "C" | "D" | "E")[] = ["A", "B", "C", "D", "E"];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] transition-all duration-300">
+    <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] transition-all duration-300 sm:rounded-2xl">
       {/* Question Header (Always visible) */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-start gap-4 p-5 md:p-6 text-left hover:bg-white/[0.02] focus:outline-none"
+        className="flex w-full items-start gap-3 p-4 text-left hover:bg-white/[0.02] focus:outline-none sm:gap-4 sm:p-5 md:p-6"
       >
         {/* Status Indicator */}
         <div
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border sm:h-8 sm:w-8",
             q.isCorrect
               ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-400"
               : q.userAnswer
@@ -199,11 +199,11 @@ export function QuestionReviewItem({
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-white/[0.06] p-5 md:p-6 space-y-6">
+          <div className="space-y-4 border-t border-white/[0.06] p-3.5 sm:space-y-6 sm:p-5 md:p-6">
             {/* Full Question Text/Images if expanded */}
             <div className="space-y-4">
               {q.parentQuestionText && (
-                <div className="rounded-xl bg-white/[0.02] p-4 text-xs text-white/50 italic border-l-2 border-white/10 sb-protected">
+                <div className="rounded-xl bg-white/[0.02] p-3.5 text-xs text-white/50 italic border-l-2 border-white/10 sb-protected sm:p-4">
                   <MathMarkdown content={q.parentQuestionText} />
                 </div>
               )}
@@ -240,14 +240,14 @@ export function QuestionReviewItem({
 
             {/* Explanation / Notes */}
             {q.explanation && (
-              <div className="rounded-xl border border-[var(--sb-accent)]/20 bg-gradient-to-br from-[var(--sb-accent)]/10 to-transparent p-4 md:p-5 shadow-[0_0_15px_var(--sb-accent-glow)]">
+              <div className="rounded-lg border border-[var(--sb-accent)]/20 bg-gradient-to-br from-[var(--sb-accent)]/10 to-transparent p-3.5 shadow-[0_0_15px_var(--sb-accent-glow)] sm:rounded-xl sm:p-4 md:p-5">
                 <div className="mb-2 flex items-center gap-2 text-[var(--sb-accent)]">
                   <Lightbulb className="h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-widest">
                     Explanation
                   </span>
                 </div>
-                <div className="text-sm leading-relaxed text-white/70 sb-protected">
+                <div className="min-w-0 text-sm leading-relaxed text-white/70 sb-protected">
                   <MathMarkdown
                     content={q.explanation.text}
                     variant="explanation"
@@ -265,14 +265,14 @@ export function QuestionReviewItem({
 
             {/* Additional Notes (Expert/Pro Tip styling) */}
             {q.explanation?.additionalNotes && (
-              <div className="rounded-xl border border-blue-400/20 bg-gradient-to-br from-blue-400/10 to-transparent p-4 md:p-5 shadow-[0_0_15px_rgba(96,165,250,0.05)] mt-4">
+              <div className="mt-4 rounded-lg border border-blue-400/20 bg-gradient-to-br from-blue-400/10 to-transparent p-3.5 shadow-[0_0_15px_rgba(96,165,250,0.05)] sm:rounded-xl sm:p-4 md:p-5">
                 <div className="mb-2 flex items-center gap-2 text-blue-400">
                   <Info className="h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-widest">
                     Expert Note
                   </span>
                 </div>
-                <div className="text-sm leading-relaxed text-white/70 sb-protected">
+                <div className="min-w-0 text-sm leading-relaxed text-white/70 sb-protected">
                   <MathMarkdown content={q.explanation.additionalNotes} />
                 </div>
               </div>
@@ -320,7 +320,7 @@ export function AnswerReview({ result }: AnswerReviewProps) {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-5 sm:space-y-6">
       {/* Header controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
         <h3 className="text-lg font-bold text-white tracking-tight">

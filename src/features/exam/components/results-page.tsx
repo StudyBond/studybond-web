@@ -217,7 +217,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
         mode="review"
       />
 
-      <div className="mx-auto max-w-5xl px-4 py-8 md:py-12 pb-24 space-y-8 md:space-y-12 sb-exam-content">
+      <div className="mx-auto w-full max-w-5xl py-6 pb-24 md:py-12 space-y-7 md:space-y-12 sb-exam-content">
         {/* Restricted phase warning banner */}
         {isInLastChance && (
           <div className="flex items-center gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.04] px-5 py-3 animate-in fade-in slide-in-from-top-4 duration-500 z-10 relative">
@@ -257,7 +257,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
         <ScoreSummary result={result} />
 
         {/* Breakdown Row */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col gap-6 items-start lg:flex-row lg:gap-8">
           {/* Detailed Review */}
           <div className="w-full lg:flex-1 order-2 lg:order-1 min-w-0">
             <AnswerReview result={result} />

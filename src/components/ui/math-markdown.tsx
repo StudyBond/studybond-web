@@ -217,8 +217,8 @@ export const MathMarkdown = React.memo(function MathMarkdown({
           table: ({ children, ...props }) => {
             const { node, ...rest } = props as any;
             return (
-              <div className="overflow-x-auto mb-3 rounded-lg border border-white/10">
-                <table className="w-full text-sm border-collapse" {...rest}>{children}</table>
+              <div className="mb-3 max-w-full overflow-x-auto rounded-lg border border-white/10">
+                <table className="min-w-[34rem] border-collapse text-sm" {...rest}>{children}</table>
               </div>
             );
           },
@@ -236,11 +236,11 @@ export const MathMarkdown = React.memo(function MathMarkdown({
           },
           th: ({ children, ...props }) => {
             const { node, ...rest } = props as any;
-            return <th className="px-3 py-2 text-left font-semibold text-white/90" {...rest}>{children}</th>;
+            return <th className="px-3 py-2 text-left align-top font-semibold text-white/90" {...rest}>{children}</th>;
           },
           td: ({ children, ...props }) => {
             const { node, ...rest } = props as any;
-            return <td className="px-3 py-2 text-white/70" {...rest}>{children}</td>;
+            return <td className="px-3 py-2 align-top text-white/70" {...rest}>{children}</td>;
           },
           // GFM strikethrough
           del: ({ children, ...props }) => {
