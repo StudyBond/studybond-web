@@ -107,10 +107,6 @@ export const MathMarkdown = React.memo(function MathMarkdown({
   className,
   variant = 'default',
 }: MathMarkdownProps) {
-  if (!content || content.trim() === '') {
-    return null;
-  }
-
   const variantClasses = {
     default: 'prose prose-sm max-w-none text-white/90',
     question: 'prose prose-base max-w-none text-white font-medium leading-relaxed',
@@ -131,6 +127,10 @@ export const MathMarkdown = React.memo(function MathMarkdown({
       // This ensures we don't break existing $ formatting
       .trim();
   }, [content]);
+
+  if (!content || content.trim() === '') {
+    return null;
+  }
 
   return (
     <div className={clsx(variantClasses[variant], className)}>
@@ -218,7 +218,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
             const { node, ...rest } = props as any;
             return (
               <div className="mb-3 max-w-full overflow-x-auto rounded-lg border border-white/10">
-                <table className="min-w-[34rem] border-collapse text-sm" {...rest}>{children}</table>
+m                        <table className="w-full min-w-[34rem] border-collapse text-sm" {...rest}>{children}</table>
               </div>
             );
           },
