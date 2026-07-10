@@ -119,19 +119,78 @@ export const MathMarkdown = React.memo(function MathMarkdown({
     option: 'prose prose-sm max-w-none text-inherit leading-relaxed [&>p]:mb-0',
   };
 
+  // Helper to normalize Google Drive image links to lh3 format
+  const normalizeImageUrl = React.useCallback((url: string | null | undefined): string | null => {
+    if (!url) return null;
+    if (url.includes('drive.google.com')) {
+      let fileId: string | null = null;
+      const fileDPattern = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+      const fileDMatch = url.match(fileDPattern);
+      if (fileDMatch && fileDMatch[1]) {
+        fileId = fileDMatch[1];
+      } else {
+        const idPattern = /[?&]id=([a-zA-Z0-9_-]+)/;
+        const idMatch = url.match(idPattern);
+        if (idMatch && idMatch[1]) {
+          fileId = idMatch[1];
+        }
+      }
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/d/${fileId}=s0`;
+      }
+    }
+    return url;
+  }, []);
+
+  // Known image-hosting domains (URLs from these always contain images)
+  const IMAGE_HOST_PATTERN = /(?:lh3\.googleusercontent\.com|res\.cloudinary\.com|i\.imgur\.com|drive\.google\.com)/i;
+  // Common image file extensions
+  const IMAGE_EXT_PATTERN = /\.(?:png|jpe?g|gif|webp|svg|bmp|ico|avif)(?:\?[^\s)]*)?$/i;
+
+  /** Check if a URL points to an image */
+  const isImageUrl = React.useCallback((url: string): boolean => {
+    return IMAGE_EXT_PATTERN.test(url) || IMAGE_HOST_PATTERN.test(url);
+  }, []);
+
   // Pre-process content to handle different LaTeX delimiters used by AI models
+  // AND auto-convert bare image URLs to markdown image syntax
   const processedContent = React.useMemo(() => {
     if (!content) return '';
 
-    return content
+    let processed = content
       // Handle inline math: \( ... \) -> $ ... $
       .replace(/\\\((.*?)\\\)/g, (_, formula) => `$${formula}$`)
       // Handle block math: \[ ... \] -> $$ ... $$
       .replace(/\\\[(.*?)\\\]/g, (_, formula) => `\n$$\n${formula}\n$$\n`)
-      // Sometimes AI escapes dollar signs incorrectly or uses them raw
-      // This ensures we don't break existing $ formatting
       .trim();
-  }, [content]);
+
+    // Auto-convert bare image URLs to markdown images, while ignoring existing markdown links and images.
+    // Also normalizes Google Drive URLs on the fly.
+    processed = processed.replace(
+      /(!?\[[^\]]*\]\((https?:\/\/[^\s)]+)\))|(https?:\/\/[^\s<]+)/gi,
+      (match, markdownLinkOrImage, markdownUrl, bareUrl) => {
+        if (markdownLinkOrImage) {
+          // If it's already markdown, check if the URL is Google Drive and needs normalization
+          if (markdownUrl && isImageUrl(markdownUrl)) {
+            const normalized = normalizeImageUrl(markdownUrl) || markdownUrl;
+            const prefix = match.startsWith('!') ? '!' : '';
+            const altText = match.slice(prefix.length + 1, match.indexOf(']'));
+            return `${prefix}[${altText}](${normalized})`;
+          }
+          return match;
+        }
+
+        // It's a bare URL! Check if it's an image URL
+        if (bareUrl && isImageUrl(bareUrl)) {
+          const normalized = normalizeImageUrl(bareUrl) || bareUrl;
+          return `![image](${normalized})`;
+        }
+        return match;
+      }
+    );
+
+    return processed;
+  }, [content, isImageUrl, normalizeImageUrl]);
 
   if (!content || content.trim() === '') {
     return null;
@@ -252,16 +311,45 @@ m                        <table className="w-full min-w-[34rem] border-collapse 
             const { node, ...rest } = props as any;
             return <del className="line-through text-white/50" {...rest}>{children}</del>;
           },
+          // Custom link renderer: intercepts image links and renders them as clickable images
+          a: (props) => {
+            const { node, href, children, ...rest } = props as any;
+            if (href && isImageUrl(href)) {
+              const normalized = normalizeImageUrl(href) || href;
+              return (
+                <img
+                  src={normalized}
+                  alt="Image"
+                  className="my-2 max-h-64 rounded-lg border border-white/10 cursor-pointer transition-opacity hover:opacity-80 sb-protected-img"
+                  onClick={() => setLightboxSrc(normalized)}
+                  onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+                  draggable={false}
+                />
+              );
+            }
+            return (
+              <a
+                href={href}
+                className="text-[var(--sb-accent)] hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+                {...rest}
+              >
+                {children}
+              </a>
+            );
+          },
           // Inline images — clickable to open lightbox
           img: (props) => {
             const { node, src, alt: imgAlt, ...rest } = props as any;
             if (!src) return null;
+            const normalized = normalizeImageUrl(src) || src;
             return (
               <img
-                src={src}
+                src={normalized}
                 alt={imgAlt || 'Image'}
                 className="my-2 max-h-64 rounded-lg border border-white/10 cursor-pointer transition-opacity hover:opacity-80 sb-protected-img"
-                onClick={() => setLightboxSrc(src)}
+                onClick={() => setLightboxSrc(normalized)}
                 onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
                 draggable={false}
                 {...rest}
