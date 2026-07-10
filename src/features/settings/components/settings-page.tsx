@@ -16,6 +16,7 @@ import { ProfileTab } from "@/features/settings/components/profile-tab";
 import { SecurityTab } from "@/features/settings/components/security-tab";
 import { SubscriptionTab } from "@/features/settings/components/subscription-tab";
 import { DangerZone } from "@/features/settings/components/danger-zone";
+import { CommunityTab } from "@/features/settings/components/community-tab";
 import { useSwipe } from "@/hooks/use-swipe";
 import {
   Settings,
@@ -25,6 +26,7 @@ import {
   AlertTriangle,
   Loader2,
   BellRing,
+  MessageCircle,
 } from "lucide-react";
 
 const baseTabs = [
@@ -40,11 +42,17 @@ const notificationsTab = {
   icon: BellRing,
 } as const;
 
-const TABS = notificationsUiEnabled
-  ? [baseTabs[0], baseTabs[1], baseTabs[2], notificationsTab, baseTabs[3]]
-  : baseTabs;
+const communityTab = {
+  id: "community",
+  label: "Community",
+  icon: MessageCircle,
+} as const;
 
-type TabId = "profile" | "security" | "subscription" | "notifications" | "danger";
+const TABS = notificationsUiEnabled
+  ? [baseTabs[0], baseTabs[1], baseTabs[2], communityTab, notificationsTab, baseTabs[3]]
+  : [baseTabs[0], baseTabs[1], baseTabs[2], communityTab, baseTabs[3]];
+
+type TabId = "profile" | "security" | "subscription" | "community" | "notifications" | "danger";
 
 function isTabId(value: string): value is TabId {
   return TABS.some((tab) => tab.id === value);
@@ -229,6 +237,7 @@ export function SettingsPageClient() {
                 />
               )}
               {activeTab === "notifications" && <NotificationsSettingsTab />}
+              {activeTab === "community" && <CommunityTab isPremium={isPremium} />}
               {activeTab === "danger" && <DangerZone />}
             </div>
           </div>

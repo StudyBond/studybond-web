@@ -4,6 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Logo, LogoLockup } from "@/components/ui/logo";
 import { PageTransition } from "@/components/ui/page-transition";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import {
+  WhatsAppChannelPrompt,
+  useWhatsAppChannelState,
+} from "@/components/ui/whatsapp-channel-prompt";
+import {
+  WhatsAppChannelSidebarPill,
+  WhatsAppChannelMobilePill,
+} from "@/components/ui/whatsapp-channel-pill";
 import { useLogoutMutation } from "@/features/auth/hooks/use-auth-mutations";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { useNotificationsRealtime } from "@/features/notifications/hooks/use-notifications";
@@ -180,6 +188,9 @@ export function LearnerShell({
   const pathname = usePathname();
   const router = useRouter();
   const logout = useLogoutMutation();
+
+  // WhatsApp channel state
+  const waChannel = useWhatsAppChannelState();
   
   // Avatar state keyed per user
   const [avatarId, setAvatarId] = useState("freshman");
@@ -274,6 +285,14 @@ export function LearnerShell({
               </p>
             </div>
           ) : null}
+
+          {/* WhatsApp channel pill */}
+          {waChannel.shouldShowPill && (
+            <WhatsAppChannelSidebarPill
+              onClick={waChannel.resetDismissed}
+              isCollapsed={isCollapsed}
+            />
+          )}
 
           {/* User identity + logout */}
           <div className="border-t border-white/[0.04] p-3">
@@ -443,6 +462,21 @@ export function LearnerShell({
           </PageTransition>
         </div>
       </main>
+
+      {/* ══════════════════════════════════════════════ */}
+      {/* ═════ WHATSAPP CHANNEL PROMPT ════════════════ */}
+      {/* ══════════════════════════════════════════════ */}
+      {waChannel.shouldShowPrompt && (
+        <WhatsAppChannelPrompt
+          onJoined={waChannel.markJoined}
+          onDismiss={waChannel.markDismissed}
+        />
+      )}
+
+      {/* Mobile floating pill */}
+      {waChannel.shouldShowPill && (
+        <WhatsAppChannelMobilePill onClick={waChannel.resetDismissed} />
+      )}
     </div>
   );
 }
