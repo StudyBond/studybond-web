@@ -143,116 +143,118 @@ export function CommunityTab({ isPremium }: CommunityTabProps) {
       </div>
 
       {/* ─── Card 2: Premium Inner Circle ─── */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.06]">
-        {/* Card content — visible but blurred for free users */}
+      <div className="overflow-hidden rounded-2xl border border-white/[0.06]">
+        {/* Content wrapper — overlay is scoped to this */}
         <div
           className={cn(
-            "p-5 sm:p-6 transition-all duration-300",
+            "relative cursor-pointer",
             !isPremium && "select-none"
           )}
+          onClick={!isPremium ? () => setShowPremiumUpsell((v) => !v) : undefined}
         >
-          {/* Ambient glow */}
-          <div
-            className={cn(
-              "pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-[50px]",
-              isPremium
-                ? "bg-emerald-400/[0.06]"
-                : "bg-[var(--sb-gold)]/[0.04]"
-            )}
-          />
+          {/* Card content — visible but blurred for free users */}
+          <div className="p-5 sm:p-6">
+            {/* Ambient glow */}
+            <div
+              className={cn(
+                "pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-[50px]",
+                isPremium
+                  ? "bg-emerald-400/[0.06]"
+                  : "bg-[var(--sb-gold)]/[0.04]"
+              )}
+            />
 
-          <div className="relative z-10">
-            <div className="flex items-start gap-3 sm:gap-4 mb-4">
-              <div
-                className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-lg",
-                  isPremium
-                    ? "bg-emerald-400/10 text-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.1)]"
-                    : "bg-[var(--sb-gold)]/10 text-[var(--sb-gold)] shadow-[0_0_16px_var(--sb-gold-glow)]"
-                )}
-              >
-                {isPremium ? (
-                  <MessageCircle className="h-5 w-5" />
-                ) : (
-                  <Crown className="h-5 w-5" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3
-                    className={cn(
-                      "text-sm font-bold",
-                      isPremium ? "text-white" : "text-white/60"
-                    )}
-                  >
-                    Premium Inner Circle
-                  </h3>
-                  <span
-                    className={cn(
-                      "text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md",
-                      isPremium
-                        ? "text-emerald-400/60 bg-emerald-400/[0.08]"
-                        : "text-[var(--sb-gold)]/60 bg-[var(--sb-gold)]/[0.08]"
-                    )}
-                  >
-                    {isPremium ? "Members Only" : "Elite Only"}
-                  </span>
-                </div>
-                <p
+            <div className="relative z-10">
+              <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                <div
                   className={cn(
-                    "text-[12px] leading-relaxed mt-1",
-                    isPremium ? "text-white/40" : "text-white/30"
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-lg",
+                    isPremium
+                      ? "bg-emerald-400/10 text-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.1)]"
+                      : "bg-[var(--sb-gold)]/10 text-[var(--sb-gold)] shadow-[0_0_16px_var(--sb-gold-glow)]"
                   )}
                 >
-                  Connect with top-performing students in our private WhatsApp
-                  group. Brainstorm, share tips, and push each other forward.
-                </p>
+                  {isPremium ? (
+                    <MessageCircle className="h-5 w-5" />
+                  ) : (
+                    <Crown className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3
+                      className={cn(
+                        "text-sm font-bold",
+                        isPremium ? "text-white" : "text-white/60"
+                      )}
+                    >
+                      Premium Inner Circle
+                    </h3>
+                    <span
+                      className={cn(
+                        "text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md",
+                        isPremium
+                          ? "text-emerald-400/60 bg-emerald-400/[0.08]"
+                          : "text-[var(--sb-gold)]/60 bg-[var(--sb-gold)]/[0.08]"
+                      )}
+                    >
+                      {isPremium ? "Members Only" : "Elite Only"}
+                    </span>
+                  </div>
+                  <p
+                    className={cn(
+                      "text-[12px] leading-relaxed mt-1",
+                      isPremium ? "text-white/40" : "text-white/30"
+                    )}
+                  >
+                    Connect with top-performing students in our private WhatsApp
+                    group. Brainstorm, share tips, and push each other forward.
+                  </p>
+                </div>
+              </div>
+
+              {/* Premium users: direct join */}
+              {isPremium && (
+                <a
+                  href={PREMIUM_WHATSAPP_GROUP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-400/10 px-4 py-2.5 text-[12px] font-semibold text-emerald-400 transition-all duration-200 hover:bg-emerald-400/15 hover:shadow-[0_0_12px_rgba(52,211,153,0.1)]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Join Group
+                  <ExternalLink className="h-3 w-3 opacity-50" />
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* ─── Frosted overlay for free users (scoped to content area only) ─── */}
+          {!isPremium && !showPremiumUpsell && (
+            <div className="absolute inset-0 z-20">
+              {/* Frosted glass */}
+              <div className="absolute inset-0 rounded-2xl bg-[var(--sb-bg)]/50 backdrop-blur-[6px]" />
+
+              {/* Lock icon + label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--sb-gold)]/10 text-[var(--sb-gold)] shadow-[0_0_16px_var(--sb-gold-glow)]">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--sb-gold)]/70">
+                  Elite Members Only
+                </span>
+                <span className="text-[11px] text-white/30 mt-0.5">
+                  Tap to learn more
+                </span>
               </div>
             </div>
-
-            {/* Premium users: direct join */}
-            {isPremium && (
-              <a
-                href={PREMIUM_WHATSAPP_GROUP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-400/10 px-4 py-2.5 text-[12px] font-semibold text-emerald-400 transition-all duration-200 hover:bg-emerald-400/15 hover:shadow-[0_0_12px_rgba(52,211,153,0.1)]"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Join Group
-                <ExternalLink className="h-3 w-3 opacity-50" />
-              </a>
-            )}
-          </div>
+          )}
         </div>
-
-        {/* ─── Frosted overlay for free users ─── */}
-        {!isPremium && (
-          <div
-            className="absolute inset-0 z-20 cursor-pointer"
-            onClick={() => setShowPremiumUpsell((v) => !v)}
-          >
-            {/* Frosted glass */}
-            <div className="absolute inset-0 rounded-2xl bg-[var(--sb-bg)]/50 backdrop-blur-[6px]" />
-
-            {/* Lock icon + label */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--sb-gold)]/10 text-[var(--sb-gold)] shadow-[0_0_16px_var(--sb-gold-glow)]">
-                <Lock className="h-4 w-4" />
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--sb-gold)]/70">
-                Elite Members Only
-              </span>
-              <span className="text-[11px] text-white/30 mt-0.5">
-                Tap to learn more
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* ─── Inline upsell expansion for free users ─── */}
         {!isPremium && showPremiumUpsell && (
-          <div className="relative z-30 border-t border-[var(--sb-gold)]/10 bg-gradient-to-br from-[var(--sb-gold)]/[0.03] to-transparent p-5 sm:p-6">
+          <div className="relative border-t border-[var(--sb-gold)]/10 bg-gradient-to-br from-[var(--sb-gold)]/[0.03] to-transparent p-5 sm:p-6">
             {/* Shimmer */}
             <div className="absolute inset-0 overflow-hidden rounded-b-2xl">
               <div className="absolute inset-0 sb-shimmer-gold opacity-30" />
