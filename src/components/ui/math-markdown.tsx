@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { ImageLightbox } from '@/components/ui/image-lightbox';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -27,6 +28,7 @@ const sanitizeSchema = {
     'mark',  // highlight
     'sub',   // subscript
     'sup',   // superscript
+    'img',   // inline images (markdown ![alt](url))
     'br',    // line break
     'span',  // inline container (needed by KaTeX)
     // GFM table tags (structural, no XSS risk)
@@ -55,6 +57,7 @@ const sanitizeSchema = {
     mark: [],
     sub: [],
     sup: [],
+    img: ['src', 'alt', 'title', 'width', 'height'],
     // KaTeX math element attributes
     math: ['xmlns', 'display'],
     annotation: ['encoding'],
@@ -107,6 +110,8 @@ export const MathMarkdown = React.memo(function MathMarkdown({
   className,
   variant = 'default',
 }: MathMarkdownProps) {
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
   const variantClasses = {
     default: 'prose prose-sm max-w-none text-white/90',
     question: 'prose prose-base max-w-none text-white font-medium leading-relaxed',
@@ -247,10 +252,27 @@ m                        <table className="w-full min-w-[34rem] border-collapse 
             const { node, ...rest } = props as any;
             return <del className="line-through text-white/50" {...rest}>{children}</del>;
           },
+          // Inline images — clickable to open lightbox
+          img: (props) => {
+            const { node, src, alt: imgAlt, ...rest } = props as any;
+            if (!src) return null;
+            return (
+              <img
+                src={src}
+                alt={imgAlt || 'Image'}
+                className="my-2 max-h-64 rounded-lg border border-white/10 cursor-pointer transition-opacity hover:opacity-80 sb-protected-img"
+                onClick={() => setLightboxSrc(src)}
+                onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+                draggable={false}
+                {...rest}
+              />
+            );
+          },
         }}
       >
         {processedContent}
       </ReactMarkdown>
+      <ImageLightbox src={lightboxSrc} alt="Expanded image" onClose={() => setLightboxSrc(null)} />
     </div>
   );
 });

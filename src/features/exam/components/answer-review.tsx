@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { ChevronDown, Check, X as XIcon, Lightbulb, Info, Flag } from "lucide-react";
 import { MathMarkdown } from "@/components/ui/math-markdown";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import type { ExamResult, QuestionWithAnswer } from "@/lib/api/types";
 import { ReportQuestionModal } from "@/features/exam/components/report-question-modal";
 
@@ -64,6 +65,8 @@ function OptionView({
   isCorrect: boolean;
   isSelected: boolean;
 }) {
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
   if (!text && !imageUrl) return null;
 
   // Determine styling based on state
@@ -114,16 +117,25 @@ function OptionView({
           </div>
         ) : null}
         {imageUrl ? (
-          <MediaNode
-            url={imageUrl}
-            alt={`Option ${label}`}
-            className="max-h-32 rounded border border-white/10 opacity-80 mix-blend-screen"
-          />
+          <button
+            type="button"
+            onClick={() => setLightboxSrc(imageUrl)}
+            className="block cursor-pointer transition-opacity hover:opacity-80"
+          >
+            <MediaNode
+              url={imageUrl}
+              alt={`Option ${label}`}
+              className="max-h-32 rounded border border-white/10 opacity-80 mix-blend-screen"
+            />
+          </button>
         ) : null}
       </div>
 
       {/* Icon Indicator */}
       {icon}
+
+      {/* Lightbox */}
+      <ImageLightbox src={lightboxSrc} alt={`Option ${label}`} onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }
@@ -137,6 +149,7 @@ export function QuestionReviewItem({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const options: ("A" | "B" | "C" | "D" | "E")[] = ["A", "B", "C", "D", "E"];
 
   return (
@@ -208,11 +221,17 @@ export function QuestionReviewItem({
                 </div>
               )}
               {q.imageUrl && (
-                <MediaNode
-                  url={q.imageUrl}
-                  alt="Question"
-                  className="max-h-48 rounded-xl border border-white/[0.06]"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightboxSrc(q.imageUrl!)}
+                  className="block cursor-pointer transition-opacity hover:opacity-80"
+                >
+                  <MediaNode
+                    url={q.imageUrl}
+                    alt="Question"
+                    className="max-h-48 rounded-xl border border-white/[0.06]"
+                  />
+                </button>
               )}
             </div>
 
@@ -254,11 +273,17 @@ export function QuestionReviewItem({
                   />
                 </div>
                 {q.explanation.imageUrl && (
-                  <MediaNode
-                    url={q.explanation.imageUrl}
-                    alt="Explanation"
-                    className="mt-3 max-h-40 rounded-lg border border-white/10"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxSrc(q.explanation!.imageUrl!)}
+                    className="block cursor-pointer transition-opacity hover:opacity-80 mt-3"
+                  >
+                    <MediaNode
+                      url={q.explanation.imageUrl}
+                      alt="Explanation"
+                      className="max-h-40 rounded-lg border border-white/10"
+                    />
+                  </button>
                 )}
               </div>
             )}
@@ -306,6 +331,9 @@ export function QuestionReviewItem({
         open={reportOpen}
         onClose={() => setReportOpen(false)}
       />
+
+      {/* Image lightbox */}
+      <ImageLightbox src={lightboxSrc} alt="Full size image" onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }
