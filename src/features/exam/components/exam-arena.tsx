@@ -417,7 +417,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
       const redirectUrl = bookmarkParams
         ? `/exams/${examId}/results?${bookmarkParams}`
         : `/exams/${examId}/results`;
-      router.push(redirectUrl);
+      router.push(redirectUrl as any);
     } catch (error) {
       const message =
         error instanceof Error && error.message
