@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useExamDetail } from "@/features/exam/hooks/use-exam-detail";
@@ -38,6 +38,59 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   const { data: collabData, isLoading: isCollabLoading } =
     useCollaborationSession(collabCode || "", !!collabCode);
   const collabSession = collabData?.session;
+
+  // Show auto-bookmarking limits feedback toast immediately after loading results
+  useEffect(() => {
+    if (isResultLoading || !result) return;
+
+    const bmSaved = searchParams.get("bmSaved");
+    const bmAttempted = searchParams.get("bmAttempted");
+    const bmLimit = searchParams.get("bmLimit") === "1";
+
+    if (bmAttempted !== null && bmSaved !== null) {
+      const saved = parseInt(bmSaved, 10);
+      const attempted = parseInt(bmAttempted, 10);
+
+      if (bmLimit) {
+        if (saved === 0 && attempted > 0) {
+          toast.error(
+            `Bookmark limit reached! None of your ${attempted} flagged question${attempted > 1 ? "s" : ""} could be saved.`,
+            {
+              duration: 6000,
+              icon: "⚠️",
+              description: "Clear some bookmarks or upgrade to Premium to get more space.",
+            }
+          );
+        } else if (saved < attempted) {
+          toast.warning(
+            `Saved ${saved} of ${attempted} flagged questions. Vault limit reached!`,
+            {
+              duration: 6000,
+              icon: "⚠️",
+              description: "Clear some bookmarks or upgrade to Premium to save the rest.",
+            }
+          );
+        }
+      } else if (saved > 0) {
+        toast.success(
+          `Successfully saved ${saved} flagged question${saved > 1 ? "s" : ""} to your study vault.`,
+          {
+            duration: 4000,
+            icon: "🔖",
+          }
+        );
+      }
+
+      // Clean up query parameters from URL to avoid repeating toast on refresh
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("bmSaved") || url.searchParams.has("bmAttempted") || url.searchParams.has("bmLimit")) {
+        url.searchParams.delete("bmSaved");
+        url.searchParams.delete("bmAttempted");
+        url.searchParams.delete("bmLimit");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      }
+    }
+  }, [result, isResultLoading, searchParams]);
 
   // ─── Progressive review lockout ───
   const {

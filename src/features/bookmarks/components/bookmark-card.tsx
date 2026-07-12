@@ -19,6 +19,7 @@ import {
   Eye,
   Trash2,
 } from "lucide-react";
+import { MathMarkdown } from "@/components/ui/math-markdown";
 
 type BookmarkCardProps = {
   bookmark: Bookmark;
@@ -215,9 +216,11 @@ export function BookmarkCard({ bookmark, onReview }: BookmarkCardProps) {
 
         {/* ──── QUESTION TEXT ──── */}
         <div className="space-y-2">
-          <p className="text-sm leading-relaxed text-white/65 line-clamp-3 group-hover:text-white/75 transition-colors duration-300">
-            {bookmark.question.questionText}
-          </p>
+          <MathMarkdown
+            content={bookmark.question.questionText}
+            variant="option"
+            className="text-sm leading-relaxed text-white/65 line-clamp-3 group-hover:text-white/75 transition-colors duration-300"
+          />
 
           {/* Image indicator */}
           {bookmark.question.hasImage && (

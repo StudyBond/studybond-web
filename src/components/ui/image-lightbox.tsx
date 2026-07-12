@@ -37,12 +37,12 @@ export function ImageLightbox({ src, alt = "Image", onClose }: ImageLightboxProp
   if (!src) return null;
 
   const content = (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+      <div 
+        className="absolute inset-0 bg-black/90 backdrop-blur-md cursor-pointer" 
+        onClick={onClose}
+      />
 
       {/* Close button */}
       <button
@@ -60,7 +60,6 @@ export function ImageLightbox({ src, alt = "Image", onClose }: ImageLightboxProp
       <img
         src={src}
         alt={alt}
-        onClick={(e) => e.stopPropagation()}
         className="relative z-[1] max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl animate-in zoom-in-95 duration-200 sb-protected-img"
         onContextMenu={(e) => e.preventDefault()}
         draggable={false}

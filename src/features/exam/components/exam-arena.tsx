@@ -380,6 +380,12 @@ export function ExamArena({ examId }: ExamArenaProps) {
         return;
       }
 
+      let bookmarkParams = "";
+      if (result && "autoBookmarkResult" in result && result.autoBookmarkResult) {
+        const { savedCount, attemptedCount, limitReached } = result.autoBookmarkResult;
+        bookmarkParams = `bmSaved=${savedCount}&bmAttempted=${attemptedCount}&bmLimit=${limitReached ? "1" : "0"}`;
+      }
+
       if (collabSession && collabCode) {
         const refreshedSession = await refetchCollabSession().catch(() => null);
         const latestSession = refreshedSession?.data?.session ?? collabSession;
@@ -389,7 +395,14 @@ export function ExamArena({ examId }: ExamArenaProps) {
         );
 
         if (latestSession.status === "COMPLETED") {
-          router.push(`/exams/${examId}/results?collab=${collabCode}`);
+          const params = new URLSearchParams();
+          params.set("collab", collabCode);
+          if (bookmarkParams) {
+            params.set("bmSaved", result.autoBookmarkResult!.savedCount.toString());
+            params.set("bmAttempted", result.autoBookmarkResult!.attemptedCount.toString());
+            params.set("bmLimit", result.autoBookmarkResult!.limitReached ? "1" : "0");
+          }
+          router.push(`/exams/${examId}/results?${params.toString()}`);
           return;
         }
 
@@ -401,7 +414,10 @@ export function ExamArena({ examId }: ExamArenaProps) {
         return;
       }
 
-      router.push(`/exams/${examId}/results`);
+      const redirectUrl = bookmarkParams
+        ? `/exams/${examId}/results?${bookmarkParams}`
+        : `/exams/${examId}/results`;
+      router.push(redirectUrl);
     } catch (error) {
       const message =
         error instanceof Error && error.message

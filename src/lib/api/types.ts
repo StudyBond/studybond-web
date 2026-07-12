@@ -357,6 +357,11 @@ export type ExamResult = {
     weeklySp: number;
     currentStreak: number;
   };
+  autoBookmarkResult?: {
+    attemptedCount: number;
+    savedCount: number;
+    limitReached: boolean;
+  } | null;
 };
 
 export type ExamAbandonResult = {

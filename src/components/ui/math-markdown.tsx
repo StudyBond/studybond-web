@@ -282,7 +282,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
             const { node, ...rest } = props as any;
             return (
               <div className="mb-3 max-w-full overflow-x-auto rounded-lg border border-white/10">
-m                        <table className="w-full min-w-[34rem] border-collapse text-sm" {...rest}>{children}</table>
+                        <table className="w-full min-w-[34rem] border-collapse text-sm" {...rest}>{children}</table>
               </div>
             );
           },
@@ -317,14 +317,19 @@ m                        <table className="w-full min-w-[34rem] border-collapse 
             if (href && isImageUrl(href)) {
               const normalized = normalizeImageUrl(href) || href;
               return (
-                <img
-                  src={normalized}
-                  alt="Image"
-                  className="my-2 max-h-64 rounded-lg border border-white/10 cursor-pointer transition-opacity hover:opacity-80 sb-protected-img"
+                <button
+                  type="button"
                   onClick={() => setLightboxSrc(normalized)}
-                  onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
-                  draggable={false}
-                />
+                  className="block text-left cursor-pointer transition-opacity hover:opacity-80 border-none bg-transparent p-0 w-full"
+                >
+                  <img
+                    src={normalized}
+                    alt="Image"
+                    className="my-2 max-h-64 rounded-lg border border-white/10 sb-protected-img"
+                    onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+                    draggable={false}
+                  />
+                </button>
               );
             }
             return (
@@ -345,15 +350,20 @@ m                        <table className="w-full min-w-[34rem] border-collapse 
             if (!src) return null;
             const normalized = normalizeImageUrl(src) || src;
             return (
-              <img
-                src={normalized}
-                alt={imgAlt || 'Image'}
-                className="my-2 max-h-64 rounded-lg border border-white/10 cursor-pointer transition-opacity hover:opacity-80 sb-protected-img"
+              <button
+                type="button"
                 onClick={() => setLightboxSrc(normalized)}
-                onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
-                draggable={false}
-                {...rest}
-              />
+                className="block text-left cursor-pointer transition-opacity hover:opacity-80 border-none bg-transparent p-0 w-full"
+              >
+                <img
+                  src={normalized}
+                  alt={imgAlt || 'Image'}
+                  className="my-2 max-h-64 rounded-lg border border-white/10 sb-protected-img"
+                  onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+                  draggable={false}
+                  {...rest}
+                />
+              </button>
             );
           },
         }}
