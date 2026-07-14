@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Crown, X, BookOpen, Zap, Shield, TrendingUp } from "lucide-react";
 
@@ -60,6 +61,9 @@ export function PremiumUpsellSheet({
     onDismiss();
   }, [onDismiss]);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Close on Escape
   useEffect(() => {
     if (!open) return;
@@ -82,7 +86,9 @@ export function PremiumUpsellSheet({
     };
   }, [open]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -201,6 +207,7 @@ export function PremiumUpsellSheet({
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

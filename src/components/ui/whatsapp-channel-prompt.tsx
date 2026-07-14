@@ -137,7 +137,7 @@ export function WhatsAppChannelPrompt({
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.05] text-white/30 transition-all hover:bg-white/[0.10] hover:text-white/60"
+            className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.05] text-white/30 transition-all hover:bg-white/[0.10] hover:text-white/60 cursor-pointer"
             aria-label="Close"
           >
             <X className="h-4 w-4" />

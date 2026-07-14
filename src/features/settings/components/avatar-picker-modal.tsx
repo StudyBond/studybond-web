@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 import { CURATED_AVATARS, getAvatarById, getSavedAvatarId, saveAvatarId } from "@/lib/avatars/avatar-collection";
 import type { CuratedAvatar } from "@/lib/avatars/avatar-collection";
@@ -26,6 +27,12 @@ export function AvatarPickerModal({
 }: AvatarPickerModalProps) {
   const [selectedId, setSelectedId] = useState(currentAvatarId);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,7 +44,7 @@ export function AvatarPickerModal({
     };
   }, [isOpen, currentAvatarId]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   function handleSave() {
     setIsAnimating(true);
@@ -49,7 +56,14 @@ export function AvatarPickerModal({
     }, 600);
   }
 
-  return (
+  function scroll(direction: "left" | "right") {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === "left" ? -240 : 240;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  }
+
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       {/* Backdrop */}
       <div
@@ -73,18 +87,31 @@ export function AvatarPickerModal({
           </button>
         </div>
 
-        {/* Avatar Grid */}
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sb-scroll-hide">
-          {CURATED_AVATARS.map((avatar, index) => {
+        {/* Avatar Carousel */}
+        <div className="relative w-full overflow-hidden flex-1 flex items-center min-h-[260px] group/carousel">
+          {/* Desktop scroll buttons */}
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-2 z-20 hidden h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-black/70 sm:group-hover/carousel:flex"
+            aria-label="Scroll left"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          
+          <div 
+            ref={scrollContainerRef}
+            className="flex w-full overflow-x-auto snap-x snap-mandatory sb-scroll-hide gap-4 px-6 py-6 items-center"
+          >
+            {CURATED_AVATARS.map((avatar, index) => {
             const isSelected = selectedId === avatar.id;
             return (
               <button
                 key={avatar.id}
                 onClick={() => setSelectedId(avatar.id)}
                 className={cn(
-                  "group relative flex flex-col items-center gap-3 rounded-2xl p-4 pb-3 transition-all duration-300 outline-none",
+                  "group relative flex flex-col items-center gap-3 rounded-2xl p-4 pb-3 transition-all duration-300 outline-none shrink-0 w-[140px] snap-center",
                   isSelected
-                    ? "bg-gradient-to-b from-[var(--sb-accent)]/[0.12] to-transparent ring-2 ring-[var(--sb-accent)]/60 scale-[1.02]"
+                    ? "bg-gradient-to-b from-[var(--sb-accent)]/[0.12] to-transparent ring-2 ring-[var(--sb-accent)]/60 scale-[1.05]"
                     : "bg-white/[0.02] hover:bg-white/[0.05] hover:scale-[1.03] hover:shadow-xl",
                 )}
                 style={{
@@ -138,6 +165,15 @@ export function AvatarPickerModal({
               </button>
             );
           })}
+          </div>
+          
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-2 z-20 hidden h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-black/70 sm:group-hover/carousel:flex"
+            aria-label="Scroll right"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
         </div>
 
         {/* Footer */}
@@ -163,6 +199,7 @@ export function AvatarPickerModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
