@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { ChevronDown, Check, X as XIcon, Lightbulb, Info, Flag } from "lucide-react";
 import { MathMarkdown } from "@/components/ui/math-markdown";
@@ -339,58 +339,230 @@ export function QuestionReviewItem({
 }
 
 export function AnswerReview({ result }: AnswerReviewProps) {
-  // Option to filter
   const [filter, setFilter] = useState<"all" | "incorrect">("all");
+  const [activeSubject, setActiveSubject] = useState<string | null>(null);
 
-  const filteredQuestions = result.questions.filter((q) => {
-    if (filter === "incorrect") return !q.isCorrect;
-    return true;
-  });
+  // ── Per-subject performance stats (skip for single-subject exams) ──
+  const subjectStats = useMemo(() => {
+    if (result.subjects.length <= 1) return [];
+
+    const map = new Map<string, { total: number; correct: number }>();
+    result.subjects.forEach((s) => map.set(s, { total: 0, correct: 0 }));
+    result.questions.forEach((q) => {
+      const entry = map.get(q.subject);
+      if (entry) {
+        entry.total += 1;
+        if (q.isCorrect) entry.correct += 1;
+      }
+    });
+
+    return Array.from(map.entries())
+      .filter(([, d]) => d.total > 0)
+      .map(([subject, d]) => ({
+        subject,
+        total: d.total,
+        correct: d.correct,
+        percentage: Math.round((d.correct / d.total) * 100),
+      }));
+  }, [result.questions, result.subjects]);
+
+  // ── Combined filter: subject × correctness ──
+  const filteredQuestions = useMemo(() => {
+    return result.questions.filter((q) => {
+      if (activeSubject && q.subject !== activeSubject) return false;
+      if (filter === "incorrect" && q.isCorrect) return false;
+      return true;
+    });
+  }, [result.questions, activeSubject, filter]);
+
+  // How many questions are in the active scope (before correctness filter)
+  const scopeTotal = activeSubject
+    ? result.questions.filter((q) => q.subject === activeSubject).length
+    : result.questions.length;
+
+  const isFiltered = activeSubject !== null || filter === "incorrect";
+
+  // Performance tier → visual mapping
+  const getTierColors = (pct: number) => {
+    if (pct >= 75)
+      return {
+        bar: "bg-emerald-400",
+        text: "text-emerald-400/70",
+        border: "border-emerald-400/25",
+        glow: "shadow-[0_0_16px_rgba(52,211,153,0.06)]",
+      };
+    if (pct >= 50)
+      return {
+        bar: "bg-amber-400",
+        text: "text-amber-400/70",
+        border: "border-amber-400/25",
+        glow: "shadow-[0_0_16px_rgba(251,191,36,0.06)]",
+      };
+    return {
+      bar: "bg-red-400",
+      text: "text-red-400/70",
+      border: "border-red-400/25",
+      glow: "shadow-[0_0_16px_rgba(248,113,113,0.06)]",
+    };
+  };
 
   return (
-    <div className="w-full min-w-0 space-y-5 sm:space-y-6">
-      {/* Header controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
-        <h3 className="text-lg font-bold text-white tracking-tight">
-          Answer Review
-        </h3>
-        <div className="flex bg-white/[0.03] p-1 rounded-xl border border-white/[0.06] self-start sm:self-auto">
-          <button
-            onClick={() => setFilter("all")}
-            className={cn(
-              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors",
-              filter === "all"
-                ? "bg-white/[0.08] text-white shadow-sm"
-                : "text-white/40 hover:text-white/70",
+    <div className="w-full min-w-0">
+      {/* ── Control bar — sticky on desktop, static on mobile to save space ── */}
+      <div className="lg:sticky lg:top-24 z-10 pb-5 sm:pb-6 bg-gradient-to-b from-[var(--sb-bg)] from-85% to-transparent">
+        {/* Title + correctness toggle */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-bold text-white tracking-tight">
+              Answer Review
+            </h3>
+            {/* Live filter count — shows only when a filter is active */}
+            {isFiltered && (
+              <span className="text-[10px] font-medium text-white/25 bg-white/[0.04] px-2 py-0.5 rounded-full tabular-nums animate-in fade-in duration-200">
+                {filteredQuestions.length} of {scopeTotal}
+              </span>
             )}
-          >
-            All Questions
-          </button>
-          <button
-            onClick={() => setFilter("incorrect")}
-            className={cn(
-              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors",
-              filter === "incorrect"
-                ? "bg-red-500/20 text-red-300 shadow-sm"
-                : "text-white/40 hover:text-white/70",
-            )}
-          >
-            Incorrect Only
-          </button>
+          </div>
+          <div className="flex bg-white/[0.03] p-1 rounded-xl border border-white/[0.06] self-start sm:self-auto">
+            <button
+              onClick={() => setFilter("all")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors",
+                filter === "all"
+                  ? "bg-white/[0.08] text-white shadow-sm"
+                  : "text-white/40 hover:text-white/70",
+              )}
+            >
+              All Questions
+            </button>
+            <button
+              onClick={() => setFilter("incorrect")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors",
+                filter === "incorrect"
+                  ? "bg-red-500/20 text-red-300 shadow-sm"
+                  : "text-white/40 hover:text-white/70",
+              )}
+            >
+              Incorrect Only
+            </button>
+          </div>
         </div>
+
+        {/* ── Subject pills — only for multi-subject exams ── */}
+        {subjectStats.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pt-4 pb-0.5 sb-scroll-hide">
+            {/* "All" pill — minimal, clearly a meta-control not a subject */}
+            <button
+              onClick={() => setActiveSubject(null)}
+              className={cn(
+                "flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 border transition-all duration-200",
+                activeSubject === null
+                  ? "bg-white/[0.08] border-white/[0.12] text-white"
+                  : "bg-transparent border-white/[0.05] text-white/35 hover:bg-white/[0.03] hover:text-white/55",
+              )}
+            >
+              <span className="text-[11px] font-bold tracking-wide">All</span>
+              <span
+                className={cn(
+                  "sb-mono text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md",
+                  activeSubject === null
+                    ? "bg-white/[0.08] text-white/60"
+                    : "bg-white/[0.03] text-white/20",
+                )}
+              >
+                {result.totalQuestions}
+              </span>
+            </button>
+
+            {/* Per-subject pills — richer, with performance data baked in */}
+            {subjectStats.map((stat) => {
+              const isActive = activeSubject === stat.subject;
+              const colors = getTierColors(stat.percentage);
+
+              return (
+                <button
+                  key={stat.subject}
+                  onClick={() =>
+                    setActiveSubject(isActive ? null : stat.subject)
+                  }
+                  className={cn(
+                    "group flex shrink-0 flex-col gap-1.5 rounded-xl px-3.5 py-2.5 border transition-all duration-200 min-w-[110px]",
+                    isActive
+                      ? cn("bg-white/[0.05]", colors.border, colors.glow)
+                      : "bg-transparent border-white/[0.05] hover:bg-white/[0.03] hover:border-white/[0.08]",
+                  )}
+                >
+                  {/* Row 1: subject name + score fraction */}
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <span
+                      className={cn(
+                        "text-[11px] font-bold uppercase tracking-wider truncate",
+                        isActive
+                          ? "text-white/90"
+                          : "text-white/35 group-hover:text-white/55",
+                      )}
+                    >
+                      {stat.subject}
+                    </span>
+                    <span
+                      className={cn(
+                        "sb-mono text-[10px] font-bold tabular-nums shrink-0",
+                        isActive
+                          ? "text-white/50"
+                          : "text-white/15 group-hover:text-white/30",
+                      )}
+                    >
+                      {stat.correct}/{stat.total}
+                    </span>
+                  </div>
+
+                  {/* Row 2: inline progress bar + percentage */}
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex-1 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-700 ease-out",
+                          colors.bar,
+                        )}
+                        style={{ width: `${stat.percentage}%` }}
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        "sb-mono text-[9px] font-bold tabular-nums shrink-0",
+                        colors.text,
+                        !isActive && "opacity-50",
+                      )}
+                    >
+                      {stat.percentage}%
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* List */}
-      <div className="space-y-3">
+      {/* ── Question list — keyed container triggers entrance animation on switch ── */}
+      <div
+        key={`${activeSubject ?? "all"}-${filter}`}
+        className="space-y-3 animate-in fade-in slide-in-from-bottom-1 duration-300"
+      >
         {filteredQuestions.length === 0 ? (
           <div className="py-12 border border-dashed border-white/10 rounded-2xl text-center">
             <Check className="h-8 w-8 text-emerald-400 mx-auto mb-3 opacity-50" />
             <p className="text-white/50 text-sm">
-              No incorrect answers. Perfect score!
+              {filter === "incorrect" && activeSubject
+                ? `No incorrect answers in ${activeSubject}. Well done!`
+                : filter === "incorrect"
+                  ? "No incorrect answers. Perfect score!"
+                  : "No questions to show."}
             </p>
           </div>
         ) : (
-          filteredQuestions.map((q, i) => (
+          filteredQuestions.map((q) => (
             <QuestionReviewItem
               key={q.id}
               q={q}
