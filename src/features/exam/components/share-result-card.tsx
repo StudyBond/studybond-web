@@ -6,7 +6,8 @@ import { createPortal } from "react-dom";
 import { Share2, Download, X, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
-import type { ExamResult } from "@/lib/api/types";
+import type { ExamResult, CollaborationSession } from "@/lib/api/types";
+import { getQuestionSourceMeta } from "@/features/collaboration/lib/collaboration-config";
 
 // ─── Smart Messages Based on Score ───
 
@@ -491,6 +492,631 @@ async function renderShareCard(
   });
 }
 
+// ─── Duel Share Card Render ───
+async function renderDuelShareCard(
+  result: ExamResult,
+  collabSession: CollaborationSession,
+  myUserId: number,
+  outcome: "VICTORY" | "DEFEAT" | "DRAW",
+  headline: string,
+  subtitle: string
+): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = CARD_WIDTH;
+  canvas.height = CARD_HEIGHT;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) throw new Error("Canvas 2D context not available");
+
+  const me = collabSession.participants.find((p) => p.userId === myUserId);
+  const opponent = collabSession.participants.find((p) => p.userId !== myUserId);
+  if (!me || !opponent) throw new Error("Participants not found in collaboration session");
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ─── BACKGROUND WITH SPLIT DIAGONAL THEME ───
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Base background fill
+  ctx.fillStyle = "#09090b";
+  ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+
+  // Left side (Me) diagonal path
+  ctx.save();
+  const leftGrad = ctx.createLinearGradient(0, 0, CARD_WIDTH / 2, CARD_HEIGHT);
+  if (outcome === "VICTORY") {
+    leftGrad.addColorStop(0, "#1f150a"); // Golden/Amber shade
+    leftGrad.addColorStop(0.5, "#0d0a06");
+    leftGrad.addColorStop(1, "#09090b");
+  } else if (outcome === "DEFEAT") {
+    leftGrad.addColorStop(0, "#0c0e12"); // Muted slate-blue
+    leftGrad.addColorStop(0.5, "#08090b");
+    leftGrad.addColorStop(1, "#09090b");
+  } else {
+    leftGrad.addColorStop(0, "#121417"); // Silver-grey for draw
+    leftGrad.addColorStop(0.5, "#0b0c0e");
+    leftGrad.addColorStop(1, "#09090b");
+  }
+  ctx.fillStyle = leftGrad;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(CARD_WIDTH / 2 - 120, 0);
+  ctx.lineTo(CARD_WIDTH / 2 + 120, CARD_HEIGHT);
+  ctx.lineTo(0, CARD_HEIGHT);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Right side (Opponent) diagonal path
+  ctx.save();
+  const rightGrad = ctx.createLinearGradient(CARD_WIDTH / 2, 0, CARD_WIDTH, CARD_HEIGHT);
+  if (outcome === "DEFEAT") {
+    rightGrad.addColorStop(0, "#1f150a"); // Opponent is the winner (Gold/Amber)
+    rightGrad.addColorStop(0.5, "#0d0a06");
+    rightGrad.addColorStop(1, "#09090b");
+  } else if (outcome === "VICTORY") {
+    rightGrad.addColorStop(0, "#0c0e12"); // Opponent is the loser (Muted slate-blue)
+    rightGrad.addColorStop(0.5, "#08090b");
+    rightGrad.addColorStop(1, "#09090b");
+  } else {
+    rightGrad.addColorStop(0, "#121417"); // Draw
+    rightGrad.addColorStop(0.5, "#0b0c0e");
+    rightGrad.addColorStop(1, "#09090b");
+  }
+  ctx.fillStyle = rightGrad;
+  ctx.beginPath();
+  ctx.moveTo(CARD_WIDTH / 2 - 120, 0);
+  ctx.lineTo(CARD_WIDTH, 0);
+  ctx.lineTo(CARD_WIDTH, CARD_HEIGHT);
+  ctx.lineTo(CARD_WIDTH / 2 + 120, CARD_HEIGHT);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Divider diagonal slash line
+  ctx.save();
+  const slashGrad = ctx.createLinearGradient(CARD_WIDTH / 2 - 120, 0, CARD_WIDTH / 2 + 120, CARD_HEIGHT);
+  if (outcome === "DRAW") {
+    slashGrad.addColorStop(0, "rgba(255, 255, 255, 0.03)");
+    slashGrad.addColorStop(0.5, "rgba(255, 255, 255, 0.2)");
+    slashGrad.addColorStop(1, "rgba(255, 255, 255, 0.03)");
+  } else {
+    slashGrad.addColorStop(0, "rgba(239, 68, 68, 0.03)"); // Muted red
+    slashGrad.addColorStop(0.5, "rgba(245, 158, 11, 0.3)"); // Amber clash glow
+    slashGrad.addColorStop(1, "rgba(239, 68, 68, 0.03)");
+  }
+  ctx.strokeStyle = slashGrad;
+  ctx.lineWidth = 16;
+  ctx.beginPath();
+  ctx.moveTo(CARD_WIDTH / 2 - 120, 0);
+  ctx.lineTo(CARD_WIDTH / 2 + 120, CARD_HEIGHT);
+  ctx.stroke();
+  ctx.restore();
+
+  // Secondary offset slash line for depth
+  ctx.save();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(CARD_WIDTH / 2 - 90, 0);
+  ctx.lineTo(CARD_WIDTH / 2 + 150, CARD_HEIGHT);
+  ctx.stroke();
+  ctx.restore();
+
+  // Ambient glows & sparks
+  ctx.save();
+  const centerGlow = ctx.createRadialGradient(CARD_WIDTH / 2, CARD_HEIGHT / 2, 0, CARD_WIDTH / 2, CARD_HEIGHT / 2, 600);
+  centerGlow.addColorStop(0, "rgba(239, 68, 68, 0.06)");
+  centerGlow.addColorStop(1, TRANSPARENT);
+  ctx.fillStyle = centerGlow;
+  ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+  ctx.restore();
+
+  // Glowing sparks / particle dots
+  ctx.save();
+  ctx.fillStyle = "rgba(245, 158, 11, 0.25)";
+  const sparks = [
+    { x: 150, y: 300, r: 4 },
+    { x: 200, y: 750, r: 6 },
+    { x: 380, y: 450, r: 5 },
+    { x: 720, y: 350, r: 4 },
+    { x: 880, y: 800, r: 6 },
+    { x: 920, y: 420, r: 5 },
+    { x: 500, y: 150, r: 3 },
+    { x: 580, y: 920, r: 4 },
+  ];
+  sparks.forEach((s) => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = "#F59E0B";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ─── TOP BAR BRANDING & DUEL INFO ───
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Top accent bar
+  ctx.save();
+  const topGrad = ctx.createLinearGradient(0, 0, CARD_WIDTH, 0);
+  topGrad.addColorStop(0, TRANSPARENT);
+  topGrad.addColorStop(0.3, "rgba(245, 158, 11, 0.15)");
+  topGrad.addColorStop(0.5, "rgba(245, 158, 11, 0.4)");
+  topGrad.addColorStop(0.7, "rgba(245, 158, 11, 0.15)");
+  topGrad.addColorStop(1, TRANSPARENT);
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, CARD_WIDTH, 6);
+  ctx.restore();
+
+  // Top branding text
+  ctx.save();
+  ctx.font = "bold 32px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.textAlign = "center";
+  ctx.fillText("STUDYBOND DUEL ARENA", CARD_WIDTH / 2, 80);
+  ctx.restore();
+
+  // Room Name
+  ctx.save();
+  ctx.font = "italic 700 40px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#F59E0B";
+  ctx.textAlign = "center";
+  ctx.fillText(collabSession.effectiveDisplayName || "1v1 Synced Duel", CARD_WIDTH / 2, 160, 880);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ─── HEAD-TO-HEAD VS CLASH PLAYERS ───
+  // ═══════════════════════════════════════════════════════════════════
+
+  const avatarY = 550;
+  const avatarRadius = 90;
+  const innerRadius = 75;
+
+  // ── Left Player (Me) ──
+  const leftX = 280;
+  const leftPercentage = Math.round(result.percentage);
+
+  // Score ring track
+  ctx.save();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.arc(leftX, avatarY, avatarRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Score ring progress
+  ctx.save();
+  const leftColor = outcome === "VICTORY" ? "#F59E0B" : outcome === "DRAW" ? "#94A3B8" : "rgba(255, 255, 255, 0.35)";
+  ctx.strokeStyle = leftColor;
+  ctx.lineWidth = 10;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.arc(leftX, avatarY, avatarRadius, -Math.PI / 2, -Math.PI / 2 + (leftPercentage / 100) * Math.PI * 2);
+  ctx.stroke();
+  if (outcome === "VICTORY") {
+    ctx.shadowColor = "#F59E0B";
+    ctx.shadowBlur = 30;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Inner avatar circle
+  ctx.save();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+  ctx.beginPath();
+  ctx.arc(leftX, avatarY, innerRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  // Initials
+  ctx.save();
+  ctx.font = "bold 60px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(getInitials(me.fullName), leftX, avatarY);
+  ctx.restore();
+
+  // Full Name
+  ctx.save();
+  ctx.font = "bold 34px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.fillText(me.fullName, leftX, 690, 320);
+  ctx.restore();
+
+  // "YOU" Badge
+  ctx.save();
+  ctx.fillStyle = "rgba(245, 158, 11, 0.12)";
+  ctx.strokeStyle = "rgba(245, 158, 11, 0.25)";
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, leftX - 60, 720, 120, 42, 21);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = "bold 18px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#F59E0B";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("YOU", leftX, 741);
+  ctx.restore();
+
+  // Crown (if Me is winner)
+  if (outcome === "VICTORY") {
+    ctx.save();
+    ctx.font = "60px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("👑", leftX, 435);
+    ctx.restore();
+  }
+
+  // ── Right Player (Opponent) ──
+  const rightX = 800;
+  const rightPercentage = opponent.score != null ? Math.round((opponent.score / result.totalQuestions) * 100) : 0;
+
+  // Score ring track
+  ctx.save();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.arc(rightX, avatarY, avatarRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Score ring progress
+  ctx.save();
+  const rightColor = outcome === "DEFEAT" ? "#F59E0B" : outcome === "DRAW" ? "#94A3B8" : "rgba(255, 255, 255, 0.35)";
+  ctx.strokeStyle = rightColor;
+  ctx.lineWidth = 10;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.arc(rightX, avatarY, avatarRadius, -Math.PI / 2, -Math.PI / 2 + (rightPercentage / 100) * Math.PI * 2);
+  ctx.stroke();
+  if (outcome === "DEFEAT") {
+    ctx.shadowColor = "#F59E0B";
+    ctx.shadowBlur = 30;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Inner avatar circle
+  ctx.save();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+  ctx.beginPath();
+  ctx.arc(rightX, avatarY, innerRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  // Initials
+  ctx.save();
+  ctx.font = "bold 60px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(getInitials(opponent.fullName), rightX, avatarY);
+  ctx.restore();
+
+  // Full Name
+  ctx.save();
+  ctx.font = "bold 34px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.fillText(opponent.fullName, rightX, 690, 320);
+  ctx.restore();
+
+  // "RIVAL" Badge
+  ctx.save();
+  ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+  ctx.strokeStyle = "rgba(239, 68, 68, 0.25)";
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, rightX - 60, 720, 120, 42, 21);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = "bold 18px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#EF4444";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("RIVAL", rightX, 741);
+  ctx.restore();
+
+  // Crown (if Opponent is winner)
+  if (outcome === "DEFEAT") {
+    ctx.save();
+    ctx.font = "60px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("👑", rightX, 435);
+    ctx.restore();
+  }
+
+  // ── Central VS Badge ──
+  ctx.save();
+  const vsGlow = ctx.createRadialGradient(CARD_WIDTH / 2, avatarY, 0, CARD_WIDTH / 2, avatarY, 90);
+  vsGlow.addColorStop(0, "rgba(239, 68, 68, 0.35)");
+  vsGlow.addColorStop(1, TRANSPARENT);
+  ctx.fillStyle = vsGlow;
+  ctx.beginPath();
+  ctx.arc(CARD_WIDTH / 2, avatarY, 90, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#0a0a0f";
+  ctx.strokeStyle = outcome === "DRAW" ? "rgba(255, 255, 255, 0.12)" : "rgba(239, 68, 68, 0.35)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(CARD_WIDTH / 2, avatarY, 48, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = "italic 900 44px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("VS", CARD_WIDTH / 2, avatarY);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ─── OUTCOME TITLE & SUBTITLE ───
+  // ═══════════════════════════════════════════════════════════════════
+
+  ctx.save();
+  ctx.font = "italic 900 100px 'Segoe UI', -apple-system, sans-serif";
+  ctx.textAlign = "center";
+
+  const outcomeGrad = ctx.createLinearGradient(0, 800, 0, 930);
+  if (outcome === "VICTORY") {
+    outcomeGrad.addColorStop(0, "#fbbf24");
+    outcomeGrad.addColorStop(1, "#f59e0b");
+  } else if (outcome === "DEFEAT") {
+    outcomeGrad.addColorStop(0, "#f87171");
+    outcomeGrad.addColorStop(1, "#ef4444");
+  } else {
+    outcomeGrad.addColorStop(0, "#e2e8f0");
+    outcomeGrad.addColorStop(1, "#94a3b8");
+  }
+
+  ctx.fillStyle = outcomeGrad;
+  ctx.fillText(outcome, CARD_WIDTH / 2, 870);
+  ctx.restore();
+
+  ctx.save();
+  ctx.font = "500 26px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+  ctx.textAlign = "center";
+  ctx.fillText(subtitle, CARD_WIDTH / 2, 930, 920);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ─── STATS GRID COMPARISON ROWS ───
+  // ═══════════════════════════════════════════════════════════════════
+
+  const myScore = me.score ?? 0;
+  const opponentScore = opponent.score ?? 0;
+  const totalQ = result.totalQuestions;
+
+  const myAccuracy = leftPercentage;
+  const opponentAccuracy = rightPercentage;
+
+  const myTime = result.timeTakenSeconds;
+  let opponentTime = myTime;
+  if (opponent.finishedAt && collabSession.startedAt) {
+    opponentTime = Math.max(0, Math.round((new Date(opponent.finishedAt).getTime() - new Date(collabSession.startedAt).getTime()) / 1000));
+  }
+
+  const mySp = result.spEarned;
+  const opponentSp = opponent.spEarned ?? 0;
+
+  const comparisonStats = [
+    {
+      label: "SCORE",
+      myValStr: `${myScore}/${totalQ}`,
+      opValStr: `${opponentScore}/${totalQ}`,
+      myNum: myScore,
+      opNum: opponentScore,
+      maxNum: totalQ,
+    },
+    {
+      label: "ACCURACY",
+      myValStr: `${myAccuracy}%`,
+      opValStr: `${opponentAccuracy}%`,
+      myNum: myAccuracy,
+      opNum: opponentAccuracy,
+      maxNum: 100,
+    },
+    {
+      label: "TIME",
+      myValStr: formatTime(myTime),
+      opValStr: formatTime(opponentTime),
+      myNum: myTime,
+      opNum: opponentTime,
+      maxNum: Math.max(myTime, opponentTime, 1),
+      isTime: true,
+    },
+    {
+      label: "SP EARNED",
+      myValStr: `+${mySp}`,
+      opValStr: `+${opponentSp}`,
+      myNum: mySp,
+      opNum: opponentSp,
+      maxNum: Math.max(mySp, opponentSp, 1),
+    },
+  ];
+
+  let currentY = 990;
+  const rowHeight = 100;
+  const rowGap = 20;
+
+  comparisonStats.forEach((stat) => {
+    // Glassmorphic row container
+    ctx.save();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.02)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, 80, currentY, CARD_WIDTH - 160, rowHeight, 20);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Stat Label (Middle)
+    ctx.save();
+    ctx.font = "bold 20px 'Segoe UI', -apple-system, sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(stat.label, CARD_WIDTH / 2, currentY + 32);
+    ctx.restore();
+
+    // Who is better on this stat
+    const iAmBetter = stat.isTime ? stat.myNum < stat.opNum : stat.myNum > stat.opNum;
+    const isTie = stat.myNum === stat.opNum;
+
+    // Left (Me) Value
+    ctx.save();
+    ctx.font = "bold 34px 'Segoe UI', -apple-system, sans-serif";
+    ctx.fillStyle = iAmBetter ? "#F59E0B" : isTie ? "#FFFFFF" : "rgba(255, 255, 255, 0.6)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(stat.myValStr, 130, currentY + 32);
+    ctx.restore();
+
+    // Right (Opponent) Value
+    ctx.save();
+    ctx.font = "bold 34px 'Segoe UI', -apple-system, sans-serif";
+    const opIsBetter = stat.isTime ? stat.opNum < stat.myNum : stat.opNum > stat.myNum;
+    ctx.fillStyle = opIsBetter ? "#F59E0B" : isTie ? "#FFFFFF" : "rgba(255, 255, 255, 0.6)";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(stat.opValStr, CARD_WIDTH - 130, currentY + 32);
+    ctx.restore();
+
+    // Horizontal bars
+    const centerLeft = 400;
+    const centerRight = 680;
+    const maxBarLen = 220;
+
+    let myRatio = 0;
+    let opRatio = 0;
+
+    if (stat.isTime) {
+      const worstTime = stat.maxNum;
+      myRatio = worstTime > 0 ? (worstTime - stat.myNum) / worstTime : 0.5;
+      opRatio = worstTime > 0 ? (worstTime - stat.opNum) / worstTime : 0.5;
+      myRatio = Math.max(0.1, myRatio);
+      opRatio = Math.max(0.1, opRatio);
+    } else {
+      myRatio = stat.maxNum > 0 ? stat.myNum / stat.maxNum : 0;
+      opRatio = stat.maxNum > 0 ? stat.opNum / stat.maxNum : 0;
+    }
+
+    // Left Bar
+    ctx.save();
+    const leftBarWidth = myRatio * maxBarLen;
+    const myBarColor = iAmBetter ? "#F59E0B" : isTie ? "rgba(255, 255, 255, 0.4)" : "rgba(255, 255, 255, 0.15)";
+    ctx.fillStyle = myBarColor;
+    roundRect(ctx, centerLeft - leftBarWidth, currentY + 68, leftBarWidth, 10, 5);
+    ctx.fill();
+    ctx.restore();
+
+    // Right Bar
+    ctx.save();
+    const rightBarWidth = opRatio * maxBarLen;
+    const opBarColor = opIsBetter ? "#F59E0B" : isTie ? "rgba(255, 255, 255, 0.4)" : "rgba(255, 255, 255, 0.15)";
+    ctx.fillStyle = opBarColor;
+    roundRect(ctx, centerRight, currentY + 68, rightBarWidth, 10, 5);
+    ctx.fill();
+    ctx.restore();
+
+    currentY += rowHeight + rowGap;
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ─── MATCH METADATA ───
+  // ═══════════════════════════════════════════════════════════════════
+
+  const metadataY = 1520;
+  const subjectList = collabSession.subjects.join(" × ") || "All Subjects";
+  const sourceLabel = getQuestionSourceMeta(collabSession.questionSource).label;
+  const matchDate = new Date(collabSession.startedAt || Date.now()).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  ctx.save();
+  ctx.font = "bold 26px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+  ctx.textAlign = "center";
+  ctx.fillText(`${subjectList}  •  ${sourceLabel}`, CARD_WIDTH / 2, metadataY);
+
+  ctx.font = "500 22px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+  ctx.fillText(`${totalQ} Questions  •  ${matchDate}`, CARD_WIDTH / 2, metadataY + 45);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ─── PREMIUM FOOTER & CTA ───
+  // ═══════════════════════════════════════════════════════════════════
+
+  const ctaY = CARD_HEIGHT - 200;
+
+  // Bottom separator line
+  ctx.save();
+  const sepGrad = ctx.createLinearGradient(150, ctaY - 60, CARD_WIDTH - 150, ctaY - 60);
+  sepGrad.addColorStop(0, TRANSPARENT);
+  sepGrad.addColorStop(0.25, "rgba(245, 158, 11, 0.2)");
+  sepGrad.addColorStop(0.75, "rgba(245, 158, 11, 0.2)");
+  sepGrad.addColorStop(1, TRANSPARENT);
+  ctx.fillStyle = sepGrad;
+  ctx.fillRect(150, ctaY - 60, CARD_WIDTH - 300, 2);
+  ctx.restore();
+
+  // CTA Text
+  ctx.save();
+  ctx.font = "bold 42px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "#F59E0B";
+  ctx.textAlign = "center";
+  ctx.fillText("studybond.app", CARD_WIDTH / 2, ctaY + 20);
+
+  ctx.font = "400 26px 'Segoe UI', -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.textAlign = "center";
+  ctx.fillText("Study Smarter • Score Higher • Stand Out", CARD_WIDTH / 2, ctaY + 75);
+  ctx.restore();
+
+  // Bottom accent line
+  ctx.save();
+  const botGrad = ctx.createLinearGradient(0, CARD_HEIGHT - 6, CARD_WIDTH, CARD_HEIGHT - 6);
+  botGrad.addColorStop(0, TRANSPARENT);
+  botGrad.addColorStop(0.3, "rgba(245, 158, 11, 0.15)");
+  botGrad.addColorStop(0.5, "rgba(245, 158, 11, 0.4)");
+  botGrad.addColorStop(0.7, "rgba(245, 158, 11, 0.15)");
+  botGrad.addColorStop(1, TRANSPARENT);
+  ctx.fillStyle = botGrad;
+  ctx.fillRect(0, CARD_HEIGHT - 6, CARD_WIDTH, 6);
+  ctx.restore();
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Failed to generate share image"));
+      },
+      "image/png",
+      1.0
+    );
+  });
+}
+
 // ─── Helpers ───
 
 function wrapText(
@@ -543,6 +1169,16 @@ function formatTime(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+}
+
 function buildSubjectStats(result: ExamResult) {
   const map = new Map<string, { total: number; correct: number }>();
   result.subjects.forEach((s) => map.set(s, { total: 0, correct: 0 }));
@@ -565,13 +1201,21 @@ function getShareText(
   result: ExamResult, 
   headline: string,
   metadataOverride?: typeof TIER_METADATA[keyof typeof TIER_METADATA] & { isDuel?: boolean },
-  duelOutcome?: "VICTORY" | "DEFEAT" | "DRAW"
+  duelOutcome?: "VICTORY" | "DEFEAT" | "DRAW",
+  opponentName?: string,
+  opponentScore?: number
 ): string {
   const tier = getScoreTier(result.percentage);
   const metadata = metadataOverride || TIER_METADATA[tier];
   const subjectText = result.subjects.join(", ");
 
-  const baseText = `${metadata.emoji} ${headline}\n\n📊 Score: ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)\n📚 ${subjectText}\n⚡ +${result.spEarned} SP earned`;
+  let baseText = "";
+  if (duelOutcome) {
+    const oppScoreText = opponentScore !== undefined ? `${opponentScore}/${result.totalQuestions}` : "?";
+    baseText = `⚔️ ${headline} | STUDYBOND DUEL\n\n👤 Me: ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)\n👤 ${opponentName || "Opponent"}: ${oppScoreText}\n📚 ${subjectText}\n⚡ +${result.spEarned} SP earned`;
+  } else {
+    baseText = `${metadata.emoji} ${headline}\n\n📊 Score: ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)\n📚 ${subjectText}\n⚡ +${result.spEarned} SP earned`;
+  }
 
   let ctaLine = "";
   if (duelOutcome) {
@@ -599,9 +1243,18 @@ type ShareResultCardProps = {
   customTrigger?: React.ReactElement<{ onClick?: React.MouseEventHandler }>;
   duelOutcome?: "VICTORY" | "DEFEAT" | "DRAW";
   opponentName?: string;
+  collabSession?: CollaborationSession;
+  myUserId?: number;
 };
 
-export function ShareResultCard({ result, customTrigger, duelOutcome, opponentName }: ShareResultCardProps) {
+export function ShareResultCard({
+  result,
+  customTrigger,
+  duelOutcome,
+  opponentName,
+  collabSession,
+  myUserId,
+}: ShareResultCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -646,11 +1299,29 @@ export function ShareResultCard({ result, customTrigger, duelOutcome, opponentNa
     return pickRandom(SHARE_SUBTITLES[tier]);
   }, [tier, duelOutcome, opponentName]);
 
+  const opponentScore = useMemo(() => {
+    if (!collabSession || !myUserId) return undefined;
+    const opponent = collabSession.participants.find((p) => p.userId !== myUserId);
+    return opponent?.score ?? undefined;
+  }, [collabSession, myUserId]);
+
   const generateImage = useCallback(async () => {
     if (generatedUrl) return;
     setIsGenerating(true);
     try {
-      const blob = await renderShareCard(result, headline, subtitle, finalMetadata);
+      let blob: Blob;
+      if (collabSession && myUserId != null) {
+        blob = await renderDuelShareCard(
+          result,
+          collabSession,
+          myUserId,
+          duelOutcome || "DRAW",
+          headline,
+          subtitle
+        );
+      } else {
+        blob = await renderShareCard(result, headline, subtitle, finalMetadata);
+      }
       blobRef.current = blob;
       const url = URL.createObjectURL(blob);
       setGeneratedUrl(url);
@@ -660,7 +1331,7 @@ export function ShareResultCard({ result, customTrigger, duelOutcome, opponentNa
     } finally {
       setIsGenerating(false);
     }
-  }, [result, headline, subtitle, finalMetadata, generatedUrl]);
+  }, [result, collabSession, myUserId, duelOutcome, headline, subtitle, finalMetadata, generatedUrl]);
 
   const handleOpen = useCallback(() => {
     setIsOpen(true);
@@ -675,22 +1346,34 @@ export function ShareResultCard({ result, customTrigger, duelOutcome, opponentNa
     if (!generatedUrl) return;
     const a = document.createElement("a");
     a.href = generatedUrl;
-    a.download = `StudyBond-Result-${Math.round(result.percentage)}pct.png`;
+    const filename = collabSession
+      ? `StudyBond-Duel-Result-${duelOutcome || "DRAW"}-${Math.round(result.percentage)}pct.png`
+      : `StudyBond-Result-${Math.round(result.percentage)}pct.png`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     toast.success("Downloaded! Time to share your victory 🚀", { icon: "📸" });
-  }, [generatedUrl, result.percentage]);
+  }, [generatedUrl, result.percentage, collabSession, duelOutcome]);
 
   const handleShare = useCallback(async () => {
-    const shareText = getShareText(result, headline, finalMetadata, duelOutcome);
+    const shareText = getShareText(
+      result,
+      headline,
+      finalMetadata,
+      duelOutcome,
+      opponentName,
+      opponentScore
+    );
 
     // Try native share (mobile)
     if (navigator.share && blobRef.current) {
       try {
         const file = new File(
           [blobRef.current],
-          `StudyBond-Result-${Math.round(result.percentage)}pct.png`,
+          collabSession
+            ? `StudyBond-Duel-Result-${duelOutcome || "DRAW"}-${Math.round(result.percentage)}pct.png`
+            : `StudyBond-Result-${Math.round(result.percentage)}pct.png`,
           { type: "image/png" }
         );
         await navigator.share({
@@ -713,7 +1396,7 @@ export function ShareResultCard({ result, customTrigger, duelOutcome, opponentNa
     } catch {
       toast.error("Couldn't copy to clipboard.");
     }
-  }, [result, headline]);
+  }, [result, headline, finalMetadata, duelOutcome, opponentName, opponentScore, collabSession]);
 
   return (
     <>
@@ -801,8 +1484,12 @@ export function ShareResultCard({ result, customTrigger, duelOutcome, opponentNa
                 <div className="hidden sm:inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-2 shadow-inner text-4xl">
                   {finalMetadata.emoji}
                 </div>
-                <h2 className="text-xl sm:text-4xl font-extrabold text-white tracking-tight">Share Your Success</h2>
-                <p className="text-white/50 text-xs sm:text-lg">Inspire others with your achievement</p>
+                <h2 className="text-xl sm:text-4xl font-extrabold text-white tracking-tight">
+                  {collabSession ? "Share Duel Result" : "Share Your Success"}
+                </h2>
+                <p className="text-white/50 text-xs sm:text-lg">
+                  {collabSession ? "Show off your performance in the arena" : "Inspire others with your achievement"}
+                </p>
               </div>
 
               {/* Action Buttons */}

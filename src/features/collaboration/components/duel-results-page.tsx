@@ -502,6 +502,8 @@ export function DuelResultsPage({ result, collabSession, myUserId }: DuelResults
             result={result}
             duelOutcome={outcomeText as "VICTORY" | "DEFEAT" | "DRAW"}
             opponentName={opponent.fullName}
+            collabSession={collabSession}
+            myUserId={myUserId}
             customTrigger={
               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold tracking-wide border-white/10 bg-white/5 text-white hover:bg-white/10">
                 <Share2 className="mr-2 h-4 w-4" />
