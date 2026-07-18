@@ -409,7 +409,7 @@ export function AnswerReview({ result }: AnswerReviewProps) {
   return (
     <div className="w-full min-w-0">
       {/* ── Control bar — sticky on desktop, static on mobile to save space ── */}
-      <div className="lg:sticky lg:top-24 z-10 pb-5 sm:pb-6 bg-gradient-to-b from-[var(--sb-bg)] from-85% to-transparent">
+      <div className="lg:sticky lg:top-16 z-10 pb-5 sm:pb-6 bg-gradient-to-b from-[var(--sb-bg)] from-85% to-transparent">
         {/* Title + correctness toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
@@ -487,14 +487,14 @@ export function AnswerReview({ result }: AnswerReviewProps) {
                     setActiveSubject(isActive ? null : stat.subject)
                   }
                   className={cn(
-                    "group flex shrink-0 flex-col gap-1.5 rounded-xl px-3.5 py-2.5 border transition-all duration-200 min-w-[110px]",
+                    "group flex shrink-0 flex-col lg:flex-row lg:items-center gap-1.5 lg:gap-2.5 rounded-xl px-3.5 py-2.5 lg:py-1.5 border transition-all duration-200 min-w-[110px] lg:min-w-0",
                     isActive
                       ? cn("bg-white/[0.05]", colors.border, colors.glow)
                       : "bg-transparent border-white/[0.05] hover:bg-white/[0.03] hover:border-white/[0.08]",
                   )}
                 >
-                  {/* Row 1: subject name + score fraction */}
-                  <div className="flex items-center justify-between gap-3 w-full">
+                  {/* Row 1 (mobile) / Inline segment (desktop): subject name + score fraction */}
+                  <div className="flex items-center justify-between lg:justify-start gap-3 w-full lg:w-auto">
                     <span
                       className={cn(
                         "text-[11px] font-bold uppercase tracking-wider truncate",
@@ -517,8 +517,8 @@ export function AnswerReview({ result }: AnswerReviewProps) {
                     </span>
                   </div>
 
-                  {/* Row 2: inline progress bar + percentage */}
-                  <div className="flex items-center gap-2 w-full">
+                  {/* Row 2 (mobile only): inline progress bar + percentage */}
+                  <div className="flex lg:hidden items-center gap-2 w-full">
                     <div className="flex-1 h-1 rounded-full bg-white/[0.06] overflow-hidden">
                       <div
                         className={cn(
@@ -538,6 +538,17 @@ export function AnswerReview({ result }: AnswerReviewProps) {
                       {stat.percentage}%
                     </span>
                   </div>
+
+                  {/* Desktop-only: compact percentage badge */}
+                  <span
+                    className={cn(
+                      "hidden lg:inline sb-mono text-[9px] font-bold tabular-nums shrink-0 px-1.5 py-0.5 rounded-md",
+                      colors.text,
+                      isActive ? "opacity-100" : "opacity-40 group-hover:opacity-60",
+                    )}
+                  >
+                    {stat.percentage}%
+                  </span>
                 </button>
               );
             })}
