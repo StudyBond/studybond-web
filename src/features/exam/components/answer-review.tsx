@@ -408,147 +408,177 @@ export function AnswerReview({ result }: AnswerReviewProps) {
 
   return (
     <div className="w-full min-w-0">
-      {/* ── Control bar — sticky on desktop, static on mobile to save space ── */}
-      <div className="lg:sticky lg:top-16 z-10 pb-5 sm:pb-6 bg-gradient-to-b from-[var(--sb-bg)] from-85% to-transparent">
-        {/* Title + correctness toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-          <div className="flex items-center gap-3">
-            <h3 className="text-lg font-bold text-white tracking-tight">
-              Answer Review
-            </h3>
-            {/* Live filter count — shows only when a filter is active */}
-            {isFiltered && (
-              <span className="text-[10px] font-medium text-white/25 bg-white/[0.04] px-2 py-0.5 rounded-full tabular-nums animate-in fade-in duration-200">
-                {filteredQuestions.length} of {scopeTotal}
-              </span>
-            )}
-          </div>
-          <div className="flex bg-white/[0.03] p-1 rounded-xl border border-white/[0.06] self-start sm:self-auto">
-            <button
-              onClick={() => setFilter("all")}
-              className={cn(
-                "px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors",
-                filter === "all"
-                  ? "bg-white/[0.08] text-white shadow-sm"
-                  : "text-white/40 hover:text-white/70",
-              )}
-            >
-              All Questions
-            </button>
-            <button
-              onClick={() => setFilter("incorrect")}
-              className={cn(
-                "px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors",
-                filter === "incorrect"
-                  ? "bg-red-500/20 text-red-300 shadow-sm"
-                  : "text-white/40 hover:text-white/70",
-              )}
-            >
-              Incorrect Only
-            </button>
-          </div>
+      {/* ── Control bar ── */}
+
+      {/* DESKTOP: single compact sticky row */}
+      <div className="hidden lg:flex lg:sticky lg:top-16 z-10 items-center gap-0 mb-6 border-b border-white/[0.06] bg-gradient-to-b from-[var(--sb-bg)] from-90% to-transparent pb-0">
+        {/* Title */}
+        <div className="flex items-center gap-2.5 pr-4 shrink-0">
+          <h3 className="text-sm font-bold text-white/70 tracking-tight whitespace-nowrap">
+            Answer Review
+          </h3>
+          {isFiltered && (
+            <span className="text-[10px] text-white/30 bg-white/[0.04] px-1.5 py-0.5 rounded-full tabular-nums animate-in fade-in duration-200">
+              {filteredQuestions.length}/{scopeTotal}
+            </span>
+          )}
         </div>
 
-        {/* ── Subject pills — only for multi-subject exams ── */}
-        {subjectStats.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pt-4 pb-0.5 sb-scroll-hide">
-            {/* "All" pill — minimal, clearly a meta-control not a subject */}
+        {/* Separator */}
+        <div className="h-4 w-px bg-white/[0.08] shrink-0 mx-1" />
+
+        {/* Subject tabs — takes all remaining space, scrollable */}
+        {subjectStats.length > 0 ? (
+          <div className="flex flex-1 items-end overflow-x-auto sb-scroll-hide min-w-0 mx-1">
+            {/* All tab */}
             <button
               onClick={() => setActiveSubject(null)}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 border transition-all duration-200",
+                "group flex shrink-0 items-center gap-1.5 px-3 pb-3 pt-2 text-[11px] font-semibold border-b-2 transition-all duration-150 -mb-px",
                 activeSubject === null
-                  ? "bg-white/[0.08] border-white/[0.12] text-white"
-                  : "bg-transparent border-white/[0.05] text-white/35 hover:bg-white/[0.03] hover:text-white/55",
+                  ? "border-white/60 text-white"
+                  : "border-transparent text-white/30 hover:text-white/60 hover:border-white/20",
               )}
             >
-              <span className="text-[11px] font-bold tracking-wide">All</span>
-              <span
-                className={cn(
-                  "sb-mono text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md",
-                  activeSubject === null
-                    ? "bg-white/[0.08] text-white/60"
-                    : "bg-white/[0.03] text-white/20",
-                )}
-              >
+              All
+              <span className={cn("sb-mono text-[10px] tabular-nums transition-colors", activeSubject === null ? "text-white/50" : "text-white/20 group-hover:text-white/40")}>
                 {result.totalQuestions}
               </span>
             </button>
 
-            {/* Per-subject pills — richer, with performance data baked in */}
             {subjectStats.map((stat) => {
               const isActive = activeSubject === stat.subject;
               const colors = getTierColors(stat.percentage);
-
               return (
                 <button
                   key={stat.subject}
-                  onClick={() =>
-                    setActiveSubject(isActive ? null : stat.subject)
-                  }
+                  onClick={() => setActiveSubject(isActive ? null : stat.subject)}
                   className={cn(
-                    "group flex shrink-0 flex-col lg:flex-row lg:items-center gap-1.5 lg:gap-2.5 rounded-xl px-3.5 py-2.5 lg:py-1.5 border transition-all duration-200 min-w-[110px] lg:min-w-0",
+                    "group flex shrink-0 items-center gap-2 px-3 pb-3 pt-2 text-[11px] font-semibold border-b-2 transition-all duration-150 -mb-px",
                     isActive
-                      ? cn("bg-white/[0.05]", colors.border, colors.glow)
-                      : "bg-transparent border-white/[0.05] hover:bg-white/[0.03] hover:border-white/[0.08]",
+                      ? cn("text-white", colors.bar.replace("bg-", "border-"))
+                      : "border-transparent text-white/30 hover:text-white/60 hover:border-white/20",
                   )}
                 >
-                  {/* Row 1 (mobile) / Inline segment (desktop): subject name + score fraction */}
-                  <div className="flex items-center justify-between lg:justify-start gap-3 w-full lg:w-auto">
-                    <span
-                      className={cn(
-                        "text-[11px] font-bold uppercase tracking-wider truncate",
-                        isActive
-                          ? "text-white/90"
-                          : "text-white/35 group-hover:text-white/55",
-                      )}
-                    >
-                      {stat.subject}
-                    </span>
-                    <span
-                      className={cn(
-                        "sb-mono text-[10px] font-bold tabular-nums shrink-0",
-                        isActive
-                          ? "text-white/50"
-                          : "text-white/15 group-hover:text-white/30",
-                      )}
-                    >
-                      {stat.correct}/{stat.total}
-                    </span>
-                  </div>
-
-                  {/* Row 2 (mobile only): inline progress bar + percentage */}
-                  <div className="flex lg:hidden items-center gap-2 w-full">
-                    <div className="flex-1 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-700 ease-out",
-                          colors.bar,
-                        )}
-                        style={{ width: `${stat.percentage}%` }}
-                      />
-                    </div>
-                    <span
-                      className={cn(
-                        "sb-mono text-[9px] font-bold tabular-nums shrink-0",
-                        colors.text,
-                        !isActive && "opacity-50",
-                      )}
-                    >
-                      {stat.percentage}%
-                    </span>
-                  </div>
-
-                  {/* Desktop-only: compact percentage badge */}
-                  <span
-                    className={cn(
-                      "hidden lg:inline sb-mono text-[9px] font-bold tabular-nums shrink-0 px-1.5 py-0.5 rounded-md",
-                      colors.text,
-                      isActive ? "opacity-100" : "opacity-40 group-hover:opacity-60",
-                    )}
-                  >
-                    {stat.percentage}%
+                  <span className="uppercase tracking-wider">{stat.subject}</span>
+                  <span className={cn("sb-mono text-[10px] tabular-nums transition-colors", isActive ? "text-white/50" : "text-white/15 group-hover:text-white/35")}>
+                    {stat.correct}/{stat.total}
                   </span>
+                  {/* Colored performance dot */}
+                  <span className={cn("h-1.5 w-1.5 rounded-full shrink-0 transition-opacity", colors.bar, isActive ? "opacity-100" : "opacity-25 group-hover:opacity-50")} />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        {/* Separator */}
+        <div className="h-4 w-px bg-white/[0.08] shrink-0 mx-1" />
+
+        {/* Filter toggle */}
+        <div className="flex shrink-0 items-center bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06] ml-3">
+          <button
+            onClick={() => setFilter("all")}
+            className={cn(
+              "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors whitespace-nowrap",
+              filter === "all"
+                ? "bg-white/[0.08] text-white"
+                : "text-white/35 hover:text-white/70",
+            )}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter("incorrect")}
+            className={cn(
+              "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors whitespace-nowrap",
+              filter === "incorrect"
+                ? "bg-red-500/20 text-red-300"
+                : "text-white/35 hover:text-white/70",
+            )}
+          >
+            Wrong Only
+          </button>
+        </div>
+      </div>
+
+      {/* MOBILE: two compact rows */}
+      <div className="lg:hidden pb-4 bg-gradient-to-b from-[var(--sb-bg)] from-85% to-transparent">
+        {/* Row 1: Title + filter toggle */}
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5">
+            <h3 className="text-base font-bold text-white tracking-tight">Answer Review</h3>
+            {isFiltered && (
+              <span className="text-[10px] text-white/25 bg-white/[0.04] px-1.5 py-0.5 rounded-full tabular-nums animate-in fade-in duration-200">
+                {filteredQuestions.length}/{scopeTotal}
+              </span>
+            )}
+          </div>
+          <div className="flex bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06] shrink-0">
+            <button
+              onClick={() => setFilter("all")}
+              className={cn(
+                "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors",
+                filter === "all"
+                  ? "bg-white/[0.08] text-white"
+                  : "text-white/35 hover:text-white/70",
+              )}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter("incorrect")}
+              className={cn(
+                "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors",
+                filter === "incorrect"
+                  ? "bg-red-500/20 text-red-300"
+                  : "text-white/35 hover:text-white/70",
+              )}
+            >
+              Wrong
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Subject tabs — scrollable underline style */}
+        {subjectStats.length > 0 && (
+          <div className="flex items-end overflow-x-auto sb-scroll-hide border-b border-white/[0.06] -mx-4 px-4">
+            <button
+              onClick={() => setActiveSubject(null)}
+              className={cn(
+                "group flex shrink-0 items-center gap-1.5 px-2.5 pb-2.5 pt-1.5 text-[11px] font-semibold border-b-2 transition-all duration-150 -mb-px",
+                activeSubject === null
+                  ? "border-white/60 text-white"
+                  : "border-transparent text-white/30 hover:text-white/60",
+              )}
+            >
+              All
+              <span className={cn("sb-mono text-[10px] tabular-nums", activeSubject === null ? "text-white/50" : "text-white/20")}>
+                {result.totalQuestions}
+              </span>
+            </button>
+
+            {subjectStats.map((stat) => {
+              const isActive = activeSubject === stat.subject;
+              const colors = getTierColors(stat.percentage);
+              return (
+                <button
+                  key={stat.subject}
+                  onClick={() => setActiveSubject(isActive ? null : stat.subject)}
+                  className={cn(
+                    "group flex shrink-0 items-center gap-2 px-2.5 pb-2.5 pt-1.5 text-[11px] font-semibold border-b-2 transition-all duration-150 -mb-px",
+                    isActive
+                      ? cn("text-white", colors.bar.replace("bg-", "border-"))
+                      : "border-transparent text-white/30 hover:text-white/60",
+                  )}
+                >
+                  <span className="uppercase tracking-wider">{stat.subject}</span>
+                  <span className={cn("sb-mono text-[10px] tabular-nums", isActive ? "text-white/50" : "text-white/15 group-hover:text-white/35")}>
+                    {stat.correct}/{stat.total}
+                  </span>
+                  <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", colors.bar, isActive ? "opacity-100" : "opacity-25")} />
                 </button>
               );
             })}
