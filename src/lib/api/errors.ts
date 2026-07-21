@@ -1,4 +1,4 @@
-export type ApiErrorKind = "network" | "auth" | "validation" | "permission" | "premium" | "server";
+export type ApiErrorKind = "network" | "auth" | "validation" | "permission" | "premium" | "rate_limit" | "server";
 
 export class ApiError extends Error {
   constructor(
@@ -45,6 +45,13 @@ function safeMessageForStatus(status: number): { message: string; kind: ApiError
     return {
       kind: "server",
       message: "We could not find what you asked for.",
+    };
+  }
+
+  if (status === 429) {
+    return {
+      kind: "rate_limit",
+      message: "Too many requests. Please slow down and try again shortly.",
     };
   }
 

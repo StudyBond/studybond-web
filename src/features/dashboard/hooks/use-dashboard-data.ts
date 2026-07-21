@@ -17,7 +17,6 @@ export function useDashboardCriticalData() {
     queryKey: ["auth", "me"],
     queryFn: getMe,
     staleTime: Infinity, // Only fetch once per page load
-    retry: 3, // Retry 3 times on failure (handles transient auth issues)
   });
 
   // Gate all other queries behind successful auth

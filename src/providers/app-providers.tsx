@@ -20,8 +20,16 @@ export function AppProviders({
           queries: {
             refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
-              if (error instanceof ApiError && error.kind === "auth") {
-                return false;
+              if (error instanceof ApiError) {
+                // Never retry auth errors or rate-limit (429) errors.
+                // Retrying 429s doubles load on a saturated backend.
+                if (
+                  error.kind === "auth" ||
+                  error.kind === "rate_limit" ||
+                  error.status === 429
+                ) {
+                  return false;
+                }
               }
 
               return failureCount < 1;
