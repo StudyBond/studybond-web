@@ -10,7 +10,7 @@ import type {
 
 // ─── Shared Enums ───
 
-export type ExamType = "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED" | "ONE_V_ONE_DUEL" | "GROUP_COLLAB" | "DAILY_CHALLENGE" | "BOOKMARK_EXAM";
+export type ExamType = "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED" | "ONE_V_ONE_DUEL" | "GROUP_COLLAB" | "DAILY_CHALLENGE" | "BOOKMARK_EXAM" | "STUDY";
 export type Subject = "Mathematics" | "English" | "Physics" | "Chemistry" | "Biology";
 
 // ─── Payloads ───

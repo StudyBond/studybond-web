@@ -86,6 +86,11 @@
   /* Sidebar width token */
   --sb-sidebar-width: 260px;
   --sb-topbar-height: 56px;
+
+  /* Study Mode — Indigo/Violet System */
+  --sb-study-accent: #6366f1;
+  --sb-study-glow: rgba(99, 102, 241, 0.25);
+  --sb-study-glow-heavy: rgba(99, 102, 241, 0.45);
 }
 
 /* ─── Reset & Base ─── */

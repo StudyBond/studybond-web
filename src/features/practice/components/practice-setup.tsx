@@ -22,7 +22,8 @@ import {
   Clock3,
   Lock,
   Unlock,
-  Info
+  Info,
+  GraduationCap
 } from "lucide-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useStartExamMutation, useStartDailyChallengeMutation } from "@/features/practice/hooks/use-practice-mutations";
@@ -88,6 +89,22 @@ const EXAM_MODES: {
     colorTo: "#7c3aed",
     accentColor: "#d946ef",
     glowColor: "rgba(217, 70, 239, 0.25)",
+  },
+  {
+    id: "STUDY",
+    title: "Study Mode",
+    tagline: "Learn at your own pace — no timer, no pressure, just understanding",
+    features: [
+      "Instant answer + explanation reveal",
+      "Topic-by-topic deep dives",
+      "Track your mastery per subject",
+      "Self-paced — no countdown"
+    ],
+    icon: GraduationCap,
+    colorFrom: "#818cf8",
+    colorTo: "#6366f1",
+    accentColor: "#818cf8",
+    glowColor: "rgba(129, 140, 248, 0.25)",
   },
 ];
 
@@ -208,6 +225,12 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
 
   const handleLaunch = () => {
     if (!selectedMode || selectedSubjects.length === 0) return;
+    
+    if (selectedMode === "STUDY") {
+      router.push(`/dashboard/study?subjects=${selectedSubjects.join(",")}` as any);
+      return;
+    }
+
     // Daily challenge requires exactly 4 subjects
     if (selectedMode === "DAILY_CHALLENGE" && selectedSubjects.length !== 4) {
       setSetupError("Daily Challenge requires exactly 4 subjects.");

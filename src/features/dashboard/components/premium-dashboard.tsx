@@ -1,6 +1,7 @@
 "use client";
 
 import { AchievementRail } from "@/features/dashboard/components/achievement-rail";
+import { StudyDashboardCard } from "@/features/study/components/study-dashboard-card";
 import { AnalyticsPanel } from "@/features/dashboard/components/analytics-panel";
 import { CollaborationCard } from "@/features/dashboard/components/collaboration-card";
 import { CommandBar } from "@/features/dashboard/components/command-bar";
@@ -197,6 +198,11 @@ export function PremiumDashboard({
       {/* ── Exam Countdown ── */}
       <section className="sb-enter mt-6">
         <ExamCountdown />
+      </section>
+
+      {/* ── Study Mode Entry Card ── */}
+      <section className="sb-enter mt-6 sb-stagger-1">
+        <StudyDashboardCard isPremium={true} />
       </section>
 
       {/* ── Study Insights (Elite exclusive) ── */}

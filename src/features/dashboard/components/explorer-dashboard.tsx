@@ -4,6 +4,7 @@ import { CommandBar } from "@/features/dashboard/components/command-bar";
 import { ExamCountdown } from "@/features/dashboard/components/exam-countdown";
 import { ExamHistoryPanel } from "@/features/dashboard/components/exam-history-panel";
 import { PremiumPreviewCard } from "@/features/dashboard/components/premium-preview-card";
+import { StudyDashboardCard } from "@/features/study/components/study-dashboard-card";
 import { RankPanel } from "@/features/dashboard/components/rank-panel";
 import { StatTile } from "@/features/dashboard/components/stat-tile";
 import { StreakPanel } from "@/features/dashboard/components/streak-panel";
@@ -118,6 +119,11 @@ export function ExplorerDashboard({
       {/* ── Daily Goal Tracker ── */}
       <section className="sb-enter mt-6 sb-stagger-3">
         <DailyGoalCard streak={streak} />
+      </section>
+
+      {/* ── Study Mode teaser card ── */}
+      <section className="sb-enter mt-6 sb-stagger-3">
+        <StudyDashboardCard isPremium={false} />
       </section>
 
       {/* ── Exam History + Streak ── */}

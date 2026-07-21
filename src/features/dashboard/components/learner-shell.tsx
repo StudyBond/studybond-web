@@ -32,6 +32,7 @@ import {
   Swords,
   PanelLeftClose,
   PanelLeftOpen,
+  GraduationCap
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -64,6 +65,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Dashboard", href: "/dashboard", icon: Home },
       { label: "Practice", href: "/dashboard/practice", icon: BookOpen },
+      { label: "Study Mode", href: "/dashboard/study", icon: GraduationCap },
       { label: "History", href: "/dashboard/history", icon: BarChart3 },
       { label: "Study Vault", href: "/dashboard/bookmarks", icon: Bookmark },
     ],
