@@ -201,9 +201,11 @@ export function PremiumDashboard({
       </section>
 
       {/* ── Study Mode Entry Card ── */}
-      <section className="sb-enter mt-6 sb-stagger-1">
-        <StudyDashboardCard isPremium={true} />
-      </section>
+      {stats.institution?.studyModeEnabled && (
+        <section className="sb-enter mt-6 sb-stagger-1">
+          <StudyDashboardCard isPremium={true} />
+        </section>
+      )}
 
       {/* ── Study Insights (Elite exclusive) ── */}
       <section className="sb-enter mt-6 sb-stagger-1">

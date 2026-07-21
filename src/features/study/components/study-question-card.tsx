@@ -57,10 +57,10 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
       ) : null}
 
       {/* Main question card */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] p-6 md:p-8 space-y-6">
+      <div className="rounded-2xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
         <div>
           {/* Question Text */}
-          <h2 className="text-base md:text-lg font-medium leading-relaxed text-white/90 sb-protected">
+          <h2 className="text-sm sm:text-base md:text-lg font-medium leading-relaxed text-white/90 sb-protected">
             <MathMarkdown content={question.questionText} variant="question" />
           </h2>
 
@@ -69,7 +69,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
             <img
               src={question.imageUrl}
               alt="Question illustration"
-              className="mt-4 max-h-72 rounded-xl border border-white/[0.06] object-contain sb-protected-img"
+              className="mt-4 max-h-56 sm:max-h-72 rounded-xl border border-white/[0.06] object-contain sb-protected-img"
               loading="lazy"
               onContextMenu={(e) => e.preventDefault()}
               draggable={false}
@@ -88,51 +88,60 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
         />
 
         {/* Action Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/[0.06]">
-          {/* Left: Previous Navigation */}
-          <Button
-            variant="ghost"
-            onClick={prevQuestion}
-            disabled={currentIndex === 0}
-            className="text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Previous
-          </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-white/[0.06]">
+          {/* Left: Previous & secondary actions */}
+          <div className="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={prevQuestion}
+              disabled={currentIndex === 0}
+              className="text-white/40 hover:text-white/80 hover:bg-white/[0.04] text-xs h-9 px-2.5"
+            >
+              <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+              Previous
+            </Button>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-3 ml-auto">
-            {phase === "attempt" ? (
-              <>
+            {phase === "attempt" && (
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={() => showAnswer(question.id)}
-                  className="text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
+                  className="text-white/40 hover:text-white/80 hover:bg-white/[0.04] text-xs h-9 px-2.5"
                 >
-                  <Eye className="mr-2 h-4 w-4" />
-                  Show Answer
+                  <Eye className="mr-1.5 h-3.5 w-3.5" />
+                  <span className="hidden xs:inline">Show Answer</span>
+                  <span className="xs:hidden">Answer</span>
                 </Button>
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={() => skipQuestion(question.id)}
-                  className="text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
+                  className="text-white/40 hover:text-white/80 hover:bg-white/[0.04] text-xs h-9 px-2.5"
                 >
                   Skip
                 </Button>
-                <Button
-                  onClick={() => checkAnswer(question.id)}
-                  disabled={!selectedAnswer}
-                  className="bg-[var(--sb-study-accent)] hover:bg-[var(--sb-study-accent)]/80 text-white font-semibold shadow-lg shadow-[var(--sb-study-glow)]"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Check Answer
-                </Button>
-              </>
+              </div>
+            )}
+          </div>
+
+          {/* Right/Bottom Primary CTA */}
+          <div className="w-full sm:w-auto">
+            {phase === "attempt" ? (
+              <Button
+                onClick={() => checkAnswer(question.id)}
+                disabled={!selectedAnswer}
+                className="w-full sm:w-auto bg-[var(--sb-study-accent)] hover:bg-[var(--sb-study-accent)]/80 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-[var(--sb-study-glow)] h-10 px-5 rounded-xl"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Check Answer
+              </Button>
             ) : (
               <Button
                 onClick={nextQuestion}
                 disabled={currentIndex === totalQuestions - 1}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold"
+                className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold h-10 px-5 rounded-xl"
               >
                 Next Question
                 <ArrowRight className="ml-2 h-4 w-4" />

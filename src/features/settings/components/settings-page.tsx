@@ -17,6 +17,7 @@ import { SecurityTab } from "@/features/settings/components/security-tab";
 import { SubscriptionTab } from "@/features/settings/components/subscription-tab";
 import { DangerZone } from "@/features/settings/components/danger-zone";
 import { CommunityTab } from "@/features/settings/components/community-tab";
+import { AdminTab } from "@/features/settings/components/admin-tab";
 import { useSwipe } from "@/hooks/use-swipe";
 import {
   Settings,
@@ -48,20 +49,36 @@ const communityTab = {
   icon: MessageCircle,
 } as const;
 
-const TABS = notificationsUiEnabled
-  ? [baseTabs[0], baseTabs[1], baseTabs[2], communityTab, notificationsTab, baseTabs[3]]
-  : [baseTabs[0], baseTabs[1], baseTabs[2], communityTab, baseTabs[3]];
+const adminTab = {
+  id: "admin",
+  label: "Admin Controls",
+  icon: Shield,
+} as const;
 
-type TabId = "profile" | "security" | "subscription" | "community" | "notifications" | "danger";
+type TabId = "profile" | "security" | "subscription" | "community" | "notifications" | "admin" | "danger";
+
+const VALID_TAB_IDS: readonly string[] = ["profile", "security", "subscription", "community", "notifications", "admin", "danger"];
 
 function isTabId(value: string): value is TabId {
-  return TABS.some((tab) => tab.id === value);
+  return VALID_TAB_IDS.includes(value);
 }
 
 export function SettingsPageClient() {
   const critical = useDashboardCriticalData();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const [activeTab, setActiveTab] = useState<TabId>("profile");
+
+  const isAdmin = profile?.role === "ADMIN" || profile?.role === "SUPERADMIN";
+
+  const TABS = [
+    baseTabs[0],
+    baseTabs[1],
+    baseTabs[2],
+    communityTab,
+    ...(notificationsUiEnabled ? [notificationsTab] : []),
+    ...(isAdmin ? [adminTab] : []),
+    baseTabs[3],
+  ];
 
   // Derive premium status from stats (always available in critical data)
   const isPremium = critical.stats.data?.isPremium ?? false;
@@ -238,6 +255,7 @@ export function SettingsPageClient() {
               )}
               {activeTab === "notifications" && <NotificationsSettingsTab />}
               {activeTab === "community" && <CommunityTab isPremium={isPremium} />}
+              {activeTab === "admin" && <AdminTab />}
               {activeTab === "danger" && <DangerZone />}
             </div>
           </div>

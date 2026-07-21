@@ -115,6 +115,7 @@ export type InstitutionContext = {
   code: string;
   name: string;
   slug: string;
+  studyModeEnabled?: boolean;
   source?: "explicit" | "user_target" | "launch_default";
 };
 

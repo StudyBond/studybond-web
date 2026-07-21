@@ -94,8 +94,8 @@ export function StudyOptionGrid({
             onClick={() => !isRevealed && onSelect(key)}
             disabled={disabled || isRevealed}
             className={cn(
-              "group relative w-full rounded-2xl border p-4 text-left transition-all duration-300",
-              "flex items-start gap-3.5",
+              "group relative w-full rounded-xl sm:rounded-2xl border p-3 sm:p-4 text-left transition-all duration-300",
+              "flex items-start gap-2.5 sm:gap-3.5",
               "outline-none focus-visible:ring-2 focus-visible:ring-[var(--sb-study-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--sb-bg)]",
               buttonClass
             )}
@@ -103,7 +103,7 @@ export function StudyOptionGrid({
             {/* Option letter/icon badge */}
             <span
               className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-all duration-300",
+                "flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-all duration-300 mt-0.5",
                 badgeClass
               )}
             >
@@ -114,7 +114,7 @@ export function StudyOptionGrid({
             <div className="flex-1 min-w-0 pt-0.5">
               {text ? (
                 <div className={cn(
-                  "text-sm leading-relaxed transition-colors duration-200 sb-protected",
+                  "text-xs sm:text-sm leading-relaxed transition-colors duration-200 sb-protected",
                   textClass
                 )}>
                   <MathMarkdown content={text} variant="option" />
@@ -127,7 +127,7 @@ export function StudyOptionGrid({
                     src={imageUrl}
                     alt={`Option ${key}`}
                     className={cn(
-                      "max-h-40 rounded-lg border border-white/[0.06] object-contain sb-protected-img transition-opacity duration-300",
+                      "max-h-32 sm:max-h-40 rounded-lg border border-white/[0.06] object-contain sb-protected-img transition-opacity duration-300",
                       isRevealed && !isCorrect && !isWrongAndSelected && "opacity-40"
                     )}
                     loading="lazy"
@@ -140,7 +140,7 @@ export function StudyOptionGrid({
 
             {/* Pulsing indicator for correct option in reveal mode */}
             {isRevealed && isCorrect && (
-              <span className="absolute inset-0 rounded-2xl border border-emerald-500/30 animate-pulse pointer-events-none" />
+              <span className="absolute inset-0 rounded-xl sm:rounded-2xl border border-emerald-500/30 animate-pulse pointer-events-none" />
             )}
           </button>
         );

@@ -122,9 +122,11 @@ export function ExplorerDashboard({
       </section>
 
       {/* ── Study Mode teaser card ── */}
-      <section className="sb-enter mt-6 sb-stagger-3">
-        <StudyDashboardCard isPremium={false} />
-      </section>
+      {stats.institution?.studyModeEnabled && (
+        <section className="sb-enter mt-6 sb-stagger-3">
+          <StudyDashboardCard isPremium={false} />
+        </section>
+      )}
 
       {/* ── Exam History + Streak ── */}
       <section className="sb-enter mt-6 grid gap-5 lg:grid-cols-[1.15fr_0.85fr] sb-stagger-4">

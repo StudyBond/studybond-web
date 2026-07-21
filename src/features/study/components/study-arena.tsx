@@ -116,6 +116,8 @@ export function StudyArena() {
     }
   }, [currentIndex, questionStates, questions]);
 
+  const [isMobileTopicsOpen, setIsMobileTopicsOpen] = useState(false);
+
   if (!sessionActive || questions.length === 0) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-4 text-center">
@@ -152,12 +154,18 @@ export function StudyArena() {
   }
 
   return (
-    <div className="space-y-6">
-      <StudyHeader onEndSession={handleEndSession} />
+    <div className="space-y-4 sm:space-y-6">
+      <StudyHeader 
+        onEndSession={handleEndSession}
+        onOpenMobileTopics={() => setIsMobileTopicsOpen(true)}
+      />
 
-      <div className="flex items-start gap-8">
-        {/* Topic navigation on the left */}
-        <StudyTopicDrawer />
+      <div className="flex items-start gap-6 lg:gap-8">
+        {/* Topic navigation (Sidebar on desktop, Sheet on mobile) */}
+        <StudyTopicDrawer 
+          isOpenMobile={isMobileTopicsOpen}
+          onCloseMobile={() => setIsMobileTopicsOpen(false)}
+        />
 
         {/* Core question work area */}
         <div className="flex-1 min-w-0">

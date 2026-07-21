@@ -42,41 +42,41 @@ export function StudySummary({ onRestart, onBackToDashboard }: StudySummaryProps
       </div>
 
       {/* Metrics Bento Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Studied */}
-        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-5 text-center space-y-1">
-          <BookOpen className="h-5 w-5 text-indigo-400 mx-auto" />
-          <p className="text-2xl font-bold text-white font-mono">{total}</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-white/30">Studied</p>
+        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4 sm:p-5 text-center space-y-1">
+          <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 text-indigo-400 mx-auto" />
+          <p className="text-xl sm:text-2xl font-bold text-white font-mono">{total}</p>
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white/30">Studied</p>
         </div>
 
         {/* First Try Correct */}
-        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-5 text-center space-y-1">
-          <Sparkles className="h-5 w-5 text-emerald-400 mx-auto" />
-          <p className="text-2xl font-bold text-white font-mono">{masteryPercent}%</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-white/30">Mastery Rate</p>
+        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4 sm:p-5 text-center space-y-1">
+          <Sparkles className="h-4 sm:h-5 w-4 sm:w-5 text-emerald-400 mx-auto" />
+          <p className="text-xl sm:text-2xl font-bold text-white font-mono">{masteryPercent}%</p>
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white/30">Mastery Rate</p>
         </div>
 
         {/* Best Streak */}
-        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-5 text-center space-y-1">
-          <Flame className="h-5 w-5 text-orange-400 mx-auto" />
-          <p className="text-2xl font-bold text-white font-mono">{mastery.bestStreak}</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-white/30">Best Streak</p>
+        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4 sm:p-5 text-center space-y-1">
+          <Flame className="h-4 sm:h-5 w-4 sm:w-5 text-orange-400 mx-auto" />
+          <p className="text-xl sm:text-2xl font-bold text-white font-mono">{mastery.bestStreak}</p>
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white/30">Best Streak</p>
         </div>
 
         {/* Time Spent */}
-        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-5 text-center space-y-1">
-          <Clock className="h-5 w-5 text-amber-400 mx-auto" />
-          <p className="text-2xl font-bold text-white font-mono truncate px-1">
+        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.02] p-4 sm:p-5 text-center space-y-1">
+          <Clock className="h-4 sm:h-5 w-4 sm:w-5 text-amber-400 mx-auto" />
+          <p className="text-xl sm:text-2xl font-bold text-white font-mono truncate px-1">
             {timeSpent > 60 ? `${Math.round(timeSpent / 60)}m` : `${timeSpent}s`}
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-white/30">Time Spent</p>
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white/30">Time Spent</p>
         </div>
       </div>
 
       {/* Subject and Topic Mastery Breakdown */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] p-6 space-y-6">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-white/40">
+      <div className="rounded-2xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] p-4 sm:p-6 space-y-5 sm:space-y-6">
+        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-white/40">
           Mastery by Topic
         </h3>
 
@@ -111,10 +111,10 @@ export function StudySummary({ onRestart, onBackToDashboard }: StudySummaryProps
       </div>
 
       {/* CTA Actions */}
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
         <Button
           onClick={onRestart}
-          className="w-full md:w-auto px-6 py-5 bg-[var(--sb-study-accent)] hover:bg-[var(--sb-study-accent)]/80 text-white font-bold rounded-xl shadow-lg shadow-[var(--sb-study-glow)]"
+          className="w-full sm:w-auto px-6 py-5 bg-[var(--sb-study-accent)] hover:bg-[var(--sb-study-accent)]/80 text-white font-bold rounded-xl shadow-lg shadow-[var(--sb-study-glow)]"
         >
           <RefreshCw className="mr-2 h-4 w-4" />
           Study Again
@@ -122,7 +122,7 @@ export function StudySummary({ onRestart, onBackToDashboard }: StudySummaryProps
         <Button
           variant="ghost"
           onClick={onBackToDashboard}
-          className="w-full md:w-auto px-6 py-5 border-white/10 text-white hover:bg-white/[0.04]"
+          className="w-full sm:w-auto px-6 py-5 border-white/10 text-white hover:bg-white/[0.04]"
         >
           <LayoutDashboard className="mr-2 h-4 w-4" />
           Dashboard
