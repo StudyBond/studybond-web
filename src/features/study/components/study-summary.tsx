@@ -1,7 +1,7 @@
 "use client";
 
 import { useStudyStore } from "@/features/study/stores/study-store";
-import { Crown, Sparkles, BookOpen, Flame, Clock, RefreshCw, LayoutDashboard } from "lucide-react";
+import { Crown, Sparkles, BookOpen, Flame, Clock, RefreshCw, LayoutDashboard, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type StudySummaryProps = {
@@ -13,6 +13,7 @@ export function StudySummary({ onRestart, onBackToDashboard }: StudySummaryProps
   const questions = useStudyStore((s) => s.questions);
   const mastery = useStudyStore((s) => s.mastery);
   const topicGroups = useStudyStore((s) => s.topicGroups);
+  const isPremiumSession = useStudyStore((s) => s.isPremiumSession);
   
   const total = questions.length;
   const attempted = mastery.correct + mastery.wrong;
@@ -109,6 +110,28 @@ export function StudySummary({ onRestart, onBackToDashboard }: StudySummaryProps
           })}
         </div>
       </div>
+
+      {/* Premium Upgrade Banner for Free Users */}
+      {!isPremiumSession && (
+        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-950/20 to-indigo-950/30 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-amber-500/5">
+          <div className="flex items-center gap-3 text-left">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-black shadow-lg">
+              <Crown className="h-5 w-5 fill-black" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-white">Unlock 10,000+ Real Past Questions</h4>
+              <p className="text-xs text-white/60">Upgrade to StudyBond Premium for unlimited questions, real UTME/JAMB past exams, and full topic analytics.</p>
+            </div>
+          </div>
+          <a
+            href="/dashboard/settings"
+            className="shrink-0 w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-amber-400 to-[#e09040] hover:from-amber-500 hover:to-[#d08030] text-black font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all"
+          >
+            <span>Upgrade to Premium</span>
+            <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      )}
 
       {/* CTA Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">

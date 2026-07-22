@@ -1,7 +1,7 @@
 "use client";
 
 import { useStudyStore } from "@/features/study/stores/study-store";
-import { Flame, Sparkles, LogOut, Layers } from "lucide-react";
+import { Flame, Sparkles, LogOut, Layers, Crown, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type StudyHeaderProps = {
@@ -13,6 +13,7 @@ export function StudyHeader({ onEndSession, onOpenMobileTopics }: StudyHeaderPro
   const currentIndex = useStudyStore((s) => s.currentIndex);
   const questions = useStudyStore((s) => s.questions);
   const mastery = useStudyStore((s) => s.mastery);
+  const isPremiumSession = useStudyStore((s) => s.isPremiumSession);
   
   const currentQuestion = questions[currentIndex];
   const total = questions.length;
@@ -76,6 +77,19 @@ export function StudyHeader({ onEndSession, onOpenMobileTopics }: StudyHeaderPro
         {/* Center/Right: Mastery Stats & Actions */}
         <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
           <div className="flex items-center gap-2">
+            {/* Question pool tier badge */}
+            {isPremiumSession ? (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold font-mono">
+                <Crown className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                <span>Real + Practice Bank</span>
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold font-mono">
+                <Lock className="h-3.5 w-3.5 text-amber-400" />
+                <span>Free Pool Teaser</span>
+              </div>
+            )}
+
             {/* Streak indicator */}
             {mastery.currentStreak > 0 && (
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold font-mono">

@@ -4,7 +4,7 @@ import { useStudyStore, type OptionKey } from "@/features/study/stores/study-sto
 import { StudyOptionGrid } from "./study-option-grid";
 import { MathMarkdown } from "@/components/ui/math-markdown";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Eye, ArrowRight, ArrowLeft } from "lucide-react";
+import { Sparkles, Eye, ArrowRight, ArrowLeft, Crown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type StudyQuestionCardProps = {
@@ -22,6 +22,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
   const nextQuestion = useStudyStore((s) => s.nextQuestion);
   const prevQuestion = useStudyStore((s) => s.prevQuestion);
   const currentIndex = useStudyStore((s) => s.currentIndex);
+  const isPremiumSession = useStudyStore((s) => s.isPremiumSession);
 
   const selectedAnswer = state?.selectedAnswer ?? null;
   const phase = state?.phase ?? "attempt";
@@ -189,6 +190,24 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
                 <p className="text-xs text-white/50 leading-relaxed">
                   {question.explanation.additionalNotes}
                 </p>
+              </div>
+            )}
+
+            {!isPremiumSession && (
+              <div className="mt-4 pt-3.5 border-t border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-500/[0.06] -mx-5 -mb-5 md:-mx-6 md:-mb-6 p-4 rounded-b-2xl">
+                <div className="flex items-center gap-2.5 text-xs text-amber-200">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400 text-black font-bold">
+                    <Crown className="h-4 w-4 fill-black" />
+                  </div>
+                  <span>Want 10,000+ real past questions on <strong>{question.subject}</strong>?</span>
+                </div>
+                <a
+                  href="/dashboard/settings"
+                  className="shrink-0 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-amber-500/30 transition-all"
+                >
+                  <span>Unlock Real Bank</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </a>
               </div>
             )}
           </motion.div>

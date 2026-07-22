@@ -86,20 +86,82 @@ function StudySetupContent() {
         <div className="inline-flex items-center gap-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 w-fit">
           <GraduationCap className="h-4 w-4 text-indigo-400" />
           <span className="text-[10px] sm:text-xs font-bold text-indigo-300 uppercase tracking-widest font-mono">
-            Premium Study Mode
+            {isPremium ? "Premium Real + Practice Pool" : "Free Exam Pool Sample"}
           </span>
         </div>
         <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight text-white">
           Configure Study Session
         </h1>
         <p className="text-white/40 text-sm sm:text-base md:text-lg">
-          Pick any subject combination to learn at your own pace.
-          {!isPremium && (
-            <span className="block mt-1 text-amber-400 font-medium text-xs sm:text-sm">
-              Free preview: Experience 3 interactive questions.
-            </span>
-          )}
+          Pick any subject combination to learn at your own pace with instant answer explanations.
         </p>
+
+        {/* Question Pool Tier Banner */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          {/* Free Pool Card */}
+          <div className={cn(
+            "p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 relative overflow-hidden",
+            !isPremium
+              ? "bg-amber-500/[0.06] border-amber-500/30 text-amber-200"
+              : "bg-white/[0.02] border-white/[0.06] text-white/50"
+          )}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold font-mono">
+                  FREE
+                </span>
+                <h3 className="font-bold text-sm text-white">Free Exam Pool</h3>
+              </div>
+              {!isPremium && (
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/30">
+                  Active
+                </span>
+              )}
+            </div>
+            <p className="text-xs leading-relaxed text-white/60">
+              Includes a curated 3-question sample from your institution's free exam pool.
+            </p>
+          </div>
+
+          {/* Premium Pool Card */}
+          <div className={cn(
+            "p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 relative overflow-hidden",
+            isPremium
+              ? "bg-gradient-to-br from-indigo-900/40 via-purple-900/20 to-black/40 border-indigo-500/40 text-indigo-200 shadow-[0_0_20px_rgba(99,102,241,0.15)]"
+              : "bg-gradient-to-br from-amber-950/20 to-black/40 border-amber-500/20 text-white/70"
+          )}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-black shadow-md">
+                  <Crown className="h-4 w-4 fill-black" />
+                </div>
+                <h3 className="font-bold text-sm text-white">Real Bank & Practice Pool</h3>
+              </div>
+              {isPremium ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                  Unlocked
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/30">
+                  <Lock className="h-3 w-3" /> Premium Only
+                </span>
+              )}
+            </div>
+            <p className="text-xs leading-relaxed text-white/60">
+              10,000+ real past exam questions & practice bank across all subjects, unlimited questions, and detailed topic mastery.
+            </p>
+            {!isPremium && (
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard/settings")}
+                className="mt-1 inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors w-fit"
+              >
+                <span>Subscribe to StudyBond Premium to unlock</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Grid selector */}
