@@ -9,7 +9,7 @@ type StudyPremiumWallProps = {
 };
 
 const FEATURE_COMPARISON = [
-  { feature: "Question Pool", free: "3 Free Exam Sample Qs", premium: "10,000+ Real Past & Practice Qs" },
+  { feature: "Question Pool", free: "3 Free Exam Sample Qs", premium: "2,000+ Real Past & Practice Qs" },
   { feature: "Real Exam Questions", free: false, premium: true },
   { feature: "Unlimited Subject Practice", free: false, premium: true },
   { feature: "Detailed Explanations", free: "Sample Only", premium: "Every Single Question" },

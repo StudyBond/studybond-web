@@ -199,7 +199,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400 text-black font-bold">
                     <Crown className="h-4 w-4 fill-black" />
                   </div>
-                  <span>Want 10,000+ real past questions on <strong>{question.subject}</strong>?</span>
+                  <span>Want 2,000+ real past questions on <strong>{question.subject}</strong>?</span>
                 </div>
                 <a
                   href="/dashboard/settings"

@@ -148,7 +148,7 @@ function StudySetupContent() {
               )}
             </div>
             <p className="text-xs leading-relaxed text-white/60">
-              10,000+ real past exam questions & practice bank across all subjects, unlimited questions, and detailed topic mastery.
+              2,000+ real past exam questions & practice bank across all subjects, unlimited questions, and detailed topic mastery.
             </p>
             {!isPremium && (
               <button
