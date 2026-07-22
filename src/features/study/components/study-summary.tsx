@@ -120,7 +120,7 @@ export function StudySummary({ onRestart, onBackToDashboard }: StudySummaryProps
             </div>
             <div>
               <h4 className="font-bold text-sm text-white">Unlock 2,000+ Real Past Questions</h4>
-              <p className="text-xs text-white/60">Upgrade to StudyBond Premium for unlimited questions, real UTME/JAMB past exams, and full topic analytics.</p>
+              <p className="text-xs text-white/60">Upgrade to StudyBond Premium for unlimited questions, real UI post utme past exams, and full topic analytics.</p>
             </div>
           </div>
           <a
