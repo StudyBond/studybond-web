@@ -5,6 +5,30 @@ import type { Subject } from "@/lib/api/exams";
 export interface StartStudySessionPayload {
   institutionCode?: string;
   subjects: Subject[];
+  mode?: "random" | "topic";
+  selectedTopics?: string[];
+}
+
+export interface SubtopicInfo {
+  name: string;
+  questionCount: number;
+  rawTopics: string[];
+}
+
+export interface TopicFamilyInfo {
+  topicFamily: string;
+  totalQuestions: number;
+  subtopics: SubtopicInfo[];
+}
+
+export interface SubjectTopicTree {
+  subject: string;
+  totalQuestions: number;
+  topicFamilies: TopicFamilyInfo[];
+}
+
+export interface GetStudyTopicsResponse {
+  subjects: SubjectTopicTree[];
 }
 
 export interface CompleteStudySessionPayload {
@@ -75,5 +99,21 @@ export async function completeStudySession(examId: number, payload: CompleteStud
       body: JSON.stringify(payload),
     }
   );
+  return response.data;
+}
+
+export async function getStudyTopics(subjects?: Subject[], institutionCode?: string) {
+  const params = new URLSearchParams();
+  if (subjects && subjects.length > 0) {
+    params.set("subjects", subjects.join(","));
+  }
+  if (institutionCode) {
+    params.set("institutionCode", institutionCode);
+  }
+  const queryString = params.toString();
+  const url = `/api/study/topics${queryString ? `?${queryString}` : ""}`;
+  const response = await apiClient<SuccessEnvelope<GetStudyTopicsResponse>>(url, {
+    method: "GET",
+  });
   return response.data;
 }

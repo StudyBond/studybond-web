@@ -91,9 +91,21 @@ export function StudyTopicDrawer({ isOpenMobile, onCloseMobile }: StudyTopicDraw
                 )}
               >
                 <div className="flex-1 min-w-0 pr-2">
-                  <p className="text-xs font-semibold truncate leading-tight mb-1">
+                  <p className="text-xs font-semibold truncate leading-tight mb-0.5">
                     {group.topic}
                   </p>
+                  {group.subtopics && group.subtopics.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-1">
+                      {group.subtopics.slice(0, 2).map((sub, i) => (
+                        <span key={i} className="text-[9px] px-1.5 py-0.2 rounded bg-white/[0.05] text-white/40 truncate max-w-[120px]">
+                          {sub}
+                        </span>
+                      ))}
+                      {group.subtopics.length > 2 && (
+                        <span className="text-[9px] text-white/30">+{group.subtopics.length - 2}</span>
+                      )}
+                    </div>
+                  )}
                   <p className="text-[10px] text-white/40 font-mono">
                     {group.completedCount}/{group.questionIndices.length} done ({percent}%)
                   </p>

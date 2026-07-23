@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { startStudySession, completeStudySession, StartStudySessionPayload, CompleteStudySessionPayload } from "@/lib/api/study";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { startStudySession, completeStudySession, getStudyTopics, StartStudySessionPayload, CompleteStudySessionPayload } from "@/lib/api/study";
+import type { Subject } from "@/lib/api/exams";
 
 export function useStartStudySession() {
   return useMutation({
@@ -18,5 +19,14 @@ export function useCompleteStudySession() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-critical-data"] });
       queryClient.invalidateQueries({ queryKey: ["exam-history"] });
     }
+  });
+}
+
+export function useStudyTopics(subjects?: Subject[], institutionCode?: string, enabled = true) {
+  return useQuery({
+    queryKey: ["study-topics", subjects, institutionCode],
+    queryFn: () => getStudyTopics(subjects, institutionCode),
+    enabled: enabled && !!subjects && subjects.length > 0,
+    staleTime: 5 * 60 * 1000,
   });
 }

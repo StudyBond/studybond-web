@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { parseTopicString } from "@/lib/utils/topics";
 
 export type OptionKey = "A" | "B" | "C" | "D" | "E";
 export type StudyPhase = "attempt" | "revealed" | "skipped";
@@ -26,6 +27,7 @@ export type StudyMastery = {
 export type StudyTopicGroup = {
   topic: string;
   subject: string;
+  subtopics: string[];
   questionIndices: number[];
   completedCount: number;
   correctCount: number;
@@ -89,23 +91,29 @@ export const useStudyStore = create<StudyStoreState & StudyStoreActions>((set, g
       };
     });
 
-    // Group questions by topic + subject
+    // Group questions by topic family + subject
     const groupsMap = new Map<string, StudyTopicGroup>();
     questions.forEach((q, index) => {
-      const topicName = q.topic || "General";
+      const parsed = parseTopicString(q.topic);
+      const topicFamily = parsed.topicFamily;
       const subjectName = q.subject;
-      const key = `${subjectName}:${topicName}`;
+      const key = `${subjectName}:${topicFamily}`;
 
       if (!groupsMap.has(key)) {
         groupsMap.set(key, {
-          topic: topicName,
+          topic: topicFamily,
           subject: subjectName,
+          subtopics: [],
           questionIndices: [],
           completedCount: 0,
           correctCount: 0,
         });
       }
-      groupsMap.get(key)!.questionIndices.push(index);
+      const group = groupsMap.get(key)!;
+      group.questionIndices.push(index);
+      if (parsed.subtopic && !group.subtopics.includes(parsed.subtopic)) {
+        group.subtopics.push(parsed.subtopic);
+      }
     });
 
     set({
