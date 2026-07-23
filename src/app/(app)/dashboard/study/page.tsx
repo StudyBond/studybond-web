@@ -333,7 +333,7 @@ function StudySetupContent() {
       )}
 
       {/* Action CTA */}
-      {selectedSubjects.length > 0 && (
+      {selectedSubjects.length > 0 && !(studyMode === "topic" && !isPremium) && (
         <div className="pt-4 sm:pt-6 border-t border-white/[0.05] animate-in slide-in-from-bottom-8 duration-500">
           <Button
             onClick={() => handleInitiateSession(selectedSubjects)}
