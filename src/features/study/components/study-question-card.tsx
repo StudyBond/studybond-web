@@ -28,6 +28,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
   const selectedAnswer = state?.selectedAnswer ?? null;
   const phase = state?.phase ?? "attempt";
   const isRevealed = phase === "revealed" || phase === "skipped";
+  const isLastQuestion = currentIndex === totalQuestions - 1;
 
   function handleSelectOption(key: OptionKey) {
     if (isRevealed) return;

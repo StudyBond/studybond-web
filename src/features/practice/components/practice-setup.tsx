@@ -748,7 +748,7 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setShowUpgradeModal(false)}
                   className="w-full sm:w-auto h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-medium text-sm px-5"
                 >
