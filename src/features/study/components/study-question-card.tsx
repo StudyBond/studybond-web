@@ -11,9 +11,10 @@ type StudyQuestionCardProps = {
   question: any;
   questionIndex: number;
   totalQuestions: number;
+  onEndSession?: () => void;
 };
 
-export function StudyQuestionCard({ question, questionIndex, totalQuestions }: StudyQuestionCardProps) {
+export function StudyQuestionCard({ question, questionIndex, totalQuestions, onEndSession }: StudyQuestionCardProps) {
   const state = useStudyStore((s) => s.questionStates[question.id]);
   const selectOption = useStudyStore((s) => s.selectOption);
   const checkAnswer = useStudyStore((s) => s.checkAnswer);
@@ -138,10 +139,17 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
                 <Sparkles className="mr-2 h-4 w-4" />
                 Check Answer
               </Button>
+            ) : isLastQuestion ? (
+              <Button
+                onClick={() => onEndSession?.()}
+                className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-xs sm:text-sm font-semibold h-10 px-5 rounded-xl"
+              >
+                Finish Session
+                <Sparkles className="ml-2 h-4 w-4" />
+              </Button>
             ) : (
               <Button
                 onClick={nextQuestion}
-                disabled={currentIndex === totalQuestions - 1}
                 className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold h-10 px-5 rounded-xl"
               >
                 Next Question

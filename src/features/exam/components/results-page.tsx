@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { toast } from "sonner";
 import { useExamDetail } from "@/features/exam/hooks/use-exam-detail";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
@@ -195,8 +196,8 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     );
   }
 
-  // ─── Locked state — show lockout page instead of results ───
-  if (isLocked) {
+  // ─── Locked state — show lockout page instead of results (Exams only) ───
+  if (isLocked && result.examType !== "STUDY") {
     return (
       <LearnerShell profile={critical.profile.data}>
         <ReviewLockedPage
@@ -257,22 +258,26 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     );
   }
 
-  // ─── Normal results view (with active protection) ───
+  const isStudySession = result.examType === "STUDY";
+
+  // ─── Results view (with active protection for exams, relaxed for study sessions) ───
   return (
     <LearnerShell profile={critical.profile.data}>
       {/* Print watermark */}
       <div className="sb-print-watermark" />
 
-      {/* Security overlay — uses our wrapped dismiss handler */}
-      <ExamSecurityOverlay
-        guardState={guardState}
-        onDismiss={handleDismissViolation}
-        mode="review"
-      />
+      {/* Security overlay — only for actual timed exams, NOT study sessions */}
+      {!isStudySession && (
+        <ExamSecurityOverlay
+          guardState={guardState}
+          onDismiss={handleDismissViolation}
+          mode="review"
+        />
+      )}
 
       <div className="mx-auto w-full max-w-5xl py-6 pb-24 md:py-12 space-y-7 md:space-y-12 sb-exam-content">
         {/* Restricted phase warning banner */}
-        {isInLastChance && (
+        {!isStudySession && isInLastChance && (
           <div className="flex items-center gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.04] px-5 py-3 animate-in fade-in slide-in-from-top-4 duration-500 z-10 relative">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-400/10 text-amber-400">
               🛡️
@@ -302,7 +307,17 @@ export function ResultsPageClient({ examId }: { examId: number }) {
 
           <div className="flex items-center gap-3">
             <ShareResultCard result={result} />
-            <RetakeButton examId={examId} />
+            {isStudySession ? (
+              <Button
+                asChild
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl h-10 px-4"
+                href={"/dashboard/study" as Route}
+              >
+                <>Start New Study Session</>
+              </Button>
+            ) : (
+              <RetakeButton examId={examId} />
+            )}
           </div>
         </div>
 

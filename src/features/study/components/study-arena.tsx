@@ -102,20 +102,6 @@ export function StudyArena() {
     }, 200);
   }
 
-  // Handle auto completion when last question is done/revealed
-  useEffect(() => {
-    if (questions.length > 0 && currentIndex === questions.length - 1) {
-      const lastQState = questionStates[questions[currentIndex].id];
-      if (lastQState && lastQState.phase !== "attempt") {
-        // Wait 1.5 seconds for the explanation to be seen before finishing session
-        const timer = setTimeout(() => {
-          handleEndSession();
-        }, 1500);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [currentIndex, questionStates, questions]);
-
   const [isMobileTopicsOpen, setIsMobileTopicsOpen] = useState(false);
 
   if (!sessionActive || questions.length === 0) {
@@ -173,6 +159,7 @@ export function StudyArena() {
             question={currentQuestion}
             questionIndex={currentIndex}
             totalQuestions={questions.length}
+            onEndSession={handleEndSession}
           />
         </div>
       </div>

@@ -95,6 +95,8 @@ export function ScoreSummary({ result }: ScoreSummaryProps) {
     return `${m}m ${s}s`;
   };
 
+  const isStudy = result.examType === "STUDY";
+
   return (
     <div className="relative overflow-hidden rounded-3xl border border-[#e09040]/15 bg-gradient-to-br from-[#e09040]/10 to-transparent p-6 md:p-10 shadow-2xl">
       {/* Background effects */}
@@ -109,8 +111,11 @@ export function ScoreSummary({ result }: ScoreSummaryProps) {
         {/* Right: Metrics */}
         <div className="flex-1 space-y-6 w-full text-center md:text-left">
           <div>
-             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
-               Exam Completed
+             <div className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 mb-2 text-xs font-bold text-indigo-300 font-mono">
+               {isStudy ? "🎓 STUDY MODE MASTERY" : "🎯 EXAM PERFORMANCE"}
+             </div>
+             <h2 className="text-2xl md:text-3xl font-bold text-white mb-1.5 tracking-tight">
+               {isStudy ? "Study Session Completed" : "Exam Completed"}
              </h2>
              <p className="text-sm text-white/50">
                {result.displayNameLong}
@@ -121,7 +126,7 @@ export function ScoreSummary({ result }: ScoreSummaryProps) {
              {/* Score metric */}
              <div className="flex flex-col items-center md:items-start p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wider mb-1">
-                   <Target className="h-3.5 w-3.5" /> Score
+                   <Target className="h-3.5 w-3.5" /> {isStudy ? "Questions Practiced" : "Score"}
                 </div>
                 <span className="sb-mono text-lg font-bold text-white">
                    {result.score} <span className="text-sm text-white/40">/ {result.totalQuestions}</span>

@@ -67,9 +67,15 @@ export function ExamCard({ exam }: ExamCardProps) {
       <div className="flex items-start justify-between mb-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* Exam Type Badge */}
-          <span className="inline-flex items-center rounded-lg border border-white/10 bg-white/[0.05] px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-white/50">
-            {exam.examType.replace(/_/g, " ")}
-          </span>
+          {exam.examType === "STUDY" ? (
+            <span className="inline-flex items-center rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-indigo-300">
+              🎓 STUDY SESSION
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-lg border border-white/10 bg-white/[0.05] px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-white/50">
+              {exam.examType.replace(/_/g, " ")}
+            </span>
+          )}
           {/* Subjects (limit to 2 for brevity on card) */}
           {exam.subjects.slice(0, 2).map((s) => (
             <span
@@ -112,7 +118,7 @@ export function ExamCard({ exam }: ExamCardProps) {
               {exam.percentage}%
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">
-              Score
+              {exam.examType === "STUDY" ? "Mastery Rate" : "Score"}
             </span>
           </div>
         ) : (

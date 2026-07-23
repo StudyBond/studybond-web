@@ -86,6 +86,7 @@ export function HistoryList() {
                onValueChange={(val) => setExamType(val as any)}
                options={[
                  { label: "All Types", value: "ALL" },
+                 { label: "Study Sessions", value: "STUDY" },
                  { label: "Practice", value: "PRACTICE" },
                  { label: "Past Questions", value: "REAL_PAST_QUESTION" }
                ]}
