@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStartStudySession, useStudyTopics } from "@/features/study/hooks/use-study-mutations";
 import { useStudyStore } from "@/features/study/stores/study-store";
@@ -10,6 +10,7 @@ import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData, useDashboardPremiumData } from "@/features/dashboard/hooks/use-dashboard-data";
 import { Button } from "@/components/ui/button";
 import type { Subject } from "@/lib/api/exams";
+import type { SubjectTopicTree } from "@/lib/api/study";
 import { cn } from "@/lib/utils/cn";
 import { GraduationCap, Sparkles, BookOpen, Loader2, Lock, CheckCircle2, ChevronRight, Crown, Dices, Target } from "lucide-react";
 
@@ -20,6 +21,28 @@ const STUDY_SUBJECTS: { id: Subject; label: string; icon: any; color: string }[]
   { id: "Chemistry", label: "Chemistry", icon: GraduationCap, color: "text-emerald-400" },
   { id: "Biology", label: "Biology", icon: GraduationCap, color: "text-green-400" },
 ];
+
+function calculateSelectedTopicsQuestionCount(subjectTrees: SubjectTopicTree[], selectedTopics: string[]): number {
+  if (!selectedTopics || selectedTopics.length === 0) return 0;
+  let count = 0;
+  const selectedSet = new Set(selectedTopics);
+
+  for (const tree of subjectTrees) {
+    for (const family of tree.topicFamilies) {
+      if (selectedSet.has(family.topicFamily)) {
+        count += family.totalQuestions;
+      } else {
+        for (const sub of family.subtopics) {
+          if (sub.rawTopics.some((rt: string) => selectedSet.has(rt))) {
+            count += sub.questionCount;
+          }
+        }
+      }
+    }
+  }
+
+  return count;
+}
 
 function StudySetupContent() {
   const router = useRouter();
@@ -37,11 +60,16 @@ function StudySetupContent() {
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
   const [studyMode, setStudyMode] = useState<"random" | "topic">("random");
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [selectedLimitOption, setSelectedLimitOption] = useState<"default" | "all">("default");
   const [error, setError] = useState<string | null>(null);
 
   // Fetch topics ONLY if topic mode is active, user is premium, and subjects are selected
   const topicsQuery = useStudyTopics(selectedSubjects, undefined, isPremium && studyMode === "topic");
   const subjectTrees = topicsQuery.data?.subjects || [];
+
+  const totalAvailableTopicQuestions = useMemo(() => {
+    return calculateSelectedTopicsQuestionCount(subjectTrees, selectedTopics);
+  }, [subjectTrees, selectedTopics]);
 
   // Read URL params
   const subjectsParam = searchParams.get("subjects");
@@ -58,10 +86,15 @@ function StudySetupContent() {
   async function handleInitiateSession(subjectsToStart: Subject[]) {
     setError(null);
     try {
+      const chosenLimit = (isPremium && studyMode === "topic" && selectedTopics.length > 0)
+        ? (selectedLimitOption === "all" ? totalAvailableTopicQuestions : 15)
+        : undefined;
+
       const response = await startSessionMutation.mutateAsync({
         subjects: subjectsToStart,
         mode: isPremium ? studyMode : "random",
         selectedTopics: isPremium && studyMode === "topic" ? selectedTopics : undefined,
+        limit: chosenLimit,
       });
       initSession(response.examId, response.questions, response.isPremiumSession);
     } catch (err: any) {
@@ -274,14 +307,90 @@ function StudySetupContent() {
 
       {/* Topic selector (when studyMode === 'topic' and subjects are chosen) */}
       {studyMode === "topic" && selectedSubjects.length > 0 && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-400">
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-400">
           {isPremium ? (
-            <StudyTopicSelector
-              subjectTrees={subjectTrees}
-              selectedTopics={selectedTopics}
-              onSelectionChange={setSelectedTopics}
-              isLoading={topicsQuery.isLoading}
-            />
+            <>
+              <StudyTopicSelector
+                subjectTrees={subjectTrees}
+                selectedTopics={selectedTopics}
+                onSelectionChange={setSelectedTopics}
+                isLoading={topicsQuery.isLoading}
+              />
+
+              {/* Question Count Selection Card (When selected topics have > 15 questions) */}
+              {selectedTopics.length > 0 && totalAvailableTopicQuestions > 15 && (
+                <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/40 via-purple-950/20 to-black/80 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300 font-bold">
+                        <Sparkles className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm sm:text-base text-white">Choose Session Length</h4>
+                        <p className="text-xs text-white/50">
+                          Selected topics contain <strong className="text-indigo-300">{totalAvailableTopicQuestions} questions</strong>.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-lg border border-indigo-500/30">
+                      Default: 15 Questions
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* Option 1: 15 Questions (Default Sprint) */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLimitOption("default")}
+                      className={cn(
+                        "flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all",
+                        selectedLimitOption === "default"
+                          ? "bg-indigo-600/20 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                          : "bg-white/[0.02] border-white/[0.06] text-white/60 hover:bg-white/[0.04] hover:text-white"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex h-5 w-5 items-center justify-center rounded-full border mt-0.5 shrink-0",
+                        selectedLimitOption === "default" ? "border-indigo-400 bg-indigo-500 text-white" : "border-white/20"
+                      )}>
+                        {selectedLimitOption === "default" && <CheckCircle2 className="h-3.5 w-3.5" />}
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs sm:text-sm text-white">Study 15 Questions (Recommended)</div>
+                        <div className="text-[11px] text-white/50 leading-relaxed mt-0.5">
+                          Optimal focus sprint for maximum retention. Fast & manageable.
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Option 2: All Questions (Full Mastery) */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLimitOption("all")}
+                      className={cn(
+                        "flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all",
+                        selectedLimitOption === "all"
+                          ? "bg-indigo-600/20 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                          : "bg-white/[0.02] border-white/[0.06] text-white/60 hover:bg-white/[0.04] hover:text-white"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex h-5 w-5 items-center justify-center rounded-full border mt-0.5 shrink-0",
+                        selectedLimitOption === "all" ? "border-indigo-400 bg-indigo-500 text-white" : "border-white/20"
+                      )}>
+                        {selectedLimitOption === "all" && <CheckCircle2 className="h-3.5 w-3.5" />}
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs sm:text-sm text-white">Study All {totalAvailableTopicQuestions} Questions</div>
+                        <div className="text-[11px] text-white/50 leading-relaxed mt-0.5">
+                          Complete topic deep-dive. Master every question in one session.
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="p-6 sm:p-8 rounded-3xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] via-indigo-950/30 to-black/80 text-center space-y-4 backdrop-blur-xl shadow-xl">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-[#e09040] shadow-lg shadow-amber-500/20">

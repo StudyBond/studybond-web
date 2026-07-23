@@ -7,6 +7,7 @@ export interface StartStudySessionPayload {
   subjects: Subject[];
   mode?: "random" | "topic";
   selectedTopics?: string[];
+  limit?: number;
 }
 
 export interface SubtopicInfo {
