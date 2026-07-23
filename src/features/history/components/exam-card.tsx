@@ -69,7 +69,7 @@ export function ExamCard({ exam }: ExamCardProps) {
           {/* Exam Type Badge */}
           {exam.examType === "STUDY" ? (
             <span className="inline-flex items-center rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-indigo-300">
-              🎓 STUDY SESSION
+               STUDY SESSION
             </span>
           ) : (
             <span className="inline-flex items-center rounded-lg border border-white/10 bg-white/[0.05] px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-white/50">

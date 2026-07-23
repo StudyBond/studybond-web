@@ -112,7 +112,7 @@ export function ScoreSummary({ result }: ScoreSummaryProps) {
         <div className="flex-1 space-y-6 w-full text-center md:text-left">
           <div>
              <div className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 mb-2 text-xs font-bold text-indigo-300 font-mono">
-               {isStudy ? "🎓 STUDY MODE MASTERY" : "🎯 EXAM PERFORMANCE"}
+               {isStudy ? " STUDY MODE MASTERY" : "🎯 EXAM PERFORMANCE"}
              </div>
              <h2 className="text-2xl md:text-3xl font-bold text-white mb-1.5 tracking-tight">
                {isStudy ? "Study Session Completed" : "Exam Completed"}
