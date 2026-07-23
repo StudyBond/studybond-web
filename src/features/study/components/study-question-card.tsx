@@ -202,7 +202,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions }: S
                   <span>Want 2,000+ real past questions on <strong>{question.subject}</strong>?</span>
                 </div>
                 <a
-                  href="/dashboard/settings"
+                  href="/dashboard/settings?tab=subscription"
                   className="shrink-0 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-amber-500/30 transition-all"
                 >
                   <span>Unlock Real Bank</span>

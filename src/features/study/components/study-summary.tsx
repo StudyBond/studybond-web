@@ -120,11 +120,11 @@ export function StudySummary({ onRestart, onBackToDashboard }: StudySummaryProps
             </div>
             <div>
               <h4 className="font-bold text-sm text-white">Unlock 2,000+ Real Past Questions</h4>
-              <p className="text-xs text-white/60">Upgrade to StudyBond Premium for unlimited questions, real UI post utme past exams, and full topic analytics.</p>
+              <p className="text-xs text-white/60">Upgrade to StudyBond Premium for real UI post utme past exams, and full topic analytics.</p>
             </div>
           </div>
           <a
-            href="/dashboard/settings"
+            href="/dashboard/settings?tab=subscription"
             className="shrink-0 w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-amber-400 to-[#e09040] hover:from-amber-500 hover:to-[#d08030] text-black font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all"
           >
             <span>Upgrade to Premium</span>

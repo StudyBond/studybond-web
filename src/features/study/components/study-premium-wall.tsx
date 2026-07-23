@@ -80,7 +80,7 @@ export function StudyPremiumWall({ onBackToDashboard }: StudyPremiumWallProps) {
 
         {/* Action CTAs */}
         <div className="flex flex-col gap-3">
-          <Link href="/dashboard/settings" className="w-full">
+          <Link href="/dashboard/settings?tab=subscription" className="w-full">
             <Button className="w-full h-12 bg-gradient-to-r from-amber-400 via-amber-500 to-[#e09040] hover:from-amber-500 hover:to-[#d08030] text-black font-bold text-base rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all scale-[1.01] hover:scale-[1.02]">
               Upgrade to Premium Now
               <ArrowRight className="h-5 w-5" />

@@ -39,8 +39,8 @@ function StudySetupContent() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch topics if topic mode is active and subjects are selected
-  const topicsQuery = useStudyTopics(selectedSubjects, undefined, studyMode === "topic");
+  // Fetch topics ONLY if topic mode is active, user is premium, and subjects are selected
+  const topicsQuery = useStudyTopics(selectedSubjects, undefined, isPremium && studyMode === "topic");
   const subjectTrees = topicsQuery.data?.subjects || [];
 
   // Read URL params
@@ -60,8 +60,8 @@ function StudySetupContent() {
     try {
       const response = await startSessionMutation.mutateAsync({
         subjects: subjectsToStart,
-        mode: studyMode,
-        selectedTopics: studyMode === "topic" ? selectedTopics : undefined,
+        mode: isPremium ? studyMode : "random",
+        selectedTopics: isPremium && studyMode === "topic" ? selectedTopics : undefined,
       });
       initSession(response.examId, response.questions, response.isPremiumSession);
     } catch (err: any) {
@@ -157,12 +157,12 @@ function StudySetupContent() {
               )}
             </div>
             <p className="text-xs leading-relaxed text-white/60">
-              2,000+ real past exam questions & practice bank across all subjects, unlimited questions, and detailed topic mastery.
+              2,000+ real past exam questions & practice bank across all subjects, and detailed topic mastery.
             </p>
             {!isPremium && (
               <button
                 type="button"
-                onClick={() => router.push("/dashboard/settings")}
+                onClick={() => router.push("/dashboard/settings?tab=subscription")}
                 className="mt-1 inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors w-fit"
               >
                 <span>Subscribe to StudyBond Premium to unlock</span>
@@ -212,23 +212,32 @@ function StudySetupContent() {
             type="button"
             onClick={() => setStudyMode("topic")}
             className={cn(
-              "flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all",
+              "flex items-start justify-between p-4 rounded-2xl border text-left transition-all relative overflow-hidden",
               studyMode === "topic"
                 ? "bg-[var(--sb-study-accent)]/15 border-[var(--sb-study-accent)] text-white shadow-[0_0_20px_rgba(99,102,241,0.15)]"
                 : "bg-white/[0.02] border-white/[0.06] text-white/60 hover:bg-white/[0.04] hover:text-white"
             )}
           >
-            <div className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-xl shrink-0 mt-0.5",
-              studyMode === "topic" ? "bg-[var(--sb-study-accent)] text-white" : "bg-white/5 text-white/40"
-            )}>
-              <Target className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="font-bold text-sm text-white">Targeted Topic Mastery</h4>
-              <p className="text-xs text-white/50 leading-relaxed mt-0.5">
-                Focus strictly on specific topics & subtopics (e.g. Phonology — Word Stress).
-              </p>
+            <div className="flex items-start gap-3.5 min-w-0 pr-2">
+              <div className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-xl shrink-0 mt-0.5",
+                studyMode === "topic" ? "bg-[var(--sb-study-accent)] text-white" : "bg-white/5 text-white/40"
+              )}>
+                <Target className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-sm text-white">Targeted Topic Mastery</h4>
+                  {!isPremium && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/30 shrink-0">
+                      <Lock className="h-3 w-3" /> Premium
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-white/50 leading-relaxed mt-0.5">
+                  Focus strictly on specific topics & subtopics (e.g. Phonology — Word Stress).
+                </p>
+              </div>
             </div>
           </button>
         </div>
@@ -281,15 +290,39 @@ function StudySetupContent() {
         </div>
       </div>
 
-      {/* Topic selector (only when studyMode === 'topic' and subjects are chosen) */}
+      {/* Topic selector (when studyMode === 'topic' and subjects are chosen) */}
       {studyMode === "topic" && selectedSubjects.length > 0 && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-400">
-          <StudyTopicSelector
-            subjectTrees={subjectTrees}
-            selectedTopics={selectedTopics}
-            onSelectionChange={setSelectedTopics}
-            isLoading={topicsQuery.isLoading}
-          />
+          {isPremium ? (
+            <StudyTopicSelector
+              subjectTrees={subjectTrees}
+              selectedTopics={selectedTopics}
+              onSelectionChange={setSelectedTopics}
+              isLoading={topicsQuery.isLoading}
+            />
+          ) : (
+            <div className="p-6 sm:p-8 rounded-3xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] via-indigo-950/30 to-black/80 text-center space-y-4 backdrop-blur-xl shadow-xl">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-[#e09040] shadow-lg shadow-amber-500/20">
+                <Target className="h-7 w-7 text-black" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h3 className="font-bold text-lg text-white">Targeted Topic Mastery is Locked</h3>
+                <p className="text-xs text-white/60 leading-relaxed">
+                  Subscribe to <strong className="text-amber-400 font-semibold">StudyBond Premium</strong> to browse full subject topic trees, filter questions by subtopic (e.g. <em>Phonology — Word Stress</em>), and master every topic systematically!
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <Button
+                  type="button"
+                  onClick={() => router.push("/dashboard/settings?tab=subscription")}
+                  className="w-full sm:w-auto h-12 px-6 bg-gradient-to-r from-amber-400 via-amber-500 to-[#e09040] hover:from-amber-500 hover:to-[#d08030] text-black font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                >
+                  <span>Subscribe to Unlock Topic Study</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -304,16 +337,16 @@ function StudySetupContent() {
         <div className="pt-4 sm:pt-6 border-t border-white/[0.05] animate-in slide-in-from-bottom-8 duration-500">
           <Button
             onClick={() => handleInitiateSession(selectedSubjects)}
-            disabled={isMutating || (studyMode === "topic" && selectedTopics.length === 0)}
+            disabled={isMutating || (isPremium && studyMode === "topic" && selectedTopics.length === 0)}
             className="w-full h-14 sm:h-16 rounded-xl sm:rounded-[20px] text-base sm:text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-[0_4px_30px_rgba(99,102,241,0.2)] transition-all md:max-w-md md:mx-auto md:flex disabled:opacity-50"
           >
             {isMutating ? (
               <Loader2 className="h-5 sm:h-6 w-5 sm:w-6 animate-spin" />
             ) : (
               <div className="flex items-center gap-2">
-                {studyMode === "topic" && selectedTopics.length === 0
+                {isPremium && studyMode === "topic" && selectedTopics.length === 0
                   ? "Select at least 1 topic to continue"
-                  : "Start Targeted Study Session"}
+                  : "Start Study Session"}
                 <Sparkles className="h-5 w-5" />
               </div>
             )}
