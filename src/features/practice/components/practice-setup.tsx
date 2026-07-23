@@ -23,7 +23,9 @@ import {
   Lock,
   Unlock,
   Info,
-  GraduationCap
+  GraduationCap,
+  Crown,
+  X
 } from "lucide-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useStartExamMutation, useStartDailyChallengeMutation } from "@/features/practice/hooks/use-practice-mutations";
@@ -134,6 +136,8 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
   const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [autoSelectLoaded, setAutoSelectLoaded] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalSubject, setUpgradeModalSubject] = useState<string | null>(null);
 
   // Handle URL parameters for direct navigation
   useEffect(() => {
@@ -467,16 +471,23 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
           const isAlreadyTaken = !profile.isPremium && usedFreeSubjects.some(s => s.toLowerCase() === subject.id.toLowerCase());
           const isOutOfCredits = !profile.isPremium && (eligibilityQuery.data?.creditsRemaining ?? 0) <= 0;
           
-          // A subject is "locked" for a free user if they've used it before OR they have no credits left (and it's not selected)
-          const isLocked = !isSelected && (isAlreadyTaken || isOutOfCredits);
-          const isDisabled = (!isSelected && !canSelectMoreSubjects) || isLocked;
+          // A subject is "locked" ONLY in Official Past Questions mode for a free user if they've used it before OR have no credits left
+          const isLocked = selectedMode === "REAL_PAST_QUESTION" && !isSelected && (isAlreadyTaken || isOutOfCredits);
+          const isDisabled = (!isSelected && !canSelectMoreSubjects) && !isLocked;
           
           const Icon = subject.icon;
 
           return (
             <button
               key={subject.id}
-              onClick={() => !isLocked && toggleSubject(subject.id)}
+              onClick={() => {
+                if (isLocked) {
+                  setUpgradeModalSubject(subject.label);
+                  setShowUpgradeModal(true);
+                } else {
+                  toggleSubject(subject.id);
+                }
+              }}
               disabled={isDisabled && !isSelected}
               className={cn(
                 "sb-enter group relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border p-6 transition-all duration-300",
@@ -484,18 +495,20 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
                   ? "border-[var(--sb-accent)]/40 bg-[var(--sb-accent)]/10 shadow-[0_0_20px_var(--sb-accent-glow)] scale-[1.02]"
                   : isDisabled
                   ? "border-white/[0.02] bg-white/[0.01] opacity-60 grayscale-[0.5]"
+                  : isLocked
+                  ? "border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/40 hover:-translate-y-1 cursor-pointer"
                   : "border-white/[0.04] bg-[var(--sb-bg-surface-1)] hover:bg-white/[0.04] hover:border-white/10 hover:-translate-y-1"
               )}
               style={{ animationDelay: `${i * 100}ms` }}
             >
               {/* Used/Locked Overlay */}
               {isLocked && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#09090b]/60 backdrop-blur-[2px]">
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#09090b]/70 backdrop-blur-[2px] transition-all group-hover:bg-[#09090b]/55">
                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                         <Lock className="h-4 w-4 text-white/40" />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20 backdrop-blur-md group-hover:scale-110 transition-transform">
+                         <Lock className="h-4 w-4 text-amber-400" />
                       </div>
-                      <span className="text-[9px] font-bold uppercase tracking-tighter text-white/40">
+                      <span className="text-[9px] font-bold uppercase tracking-tighter text-amber-300/90">
                         {isAlreadyTaken ? "Already Taken" : "No Credits"}
                       </span>
                    </div>
@@ -667,6 +680,85 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
       {renderModeSelection()}
       {renderSubjectSelection()}
       {renderRulesScreen()}
+
+      {/* Upgrade to Premium Modal for Locked Past Question Subjects */}
+      {showUpgradeModal && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setShowUpgradeModal(false)}
+        >
+          <div 
+            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-[#1a150c] via-[#0f0c08] to-[#09090b] p-6 sm:p-8 shadow-2xl shadow-amber-500/10 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Background Glow */}
+            <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-yellow-600/10 blur-3xl pointer-events-none" />
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setShowUpgradeModal(false)}
+              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Modal Content */}
+            <div className="flex flex-col items-center text-center space-y-4 pt-2">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-xl shadow-amber-500/20">
+                <Crown className="h-8 w-8 fill-black" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold tracking-tight text-white">
+                  Unlock Official Past Questions
+                </h3>
+                <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
+                  Subscribe to premium to keep on practicing with the real UI past questions across several years.
+                </p>
+              </div>
+
+              <div className="w-full space-y-2.5 py-3.5 border-y border-white/10 text-left">
+                <div className="flex items-center gap-2.5 text-xs text-white/80">
+                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>Access all past question years for {upgradeModalSubject || "all subjects"}</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-xs text-white/80">
+                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>Detailed step-by-step explanations for every solution</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-xs text-white/80">
+                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>Unlimited daily practice & mock exams</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full pt-2">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setShowUpgradeModal(false);
+                    router.push("/dashboard/settings?tab=subscription");
+                  }}
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-black font-bold text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                >
+                  <Crown className="h-4 w-4 fill-black" />
+                  <span>Subscribe to Premium</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="w-full sm:w-auto h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-medium text-sm px-5"
+                >
+                  Maybe Later
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
