@@ -15,7 +15,11 @@ const navLinks = [
   { name: "Blog", href: "/blog" },
 ];
 
-export function MarketingNavbar() {
+interface MarketingNavbarProps {
+  showAnnouncementBanner?: boolean;
+}
+
+export function MarketingNavbar({ showAnnouncementBanner = false }: MarketingNavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -70,14 +74,16 @@ export function MarketingNavbar() {
         )}
       >
         {/* Announcement Banner */}
-        <div className="bg-gradient-to-r from-[#e09040] via-[#f5c890] to-[#c06830] text-[#09090b] text-[10px] md:text-xs font-bold py-1.5 md:py-2 px-4 md:px-5 text-center flex items-center justify-center gap-1.5 md:gap-2 relative z-50 leading-tight">
-          <span className="hidden md:inline">🔥 UI Post-UTME 2026 Exam holds July 27 – 29! Prepare with real past questions now.</span>
-          <span className="inline md:hidden">🔥 UI Post-UTME Exam: July 27 – 29!</span>
-          <a href="/signup" className="underline hover:text-black/80 font-extrabold shrink-0">
-            <span className="hidden md:inline">Start Practicing →</span>
-            <span className="inline md:hidden">Practice Now →</span>
-          </a>
-        </div>
+        {showAnnouncementBanner && (
+          <div className="bg-gradient-to-r from-[#e09040] via-[#f5c890] to-[#c06830] text-[#09090b] text-[10px] md:text-xs font-bold py-1.5 md:py-2 px-4 md:px-5 text-center flex items-center justify-center gap-1.5 md:gap-2 relative z-50 leading-tight">
+            <span className="hidden md:inline">🔥 UI Post-UTME 2026 Exam holds July 27 – 29! Prepare with real past questions now.</span>
+            <span className="inline md:hidden">🔥 UI Post-UTME Exam: July 27 – 29!</span>
+            <a href="/signup" className="underline hover:text-black/80 font-extrabold shrink-0">
+              <span className="hidden md:inline">Start Practicing →</span>
+              <span className="inline md:hidden">Practice Now →</span>
+            </a>
+          </div>
+        )}
 
         <div className="mx-auto flex h-16 md:h-20 max-w-6xl items-center justify-between px-5">
           <div className="flex items-center gap-8">
