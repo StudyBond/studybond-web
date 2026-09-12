@@ -11,7 +11,12 @@ import type {
 // ─── Shared Enums ───
 
 export type ExamType = "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED" | "ONE_V_ONE_DUEL" | "GROUP_COLLAB" | "DAILY_CHALLENGE" | "BOOKMARK_EXAM" | "STUDY";
-export type Subject = "Mathematics" | "English" | "Physics" | "Chemistry" | "Biology";
+/**
+ * A subject is whatever the student's institution offers, so this is a plain
+ * string rather than a fixed list of five. The real list for the current
+ * institution comes from the exam-profile endpoint, via useExamProfile().
+ */
+export type Subject = string;
 
 // ─── Payloads ───
 

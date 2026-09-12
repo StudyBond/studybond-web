@@ -9,18 +9,14 @@ import { StudyTopicSelector } from "@/features/study/components/study-topic-sele
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData, useDashboardPremiumData } from "@/features/dashboard/hooks/use-dashboard-data";
 import { Button } from "@/components/ui/button";
-import type { Subject } from "@/lib/api/exams";
 import type { SubjectTopicTree } from "@/lib/api/study";
+import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
 import { cn } from "@/lib/utils/cn";
-import { GraduationCap, Sparkles, BookOpen, Loader2, Lock, CheckCircle2, ChevronRight, Crown, Dices, Target } from "lucide-react";
+import { GraduationCap, Sparkles, Loader2, Lock, CheckCircle2, ChevronRight, Crown, Dices, Target } from "lucide-react";
 
-const STUDY_SUBJECTS: { id: Subject; label: string; icon: any; color: string }[] = [
-  { id: "English", label: "English", icon: BookOpen, color: "text-rose-400" },
-  { id: "Mathematics", label: "Mathematics", icon: GraduationCap, color: "text-blue-400" },
-  { id: "Physics", label: "Physics", icon: GraduationCap, color: "text-purple-400" },
-  { id: "Chemistry", label: "Chemistry", icon: GraduationCap, color: "text-emerald-400" },
-  { id: "Biology", label: "Biology", icon: GraduationCap, color: "text-green-400" },
-];
+/* Subjects used to be hardcoded here. They now come from the student's own
+   institution, through useExamProfile() inside the component below. */
 
 function calculateSelectedTopicsQuestionCount(subjectTrees: SubjectTopicTree[], selectedTopics: string[]): number {
   if (!selectedTopics || selectedTopics.length === 0) return 0;
@@ -57,11 +53,16 @@ function StudySetupContent() {
   const initSession = useStudyStore((s) => s.initSession);
   const sessionActive = useStudyStore((s) => s.sessionActive);
   
-  const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [studyMode, setStudyMode] = useState<"random" | "topic">("random");
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedLimitOption, setSelectedLimitOption] = useState<"default" | "all">("default");
   const [error, setError] = useState<string | null>(null);
+
+  /* Subjects for this student's institution, plus how many they may pick. */
+  const { data: examProfile, isLoading: subjectsLoading } = useExamProfile();
+  const availableSubjects = examProfile?.subjects ?? [];
+  const maxStudySubjects = availableSubjects.length || 5;
 
   // Fetch topics ONLY if topic mode is active, user is premium, and subjects are selected
   const topicsQuery = useStudyTopics(selectedSubjects, undefined, isPremium && studyMode === "topic");
@@ -76,14 +77,14 @@ function StudySetupContent() {
 
   useEffect(() => {
     if (subjectsParam && profile) {
-      const subs = subjectsParam.split(",").filter(Boolean) as Subject[];
+      const subs = subjectsParam.split(",").filter(Boolean);
       if (subs.length > 0) {
         handleInitiateSession(subs);
       }
     }
   }, [subjectsParam, profile]);
 
-  async function handleInitiateSession(subjectsToStart: Subject[]) {
+  async function handleInitiateSession(subjectsToStart: string[]) {
     setError(null);
     try {
       const chosenLimit = (isPremium && studyMode === "topic" && selectedTopics.length > 0)
@@ -102,13 +103,13 @@ function StudySetupContent() {
     }
   }
 
-  function toggleSubject(subject: Subject) {
+  function toggleSubject(subject: string) {
     setError(null);
     if (selectedSubjects.includes(subject)) {
       setSelectedSubjects((prev) => prev.filter((s) => s !== subject));
     } else {
-      if (selectedSubjects.length >= 5) {
-        setError("You can select up to 5 subjects.");
+      if (selectedSubjects.length >= maxStudySubjects) {
+        setError(`You can select up to ${maxStudySubjects} subjects.`);
         return;
       }
       setSelectedSubjects((prev) => [...prev, subject]);
@@ -264,15 +265,37 @@ function StudySetupContent() {
           2. Select Subjects
         </h3>
         {/* Grid selector */}
+        {subjectsLoading && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
+        {[...Array(5)].map((_, skeletonIndex) => (
+            <div
+              key={skeletonIndex}
+              className="h-[116px] sm:h-[132px] animate-pulse rounded-2xl sm:rounded-[20px] border border-white/[0.04] bg-white/[0.02]"
+            />
+          ))}
+          </div>
+        )}
+
+        {!subjectsLoading && availableSubjects.length === 0 && (
+          <div className="rounded-[20px] border border-amber-500/20 bg-amber-500/[0.06] p-5 text-center">
+            <p className="text-sm font-semibold text-amber-200">
+              We could not load your subjects.
+            </p>
+            <p className="mt-1 text-xs text-amber-200/60">
+              Check your connection, then refresh the page to try again.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
-          {STUDY_SUBJECTS.map((subject, idx) => {
-            const isSelected = selectedSubjects.includes(subject.id);
-            const Icon = subject.icon;
+          {availableSubjects.map((subject, idx) => {
+            const isSelected = selectedSubjects.includes(subject.name);
+            const palette = subjectPalette(subject.colorToken);
 
             return (
               <button
-                key={subject.id}
-                onClick={() => toggleSubject(subject.id)}
+                key={subject.name}
+                onClick={() => toggleSubject(subject.name)}
                 disabled={isMutating}
                 className={cn(
                   "group relative flex flex-col items-center justify-center gap-2.5 sm:gap-3 overflow-hidden rounded-2xl sm:rounded-[20px] border p-4 sm:p-6 transition-all duration-300",
@@ -285,13 +308,18 @@ function StudySetupContent() {
                   "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-300",
                   isSelected ? "bg-[var(--sb-study-accent)] text-white shadow-lg" : "bg-white/[0.03] text-white/50",
                 )}>
-                  <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6", isSelected ? "" : subject.color)} />
+                  <SubjectIcon
+                    iconName={subject.iconName}
+                    code={subject.code}
+                    size={22}
+                    className={cn(isSelected ? "text-white" : palette.text)}
+                  />
                 </div>
                 <span className={cn(
                   "font-bold tracking-tight text-xs sm:text-base transition-colors",
                   isSelected ? "text-white" : "text-white/60 group-hover:text-white"
                 )}>
-                  {subject.label}
+                  {subject.name}
                 </span>
 
                 {isSelected && (

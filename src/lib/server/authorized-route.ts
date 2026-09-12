@@ -33,6 +33,7 @@ export async function forwardAuthorizedRoute(
     | "reports"
     | "notifications"
     | "study"
+    | "institutions"
     | "admin",
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
 ) {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import { subjectPalette } from "@/components/ui/subject-icon";
 import { cn } from "@/lib/utils/cn";
 
 type SubjectFilterProps = {
@@ -8,15 +10,18 @@ type SubjectFilterProps = {
   onSelect: (subject: string | undefined) => void;
 };
 
-const SUBJECT_COLORS: Record<string, string> = {
-  Mathematics: "from-blue-400 to-blue-600",
-  English: "from-purple-400 to-purple-600",
-  Physics: "from-cyan-400 to-cyan-600",
-  Chemistry: "from-emerald-400 to-emerald-600",
-  Biology: "from-rose-400 to-rose-600",
-};
-
 export function SubjectFilter({ subjects, selected, onSelect }: SubjectFilterProps) {
+  /* The colour of each pill comes from the institution's own subject list, so
+     a school we have never designed for still gets sensible colours. */
+  const { data: examProfile } = useExamProfile();
+
+  const colorTokenByName = new Map(
+    (examProfile?.subjects ?? []).map((subject) => [
+      subject.name.toLowerCase(),
+      subject.colorToken,
+    ]),
+  );
+
   if (subjects.length === 0) return null;
 
   return (
@@ -37,6 +42,7 @@ export function SubjectFilter({ subjects, selected, onSelect }: SubjectFilterPro
       {/* Subject pills */}
       {subjects.map((subject) => {
         const isActive = selected === subject;
+        const palette = subjectPalette(colorTokenByName.get(subject.toLowerCase()));
         return (
           <button
             key={subject}
@@ -52,7 +58,7 @@ export function SubjectFilter({ subjects, selected, onSelect }: SubjectFilterPro
             <span
               className={cn(
                 "h-2 w-2 rounded-full bg-gradient-to-br shrink-0",
-                SUBJECT_COLORS[subject] || "from-gray-400 to-gray-600",
+                palette.gradient,
               )}
             />
             {subject}

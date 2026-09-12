@@ -27,7 +27,6 @@ import {
 } from "@/features/collaboration/hooks/use-collaboration";
 import {
   collaborationQuestionSources,
-  collaborationSubjects,
   getCollaborationStatChips,
   getQuestionSourceMeta,
 } from "@/features/collaboration/lib/collaboration-config";
@@ -37,7 +36,8 @@ import {
   rememberCollaborationRoom,
   type RecentCollaborationRoom,
 } from "@/features/collaboration/lib/recent-room-store";
-import type { Subject } from "@/lib/api/exams";
+import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
 import type {
   CollaborationQuestionSource,
   UserProfile,
@@ -65,10 +65,7 @@ export function CollaborationPage({
 
   const [questionSource, setQuestionSource] =
     useState<CollaborationQuestionSource>("REAL_PAST_QUESTION");
-  const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([
-    "English",
-    "Mathematics",
-  ]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [customName, setCustomName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -77,11 +74,32 @@ export function CollaborationPage({
   const isEligible = stats.isPremium && stats.realExamsCompleted >= 2;
   const isPremiumLocked = !stats.isPremium;
   const needsMoreRealExams = stats.isPremium && stats.realExamsCompleted < 2;
-  const maxSubjects = questionSource === "MIXED" ? 3 : 4;
+  /* Subjects and limits come from the student's institution. */
+  const { data: examProfile, isLoading: subjectsLoading } = useExamProfile();
+  const availableSubjects = examProfile?.subjects ?? [];
+  const institutionMaxSubjects = examProfile?.maxSubjects ?? 4;
+  const compulsorySubjects = availableSubjects
+    .filter((subject) => subject.isCompulsory)
+    .map((subject) => subject.name);
+  const maxSubjects =
+    questionSource === "MIXED" && !examProfile?.allowMixedFullExams
+      ? Math.max(1, institutionMaxSubjects - 1)
+      : institutionMaxSubjects;
 
   useEffect(() => {
     setRecentRooms(getRecentCollaborationRooms());
   }, []);
+
+  /* Open with a sensible pair, once we know what the school actually offers. */
+  useEffect(() => {
+    if (availableSubjects.length === 0) return;
+    setSelectedSubjects((current) =>
+      current.length > 0
+        ? current
+        : availableSubjects.slice(0, 2).map((subject) => subject.name),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableSubjects.length]);
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -98,27 +116,28 @@ export function CollaborationPage({
 
   const playlistLine = useMemo(() => {
     if (questionSource === "MIXED") {
-      return "Mixed rooms cap at three subjects to keep the sprint sharp and fair.";
+      return `Mixed rooms cap at ${maxSubjects} subject${maxSubjects === 1 ? "" : "s"} to keep the sprint sharp and fair.`;
     }
 
-    if (selectedSubjects.length === 4) {
-      return "English anchors every full four-subject duel to mirror the real admission rhythm.";
+    if (selectedSubjects.length === institutionMaxSubjects && compulsorySubjects.length > 0) {
+      return `${compulsorySubjects.join(" and ")} anchors every full duel to mirror the real admission rhythm.`;
     }
 
     return "Pick the subjects that will make both players feel the pressure immediately.";
-  }, [questionSource, selectedSubjects.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionSource, selectedSubjects.length, maxSubjects, institutionMaxSubjects, compulsorySubjects.join(",")]);
 
-  function toggleSubject(subject: Subject) {
+  function toggleSubject(subject: string) {
     setFormError(null);
 
     const exists = selectedSubjects.includes(subject);
     if (exists) {
       if (
         questionSource !== "MIXED" &&
-        selectedSubjects.length === 4 &&
-        subject === "English"
+        selectedSubjects.length >= institutionMaxSubjects &&
+        compulsorySubjects.includes(subject)
       ) {
-        setFormError("English stays locked in once you build a full four-subject duel.");
+        setFormError(`${subject} stays locked in once you build a full duel.`);
         return;
       }
 
@@ -129,19 +148,22 @@ export function CollaborationPage({
     if (selectedSubjects.length >= maxSubjects) {
       setFormError(
         questionSource === "MIXED"
-          ? "Mixed sprint rooms can only hold three subjects."
+          ? `Mixed sprint rooms can only hold ${maxSubjects} subject${maxSubjects === 1 ? "" : "s"}.`
           : "You already have a full collaboration set.",
       );
       return;
     }
 
+    const missingCompulsory = compulsorySubjects.filter(
+      (name) => !selectedSubjects.includes(name),
+    );
     if (
       questionSource !== "MIXED" &&
-      selectedSubjects.length === 3 &&
-      !selectedSubjects.includes("English") &&
-      subject !== "English"
+      selectedSubjects.length === institutionMaxSubjects - 1 &&
+      missingCompulsory.length > 0 &&
+      !compulsorySubjects.includes(subject)
     ) {
-      setFormError("English must complete any four-subject collaboration exam.");
+      setFormError(`${missingCompulsory.join(" and ")} must complete any full collaboration exam.`);
       return;
     }
 
@@ -436,28 +458,40 @@ export function CollaborationPage({
                 </div>
               </div>
 
+              {subjectsLoading && (
+                <div className="sb-arena-loadout-grid">
+        {[...Array(4)].map((_, skeletonIndex) => (
+            <div
+              key={skeletonIndex}
+              className="h-[72px] animate-pulse rounded-xl border border-white/[0.04] bg-white/[0.02]"
+            />
+          ))}
+                </div>
+              )}
+
+              {!subjectsLoading && availableSubjects.length === 0 && (
+                <div className="rounded-[20px] border border-amber-500/20 bg-amber-500/[0.06] p-5 text-center">
+                  <p className="text-sm font-semibold text-amber-200">
+                    We could not load your subjects.
+                  </p>
+                  <p className="mt-1 text-xs text-amber-200/60">
+                    Check your connection, then refresh the page to try again.
+                  </p>
+                </div>
+              )}
+
               <div className="sb-arena-loadout-grid">
-                {collaborationSubjects.map((subject) => {
-                  const Icon = subject.icon;
-                  const isSelected = selectedSubjects.includes(subject.value);
-                  const subjectColor = 
-                    subject.value === "English" ? "#fb7185" : 
-                    subject.value === "Mathematics" ? "#38bdf8" : 
-                    subject.value === "Physics" ? "#a78bfa" : 
-                    subject.value === "Chemistry" ? "#34d399" : 
-                    "#a3e635";
-                  const subjectGlow = 
-                    subject.value === "English" ? "rgba(251, 113, 133, 0.15)" :
-                    subject.value === "Mathematics" ? "rgba(56, 189, 248, 0.15)" :
-                    subject.value === "Physics" ? "rgba(167, 139, 250, 0.15)" :
-                    subject.value === "Chemistry" ? "rgba(52, 211, 153, 0.15)" :
-                    "rgba(163, 230, 53, 0.15)";
+                {availableSubjects.map((subject) => {
+                  const isSelected = selectedSubjects.includes(subject.name);
+                  const palette = subjectPalette(subject.colorToken);
+                  const subjectColor = palette.hex;
+                  const subjectGlow = palette.glow;
 
                   return (
                     <button
-                      key={subject.value}
+                      key={subject.name}
                       type="button"
-                      onClick={() => toggleSubject(subject.value)}
+                      onClick={() => toggleSubject(subject.name)}
                       className={cn(
                         "sb-arena-loadout-item",
                         isSelected && "sb-arena-loadout-item--selected",
@@ -473,9 +507,9 @@ export function CollaborationPage({
                         </div>
                       )}
                       <div className="sb-arena-loadout-item__icon-container">
-                        <Icon className="h-4 w-4" />
+                        <SubjectIcon iconName={subject.iconName} code={subject.code} size={16} />
                       </div>
-                      <span className="sb-arena-loadout-item__label">{subject.label}</span>
+                      <span className="sb-arena-loadout-item__label">{subject.name}</span>
                     </button>
                   );
                 })}

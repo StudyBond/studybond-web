@@ -1,15 +1,9 @@
-import type { Subject } from "@/lib/api/exams";
 import type { CollaborationQuestionSource } from "@/lib/api/types";
 import {
-  BookA,
   BookOpen,
-  Calculator,
-  Dna,
   Flame,
-  FlaskConical,
   Sparkles,
   Swords,
-  Target,
   type LucideIcon,
 } from "lucide-react";
 
@@ -50,43 +44,9 @@ export const collaborationQuestionSources: Array<{
   },
 ];
 
-export const collaborationSubjects: Array<{
-  value: Subject;
-  label: string;
-  icon: LucideIcon;
-  colorClass: string;
-}> = [
-  {
-    value: "English",
-    label: "English",
-    icon: BookA,
-    colorClass: "text-rose-300",
-  },
-  {
-    value: "Mathematics",
-    label: "Mathematics",
-    icon: Calculator,
-    colorClass: "text-sky-300",
-  },
-  {
-    value: "Physics",
-    label: "Physics",
-    icon: Target,
-    colorClass: "text-violet-300",
-  },
-  {
-    value: "Chemistry",
-    label: "Chemistry",
-    icon: FlaskConical,
-    colorClass: "text-emerald-300",
-  },
-  {
-    value: "Biology",
-    label: "Biology",
-    icon: Dna,
-    colorClass: "text-lime-300",
-  },
-];
+/* The subject list used to be duplicated here. Subjects now come from the
+   institution, through useExamProfile, so a duel offers whatever that school
+   actually teaches. */
 
 export function getQuestionSourceMeta(source: CollaborationQuestionSource) {
   return (

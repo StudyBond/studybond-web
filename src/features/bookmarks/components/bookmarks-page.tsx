@@ -22,16 +22,11 @@ import {
   Clock,
   Filter,
 } from "lucide-react";
+import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import { subjectPalette } from "@/components/ui/subject-icon";
 
-/* ─── Subject Palette ─── */
-
-const SUBJECT_META: Record<string, { label: string; color: string; dotColor: string }> = {
-  Physics: { label: "Physics", color: "text-cyan-400", dotColor: "bg-cyan-400" },
-  Chemistry: { label: "Chemistry", color: "text-emerald-400", dotColor: "bg-emerald-400" },
-  Biology: { label: "Biology", color: "text-rose-400", dotColor: "bg-rose-400" },
-  English: { label: "English", color: "text-purple-400", dotColor: "bg-purple-400" },
-  Mathematics: { label: "Mathematics", color: "text-blue-400", dotColor: "bg-blue-400" },
-};
+/* Subject colours used to be hardcoded here. They now come from the
+   institution's own subject list, through useExamProfile(). */
 
 /* ─── Stagger Variants ─── */
 
@@ -195,6 +190,15 @@ function SubjectFilterBar({
   onSelect: (subject: string | undefined) => void;
   totalCount: number;
 }) {
+  /* Pill colours come from the institution's subject list. */
+  const { data: examProfile } = useExamProfile();
+  const colorTokenByName = new Map(
+    (examProfile?.subjects ?? []).map((subject) => [
+      subject.name.toLowerCase(),
+      subject.colorToken,
+    ]),
+  );
+
   if (subjects.length === 0) return null;
 
   return (
@@ -240,7 +244,7 @@ function SubjectFilterBar({
 
         {/* Subject pills */}
         {subjects.map((subject) => {
-          const meta = SUBJECT_META[subject];
+          const palette = subjectPalette(colorTokenByName.get(subject.toLowerCase()));
           const isActive = selected === subject;
           const count = subjectCounts[subject] || 0;
 
@@ -259,10 +263,10 @@ function SubjectFilterBar({
             >
               <span className={cn(
                 "h-2 w-2 rounded-full shrink-0 transition-all",
-                meta?.dotColor || "bg-white/30",
+                palette.dot,
                 isActive ? "scale-110" : "opacity-60",
               )} />
-              {meta?.label || subject}
+              {subject}
               <span className={cn(
                 "text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all",
                 isActive

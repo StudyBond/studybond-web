@@ -8,11 +8,6 @@ import {
   BookOpen, 
   Sparkles, 
   Target, 
-  FlaskConical, 
-  Calculator, 
-  Dna,
-  BookA,
-  BookMarked,
   ArrowRight,
   Loader2,
   AlertTriangle,
@@ -30,8 +25,10 @@ import {
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useStartExamMutation, useStartDailyChallengeMutation } from "@/features/practice/hooks/use-practice-mutations";
 import { getExamQuestions, getExamEligibility, getExamHistory } from "@/lib/api/exams";
-import type { ExamType, Subject } from "@/lib/api/exams";
+import type { ExamType } from "@/lib/api/exams";
 import type { UserProfile } from "@/lib/api/types";
+import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
 
 // ----- Data Definitions
 
@@ -110,13 +107,8 @@ const EXAM_MODES: {
   },
 ];
 
-const AVAILABLE_SUBJECTS: { id: Subject; label: string; icon: React.ElementType; color: string }[] = [
-  { id: "English", label: "English", icon: BookA, color: "text-rose-400" },
-  { id: "Mathematics", label: "Mathematics", icon: Calculator, color: "text-blue-400" },
-  { id: "Physics", label: "Physics", icon: Target, color: "text-purple-400" },
-  { id: "Chemistry", label: "Chemistry", icon: FlaskConical, color: "text-emerald-400" },
-  { id: "Biology", label: "Biology", icon: Dna, color: "text-green-400" },
-];
+/* Subjects used to be hardcoded here. They now come from the student's own
+   institution, through useExamProfile() inside the component below. */
 
 export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
   const router = useRouter();
@@ -133,7 +125,7 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedMode, setSelectedMode] = useState<ExamType | null>(null);
-  const [selectedSubjects, setSelectedSubjects] = useState<Subject[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [autoSelectLoaded, setAutoSelectLoaded] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -157,33 +149,60 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
   const [isStartingExam, setIsStartingExam] = useState(false);
 
   // derived constraints
-  const canSelectMoreSubjects = selectedSubjects.length < 4;
+  const examProfileQuery = useExamProfile();
+  const examProfile = examProfileQuery.data;
+  const availableSubjects = examProfile?.subjects ?? [];
+
+  /* Until the profile arrives, fall back to the shape this screen has always
+     had, so it never flashes a different set of rules at the student. */
+  const maxSubjects = examProfile?.maxSubjects ?? 4;
+  const compulsorySubjects = availableSubjects
+    .filter((subject) => subject.isCompulsory)
+    .map((subject) => subject.name);
+
+  /* A mixed exam stops one short of a full exam unless the school allows it. */
+  const mixedSubjectCap = examProfile?.allowMixedFullExams
+    ? maxSubjects
+    : Math.max(1, maxSubjects - 1);
+  const activeSubjectCap = selectedMode === "MIXED" ? mixedSubjectCap : maxSubjects;
+
+  const canSelectMoreSubjects = selectedSubjects.length < activeSubjectCap;
+  const missingCompulsory = compulsorySubjects.filter(
+    (name) => !selectedSubjects.includes(name),
+  );
+  /* The last slot of a full exam has to be a compulsory subject. */
+  const compulsoryNeededNext =
+    selectedSubjects.length === maxSubjects - 1 && missingCompulsory.length > 0;
+  const defaultFullSelection = availableSubjects
+    .slice(0, maxSubjects)
+    .map((subject) => subject.name);
   
-  // Enforce English constraint naturally
-  const isEnglishMandatory = selectedSubjects.length === 3 && !selectedSubjects.includes("English");
-  // If they have 3 subjects and none are English, the VERY NEXT click MUST be English.
+  /* Which subject is compulsory is the school's own setting, and is not
+     always English, so it is read from the profile above. */
   
   // Auto-select subjects for Daily Challenge from last exam history
   useEffect(() => {
-    if (selectedMode === "DAILY_CHALLENGE" && !autoSelectLoaded) {
+    /* Wait for the subject list, otherwise the defaults below would be empty. */
+    if (selectedMode === "DAILY_CHALLENGE" && !autoSelectLoaded && availableSubjects.length > 0) {
       setAutoSelectLoaded(true);
       // Fetch more items to find the most recent 4-subject combination
       getExamHistory({ limit: 10 })
         .then((history) => {
-          const lastFourSubjectExam = history?.exams?.find(e => e.subjects.length === 4);
+          const lastFourSubjectExam = history?.exams?.find(e => e.subjects.length === maxSubjects);
           
           if (lastFourSubjectExam) {
-            setSelectedSubjects(lastFourSubjectExam.subjects as Subject[]);
+            setSelectedSubjects(lastFourSubjectExam.subjects);
           } else {
-            // Default to a valid 4-subject combination so first-time users can start immediately.
-            setSelectedSubjects(["English", "Mathematics", "Physics", "Chemistry"]);
+            // Default to a valid full set so first-time users can start immediately.
+            setSelectedSubjects(defaultFullSelection);
           }
         })
         .catch(() => {
-          setSelectedSubjects(["English", "Mathematics", "Physics", "Chemistry"]);
+          setSelectedSubjects(defaultFullSelection);
         });
     }
-  }, [selectedMode, autoSelectLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMode, autoSelectLoaded, maxSubjects, defaultFullSelection.join(",")]);
 
   // Handlers
   const handleSelectMode = (modeId: ExamType) => {
@@ -197,13 +216,13 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
     }, 300);
   };
 
-  const toggleSubject = (subject: Subject) => {
+  const toggleSubject = (subject: string) => {
     setSetupError(null);
     if (selectedSubjects.includes(subject)) {
       // Removing logic
-      // Prevent removing English if they have 4 subjects and English is required
-      if (selectedSubjects.length === 4 && subject === "English") {
-         setSetupError("English is mandatory for full 4-subject exams.");
+      // A compulsory subject cannot be dropped from a full exam.
+      if (selectedSubjects.length >= maxSubjects && compulsorySubjects.includes(subject)) {
+         setSetupError(`${subject} is required for a full exam.`);
          return;
       }
       setSelectedSubjects((prev) => prev.filter((s) => s !== subject));
@@ -211,15 +230,15 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
       // Adding logic
       if (!canSelectMoreSubjects) return;
       
-      // If adding 4th, it must be English if not already present
-      if (selectedSubjects.length === 3 && !selectedSubjects.includes("English") && subject !== "English") {
-         setSetupError("You must select English to complete a full 4-subject setup.");
+      // The final slot has to be a compulsory subject, if one is still missing.
+      if (compulsoryNeededNext && !compulsorySubjects.includes(subject)) {
+         setSetupError(`You must select ${missingCompulsory.join(" and ")} to complete a full exam.`);
          return;
       }
 
-      // If Mixed mode, max is 3 (per schema: mixed only available for 1-3 solo exams)
-      if (selectedMode === "MIXED" && selectedSubjects.length === 3) {
-         setSetupError("Mixed mode supports a maximum of 3 subjects.");
+      // Mixed exams stop short of a full exam unless the school allows it.
+      if (selectedMode === "MIXED" && selectedSubjects.length >= mixedSubjectCap) {
+         setSetupError(`Mixed mode supports a maximum of ${mixedSubjectCap} subject${mixedSubjectCap === 1 ? "" : "s"}.`);
          return;
       }
       
@@ -235,9 +254,9 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
       return;
     }
 
-    // Daily challenge requires exactly 4 subjects
-    if (selectedMode === "DAILY_CHALLENGE" && selectedSubjects.length !== 4) {
-      setSetupError("Daily Challenge requires exactly 4 subjects.");
+    // Daily challenge requires a full set of subjects
+    if (selectedMode === "DAILY_CHALLENGE" && selectedSubjects.length !== maxSubjects) {
+      setSetupError(`Daily Challenge requires exactly ${maxSubjects} subjects.`);
       return;
     }
     setSetupError(null);
@@ -427,7 +446,7 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
               ? "Select exactly 4 subjects. Auto-filled from your last session."
               : `Choose up to ${selectedMode === "MIXED" ? "3" : "4"} disciplines.`}
             <span className="block mt-1 text-[var(--sb-accent)]">
-              {selectedSubjects.length === 4 ? "Maximum selected." : isEnglishMandatory ? "English is required to complete 4 subjects." : ""}
+              {selectedSubjects.length >= activeSubjectCap ? "Maximum selected." : compulsoryNeededNext ? `${missingCompulsory.join(" and ")} is required to complete your set.` : ""}
             </span>
           </p>
 
@@ -452,7 +471,7 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
-           {[...Array(selectedMode === "MIXED" ? 3 : 4)].map((_, i) => (
+           {[...Array(activeSubjectCap)].map((_, i) => (
              <div 
                key={i} 
                className={cn(
@@ -464,28 +483,50 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
         </div>
       </div>
 
+      {examProfileQuery.isLoading && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+        {[...Array(maxSubjects + 1)].map((_, skeletonIndex) => (
+            <div
+              key={skeletonIndex}
+              className="h-[132px] animate-pulse rounded-[20px] border border-white/[0.04] bg-white/[0.02]"
+            />
+          ))}
+        </div>
+      )}
+
+      {!examProfileQuery.isLoading && availableSubjects.length === 0 && (
+        <div className="rounded-[20px] border border-amber-500/20 bg-amber-500/[0.06] p-5 text-center">
+          <p className="text-sm font-semibold text-amber-200">
+            We could not load your subjects.
+          </p>
+          <p className="mt-1 text-xs text-amber-200/60">
+            Check your connection, then refresh the page to try again.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {AVAILABLE_SUBJECTS.map((subject, i) => {
-          const isSelected = selectedSubjects.includes(subject.id);
+        {availableSubjects.map((subject, i) => {
+          const isSelected = selectedSubjects.includes(subject.name);
           const usedFreeSubjects = eligibilityQuery.data?.freeSubjectsTaken ?? [];
-          const isAlreadyTaken = !profile.isPremium && usedFreeSubjects.some(s => s.toLowerCase() === subject.id.toLowerCase());
+          const isAlreadyTaken = !profile.isPremium && usedFreeSubjects.some(s => s.toLowerCase() === subject.name.toLowerCase());
           const isOutOfCredits = !profile.isPremium && (eligibilityQuery.data?.creditsRemaining ?? 0) <= 0;
           
           // A subject is "locked" ONLY in Official Past Questions mode for a free user if they've used it before OR have no credits left
           const isLocked = selectedMode === "REAL_PAST_QUESTION" && !isSelected && (isAlreadyTaken || isOutOfCredits);
           const isDisabled = (!isSelected && !canSelectMoreSubjects) && !isLocked;
           
-          const Icon = subject.icon;
+          const palette = subjectPalette(subject.colorToken);
 
           return (
             <button
-              key={subject.id}
+              key={subject.name}
               onClick={() => {
                 if (isLocked) {
-                  setUpgradeModalSubject(subject.label);
+                  setUpgradeModalSubject(subject.name);
                   setShowUpgradeModal(true);
                 } else {
-                  toggleSubject(subject.id);
+                  toggleSubject(subject.name);
                 }
               }}
               disabled={isDisabled && !isSelected}
@@ -520,13 +561,18 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
                 isSelected ? "bg-[var(--sb-accent)] text-white shadow-lg" : "bg-white/[0.03] text-white/50",
                 isLocked && "opacity-20"
               )}>
-                <Icon className={cn("h-6 w-6", isSelected ? "" : subject.color)} />
+                <SubjectIcon
+                  iconName={subject.iconName}
+                  code={subject.code}
+                  size={24}
+                  className={cn(isSelected ? "text-white" : palette.text)}
+                />
               </div>
               <span className={cn(
                 "font-bold tracking-tight text-sm md:text-base transition-colors",
                 isSelected ? "text-white" : "text-white/60 group-hover:text-white"
               )}>
-                {subject.label}
+                {subject.name}
               </span>
 
               {isSelected && (
