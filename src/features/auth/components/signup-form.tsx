@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { CourseCombobox } from "@/components/ui/course-combobox";
 import { Field } from "@/components/ui/field";
 import { InlineError } from "@/components/ui/inline-error";
 import { useSignupMutation } from "@/features/auth/hooks/use-auth-mutations";
@@ -158,11 +159,28 @@ export function SignupForm() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Aspiring course"
-          placeholder="e.g. Medicine"
-          {...form.register("aspiringCourse")}
-        />
+        <div className="space-y-1.5">
+          <label
+            htmlFor="aspiringCourse"
+            className="block text-xs font-medium text-white/50 tracking-wide"
+          >
+            Aspiring course
+          </label>
+          <Controller
+            control={form.control}
+            name="aspiringCourse"
+            render={({ field }) => (
+              <CourseCombobox
+                id="aspiringCourse"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="e.g. Medicine"
+                className="w-full rounded-xl border border-white/[0.06] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white/90 outline-none transition-all duration-200 placeholder:text-white/20 hover:border-white/[0.1] focus:border-[#e09040]/50 focus:ring-2 focus:ring-[#e09040]/15 focus:bg-white/[0.05]"
+              />
+            )}
+          />
+        </div>
         <Field
           label="Target score"
           placeholder={

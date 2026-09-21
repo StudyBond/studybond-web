@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
 import { useUpdateProfile } from "@/features/settings/hooks/use-settings";
+import { CourseCombobox } from "@/components/ui/course-combobox";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { AvatarPickerModal } from "@/features/settings/components/avatar-picker-modal";
 import {
@@ -138,9 +139,9 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
           onClose={() => setEditingField(null)}
         >
           {editingField === "aspiringCourse" ? (
-            <input
+            <CourseCombobox
               value={aspiringCourse}
-              onChange={(e) => setAspiringCourse(e.target.value)}
+              onChange={setAspiringCourse}
               autoFocus
               className="w-full bg-transparent text-sm text-white font-medium outline-none placeholder:text-white/20"
               placeholder="e.g. Medicine & Surgery"
