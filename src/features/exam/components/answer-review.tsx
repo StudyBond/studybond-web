@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { ChevronDown, Check, X as XIcon, Lightbulb, Info, Flag } from "lucide-react";
 import { MathMarkdown } from "@/components/ui/math-markdown";
+import { SharedStimulus } from "@/features/exam/components/shared-stimulus";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import type { ExamResult, QuestionWithAnswer } from "@/lib/api/types";
 import { ReportQuestionModal } from "@/features/exam/components/report-question-modal";
@@ -215,11 +216,13 @@ export function QuestionReviewItem({
           <div className="space-y-4 border-t border-white/[0.06] p-3.5 sm:space-y-6 sm:p-5 md:p-6">
             {/* Full Question Text/Images if expanded */}
             <div className="space-y-4">
-              {q.parentQuestionText && (
-                <div className="rounded-xl bg-white/[0.02] p-3.5 text-xs text-white/50 italic border-l-2 border-white/10 sb-protected sm:p-4">
-                  <MathMarkdown content={q.parentQuestionText} />
-                </div>
-              )}
+              <SharedStimulus
+                compact
+                text={q.parentQuestionText}
+                imageUrl={q.parentQuestionImageUrl}
+                onImageClick={setLightboxSrc}
+              />
+
               {q.imageUrl && (
                 <button
                   type="button"

@@ -5,6 +5,7 @@ import { Bookmark } from "lucide-react";
 import { OptionGrid } from "@/features/exam/components/option-grid";
 import { useExamStore, type OptionKey } from "@/features/exam/stores/exam-store";
 import { MathMarkdown } from "@/components/ui/math-markdown";
+import { SharedStimulus } from "@/features/exam/components/shared-stimulus";
 import type { ExamQuestion } from "@/lib/api/types";
 
 type QuestionCardProps = {
@@ -42,27 +43,11 @@ export function QuestionCard({ question, questionIndex, totalQuestions }: Questi
 
   return (
     <div className="sb-enter space-y-6">
-      {/* Comprehension passage (if this question belongs to a passage group) */}
-      {question.parentQuestionText ? (
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 md:p-6 sb-protected">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/20 mb-3">
-            Read the passage below
-          </p>
-          <div className="text-sm leading-[1.8] text-white/70">
-            <MathMarkdown content={question.parentQuestionText} />
-          </div>
-          {question.parentQuestionImageUrl ? (
-            <img
-              src={question.parentQuestionImageUrl}
-              alt="Passage illustration"
-              className="mt-4 max-h-64 rounded-xl border border-white/[0.06] object-contain sb-protected-img"
-              loading="lazy"
-              onContextMenu={(e) => e.preventDefault()}
-              draggable={false}
-            />
-          ) : null}
-        </div>
-      ) : null}
+      {/* Shared diagram or passage (if this question belongs to a group) */}
+      <SharedStimulus
+        text={question.parentQuestionText}
+        imageUrl={question.parentQuestionImageUrl}
+      />
 
       {/* Question header */}
       <div className="flex items-start justify-between gap-4">

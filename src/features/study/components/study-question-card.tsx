@@ -3,6 +3,7 @@
 import { useStudyStore, type OptionKey } from "@/features/study/stores/study-store";
 import { StudyOptionGrid } from "./study-option-grid";
 import { MathMarkdown } from "@/components/ui/math-markdown";
+import { SharedStimulus } from "@/features/exam/components/shared-stimulus";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Eye, ArrowRight, ArrowLeft, Crown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,27 +38,11 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
 
   return (
     <div className="space-y-6">
-      {/* Comprehension passage */}
-      {question.parentQuestionText ? (
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 md:p-6 sb-protected">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/20 mb-3">
-            Read the passage below
-          </p>
-          <div className="text-sm leading-[1.8] text-white/70">
-            <MathMarkdown content={question.parentQuestionText} />
-          </div>
-          {question.parentQuestionImageUrl ? (
-            <img
-              src={question.parentQuestionImageUrl}
-              alt="Passage illustration"
-              className="mt-4 max-h-64 rounded-xl border border-white/[0.06] object-contain sb-protected-img"
-              loading="lazy"
-              onContextMenu={(e) => e.preventDefault()}
-              draggable={false}
-            />
-          ) : null}
-        </div>
-      ) : null}
+      {/* Shared diagram or passage */}
+      <SharedStimulus
+        text={question.parentQuestionText}
+        imageUrl={question.parentQuestionImageUrl}
+      />
 
       {/* Main question card */}
       <div className="rounded-2xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
