@@ -30,6 +30,7 @@ export async function forwardAuthorizedRoute(
     | "bookmarks"
     | "bookmark-exam"
     | "collaboration"
+    | "duel"
     | "reports"
     | "notifications"
     | "study"

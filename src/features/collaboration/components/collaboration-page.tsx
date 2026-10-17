@@ -37,6 +37,7 @@ import {
   type RecentCollaborationRoom,
 } from "@/features/collaboration/lib/recent-room-store";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import { FindChallengerCard } from "@/features/duel-matchmaking/components/find-challenger-card";
 import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
 import type {
   CollaborationQuestionSource,
@@ -351,6 +352,8 @@ export function CollaborationPage({
         </div>
       </section>
 
+
+      <FindChallengerCard stats={stats} />
 
       {/* ═══════════════════════════════════════════════════ */}
       {/* ═══ CREATE ROOM                               ═══ */}
