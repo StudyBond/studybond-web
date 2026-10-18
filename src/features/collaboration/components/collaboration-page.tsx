@@ -38,6 +38,10 @@ import {
 } from "@/features/collaboration/lib/recent-room-store";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import { FindChallengerCard } from "@/features/duel-matchmaking/components/find-challenger-card";
+import {
+  DuelDurationPicker,
+  useDuelDurationChoice,
+} from "@/features/collaboration/components/duel-duration-picker";
 import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
 import type {
   CollaborationQuestionSource,
@@ -73,6 +77,7 @@ export function CollaborationPage({
   const [recentRooms, setRecentRooms] = useState<RecentCollaborationRoom[]>([]);
 
   const isEligible = stats.isPremium && stats.realExamsCompleted >= 2;
+  const duelTime = useDuelDurationChoice(selectedSubjects, isEligible);
   const isPremiumLocked = !stats.isPremium;
   const needsMoreRealExams = stats.isPremium && stats.realExamsCompleted < 2;
   /* Subjects and limits come from the student's institution. */
@@ -188,6 +193,7 @@ export function CollaborationPage({
         subjects: selectedSubjects,
         customName: customName.trim() || null,
         maxParticipants: 2,
+        durationSeconds: duelTime.value ?? undefined,
       });
 
       rememberCollaborationRoom(data.session);
@@ -517,6 +523,23 @@ export function CollaborationPage({
                   );
                 })}
               </div>
+            </div>
+
+            {/* ─── Duel Time ─── */}
+            <div>
+              <div className="mb-4">
+                <p className="text-sm font-semibold text-white/80">Duel Time</p>
+                <p className="mt-1 text-[13px] text-white/40">
+                  How long you both get. It starts at the normal time for your subjects.
+                </p>
+              </div>
+              <DuelDurationPicker
+                options={duelTime.options}
+                value={duelTime.value}
+                onChange={duelTime.setValue}
+                isLoading={duelTime.isLoading}
+                disabled={!isEligible}
+              />
             </div>
 
             {/* ─── Room Settings + Match Ticket Summary ─── */}

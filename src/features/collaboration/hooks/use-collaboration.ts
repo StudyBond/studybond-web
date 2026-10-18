@@ -10,6 +10,8 @@ import {
   startCollaborationSession,
   updateCollaborationSessionName,
   leaveCollaborationSession,
+  getDuelDurationOptions,
+  updateCollaborationDuration,
   type CreateCollaborationPayload,
 } from "@/lib/api/collaboration";
 import type { ApiError } from "@/lib/api/client";
@@ -111,6 +113,40 @@ export function useRenameCollaborationMutation() {
       sessionId: number;
       customName: string | null;
     }) => updateCollaborationSessionName(sessionId, customName),
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        collaborationSessionQueryKey(data.session.code),
+        data,
+      );
+    },
+  });
+}
+
+/**
+ * The normal duel time for these subjects and the range a host may pick.
+ * Subject times change perhaps twice a year, so this is held for a while.
+ */
+export function useDuelDurationOptions(subjects: string[], enabled = true) {
+  const sorted = [...subjects].sort();
+  return useQuery({
+    queryKey: ["collaboration", "duration-options", sorted.join(",")] as const,
+    queryFn: () => getDuelDurationOptions(sorted),
+    enabled: enabled && sorted.length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useUpdateCollaborationDurationMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      durationSeconds,
+    }: {
+      sessionId: number;
+      durationSeconds: number;
+    }) => updateCollaborationDuration(sessionId, durationSeconds),
     onSuccess: (data) => {
       queryClient.setQueryData(
         collaborationSessionQueryKey(data.session.code),

@@ -31,6 +31,8 @@ export type DuelMatchmakingView = {
     iAmReady: boolean;
     opponentReady: boolean;
     secondsLeft: number;
+    /** How long the duel will run: the normal time for its subject. */
+    durationSeconds: number | null;
   } | null;
   sessionCode: string | null;
   notice: { code: DuelNoticeCode | string; at: string } | null;

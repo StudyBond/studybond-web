@@ -28,6 +28,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { InlineError } from "@/components/ui/inline-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Surface } from "@/components/ui/surface";
+import { LobbyDuelTime } from "@/features/collaboration/components/duel-duration-picker";
 import {
   collaborationSessionQueryKey,
   useCancelCollaborationMutation,
@@ -619,6 +620,8 @@ export function CollaborationRoomPage({
               </div>
             </Surface>
           ) : null}
+
+          <LobbyDuelTime session={session} isHost={isHost} />
 
           <Surface className="p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">

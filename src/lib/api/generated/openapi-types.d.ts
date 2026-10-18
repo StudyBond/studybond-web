@@ -30660,6 +30660,7 @@ export interface paths {
                         /** @enum {number} */
                         maxParticipants?: 2;
                         customName?: string;
+                        durationSeconds?: number;
                     };
                 };
             };
@@ -30690,6 +30691,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -30963,6 +30965,296 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collaboration/duration-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Duel time choices for some subjects
+         * @description The normal time for a duel in these subjects on the student's board, and the shortest and longest a host may pick (half to one and a half times the normal time, in whole minutes). Subjects are comma-separated.
+         */
+        get: {
+            parameters: {
+                query: {
+                    subjects: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: true;
+                            data: {
+                                defaultSeconds: number;
+                                minSeconds: number;
+                                maxSeconds: number;
+                                stepSeconds: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collaboration/code/{code}": {
         parameters: {
             query?: never;
@@ -31011,6 +31303,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -31334,6 +31627,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -31661,6 +31955,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -31986,6 +32281,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -32311,6 +32607,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -32661,6 +32958,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -32988,6 +33286,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -33313,6 +33612,7 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -33648,6 +33948,339 @@ export interface paths {
                                     questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
                                     subjects: string[];
                                     totalQuestions: number;
+                                    durationSeconds: number | null;
+                                    maxParticipants: number;
+                                    hostUserId: number;
+                                    /** Format: date-time */
+                                    startedAt: string | null;
+                                    /** Format: date-time */
+                                    endedAt: string | null;
+                                    participants: {
+                                        userId: number;
+                                        fullName: string;
+                                        /** @enum {string} */
+                                        participantState: "JOINED" | "READY" | "DISCONNECTED" | "FINISHED";
+                                        /** Format: date-time */
+                                        joinedAt: string;
+                                        /** Format: date-time */
+                                        finishedAt: string | null;
+                                        score: number | null;
+                                        spEarned: number | null;
+                                        finalRank: number | null;
+                                    }[];
+                                };
+                                myExamId?: number | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: false;
+                            error: {
+                                message: string;
+                                statusCode: number;
+                                code: string;
+                                hint?: string;
+                                details?: unknown;
+                                stack?: string;
+                            };
+                            requestId: string;
+                            correlationId: string;
+                            /** Format: date-time */
+                            timestamp: string;
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/collaboration/sessions/{sessionId}/duration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the duel time
+         * @description Host-only while waiting. Must be the normal time, or whole minutes between half and one and a half times it.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "idempotency-key"?: string;
+                };
+                path: {
+                    sessionId: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        durationSeconds: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @enum {boolean} */
+                            success: true;
+                            data: {
+                                session: {
+                                    id: number;
+                                    code: string;
+                                    /** @enum {string} */
+                                    sessionType: "ONE_V_ONE_DUEL";
+                                    /** @enum {string} */
+                                    status: "WAITING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                                    sessionNumber: number;
+                                    displayNameLong: string;
+                                    displayNameShort: string;
+                                    customName: string | null;
+                                    effectiveDisplayName: string;
+                                    /** @enum {string} */
+                                    questionSource: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED";
+                                    subjects: string[];
+                                    totalQuestions: number;
+                                    durationSeconds: number | null;
                                     maxParticipants: number;
                                     hostUserId: number;
                                     /** Format: date-time */
@@ -33960,6 +34593,7 @@ export interface paths {
                                     iAmReady: boolean;
                                     opponentReady: boolean;
                                     secondsLeft: number;
+                                    durationSeconds: number | null;
                                 } | null;
                                 sessionCode: string | null;
                                 notice: {
@@ -34276,6 +34910,7 @@ export interface paths {
                                     iAmReady: boolean;
                                     opponentReady: boolean;
                                     secondsLeft: number;
+                                    durationSeconds: number | null;
                                 } | null;
                                 sessionCode: string | null;
                                 notice: {
@@ -34590,6 +35225,7 @@ export interface paths {
                                     iAmReady: boolean;
                                     opponentReady: boolean;
                                     secondsLeft: number;
+                                    durationSeconds: number | null;
                                 } | null;
                                 sessionCode: string | null;
                                 notice: {
@@ -34895,6 +35531,7 @@ export interface paths {
                                     iAmReady: boolean;
                                     opponentReady: boolean;
                                     secondsLeft: number;
+                                    durationSeconds: number | null;
                                 } | null;
                                 sessionCode: string | null;
                                 notice: {
@@ -35200,6 +35837,7 @@ export interface paths {
                                     iAmReady: boolean;
                                     opponentReady: boolean;
                                     secondsLeft: number;
+                                    durationSeconds: number | null;
                                 } | null;
                                 sessionCode: string | null;
                                 notice: {

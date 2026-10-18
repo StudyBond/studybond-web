@@ -287,11 +287,21 @@ export type CollaborationSession = {
   questionSource: CollaborationQuestionSource;
   subjects: string[];
   totalQuestions: number;
+  /** The duel's clock. Null only on rooms opened before duel times existed. */
+  durationSeconds: number | null;
   maxParticipants: number;
   hostUserId: number;
   startedAt: string | null;
   endedAt: string | null;
   participants: CollaborationParticipant[];
+};
+
+/** The normal duel time for some subjects, and what a host may pick. */
+export type DuelDurationOptions = {
+  defaultSeconds: number;
+  minSeconds: number;
+  maxSeconds: number;
+  stepSeconds: number;
 };
 
 export type CollaborationSessionSnapshot = {

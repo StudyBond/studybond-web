@@ -10,6 +10,7 @@ import { Loader2, Swords, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { formatDuelTime } from "@/features/collaboration/components/duel-duration-picker";
 import { playVsClash } from "@/features/collaboration/lib/duel-sounds";
 import {
   useCancelDuelSearchMutation,
@@ -350,7 +351,11 @@ function MatchFoundDialog({ view }: { view: DuelMatchmakingView }) {
             <h2 id="duel-match-title" className="text-lg font-bold leading-snug text-white">
               {opponent} wants a {match?.subject || "duel"} duel
             </h2>
-            <p className="mt-1 text-[13px] text-white/45">Same paper, same clock. One winner.</p>
+            <p className="mt-1 text-[13px] text-white/45">
+              {match?.durationSeconds
+                ? `${formatDuelTime(match.durationSeconds)} on the clock. Same paper, one winner.`
+                : "Same paper, same clock. One winner."}
+            </p>
           </div>
         </div>
 

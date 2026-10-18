@@ -4,6 +4,7 @@ import type {
   CollaborationQuestionSource,
   CollaborationSessionSnapshot,
   CollaborationStartResult,
+  DuelDurationOptions,
   SuccessEnvelope,
 } from "@/lib/api/types";
 
@@ -14,6 +15,8 @@ export type CreateCollaborationPayload = {
   questionSource?: CollaborationQuestionSource;
   maxParticipants?: 2;
   customName?: string | null;
+  /** Left out for the normal time. */
+  durationSeconds?: number;
 };
 
 export async function createCollaborationSession(
@@ -90,6 +93,33 @@ export async function cancelCollaborationSession(sessionId: number) {
       method: "POST",
       headers: {
         "idempotency-key": `collaboration-cancel-${sessionId}-${Date.now()}`,
+      },
+    },
+  );
+
+  return response.data;
+}
+
+export async function getDuelDurationOptions(subjects: string[]) {
+  const query = encodeURIComponent(subjects.join(","));
+  const response = await apiClient<SuccessEnvelope<DuelDurationOptions>>(
+    `/api/collaboration/duration-options?subjects=${query}`,
+  );
+
+  return response.data;
+}
+
+export async function updateCollaborationDuration(
+  sessionId: number,
+  durationSeconds: number,
+) {
+  const response = await apiClient<SuccessEnvelope<CollaborationSessionSnapshot>>(
+    `/api/collaboration/sessions/${sessionId}/duration`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ durationSeconds }),
+      headers: {
+        "idempotency-key": `collaboration-duration-${sessionId}-${Date.now()}`,
       },
     },
   );
