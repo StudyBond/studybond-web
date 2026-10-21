@@ -75,8 +75,14 @@ export const metadata: Metadata = {
   ],
   applicationName: "StudyBond",
   icons: {
-    icon: "/studybond-logo.png",
-    apple: "/studybond-logo.png",
+    // Solid dark tile: the logo's white half vanishes on white (Google results, light tabs).
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
   alternates: {
     canonical: appUrl,

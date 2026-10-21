@@ -13,7 +13,7 @@ export function organizationJsonLd(appUrl: string) {
     "@type": "EducationalOrganization",
     name: "StudyBond",
     url: appUrl,
-    logo: `${appUrl}/studybond-logo.png`,
+    logo: `${appUrl}/icon-512.png`,
     description:
       "StudyBond is Nigeria's #1 Post-UTME exam preparation platform. Practice with real University of Ibadan past questions, timed CBT simulation, score analytics, and 1v1 competitive duels.",
     foundingDate: "2025",
@@ -162,7 +162,7 @@ export function articleJsonLd(params: {
       name: "StudyBond",
       logo: {
         "@type": "ImageObject",
-        url: `${params.appUrl}/studybond-logo.png`,
+        url: `${params.appUrl}/icon-512.png`,
       },
     },
     mainEntityOfPage: {
