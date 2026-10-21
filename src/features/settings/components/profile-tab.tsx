@@ -7,10 +7,16 @@ import { CourseCombobox } from "@/components/ui/course-combobox";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { AvatarPickerModal } from "@/features/settings/components/avatar-picker-modal";
 import {
+  DepartmentPicker,
+  departmentLabel,
+} from "@/features/institution/components/department-picker";
+import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import {
   getSavedAvatarId,
   getAvatarById,
 } from "@/lib/avatars/avatar-collection";
 import {
+  BookOpen,
   Camera,
   User,
   GraduationCap,
@@ -19,7 +25,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
-import type { UserProfile } from "@/lib/api/types";
+import type { Department, UserProfile } from "@/lib/api/types";
 
 type ProfileTabProps = {
   profile: UserProfile;
@@ -28,6 +34,13 @@ type ProfileTabProps = {
 
 export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   const updateProfile = useUpdateProfile();
+  const examProfile = useExamProfile();
+
+  /* Each board's exam has its own scale: UI Post-UTME 100, JAMB 400. */
+  const scoreMax = examProfile.data?.targetScoreMax ?? 100;
+  const suggestedScore = Math.round(scoreMax * 0.8);
+  const showDepartment =
+    Boolean(examProfile.data?.signupAsksDepartment) || Boolean(profile.department);
 
   const [avatarId, setAvatarId] = useState(() => getSavedAvatarId(profile.id));
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
@@ -36,7 +49,13 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   const [aspiringCourse, setAspiringCourse] = useState(
     profile.aspiringCourse ?? "",
   );
-  const [targetScore, setTargetScore] = useState(profile.targetScore ?? 80);
+  /* Null until the student sets one; the suggestion is only shown. */
+  const [targetScore, setTargetScore] = useState<number | null>(
+    profile.targetScore ?? null,
+  );
+  const [department, setDepartment] = useState<Department | undefined>(
+    profile.department ?? undefined,
+  );
   const [emailUnsubscribed, setEmailUnsubscribed] = useState(
     profile.emailUnsubscribed,
   );
@@ -45,13 +64,17 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const currentAvatar = getAvatarById(avatarId);
+  const targetScoreChanged = targetScore !== (profile.targetScore ?? null);
+  const departmentChanged = department !== (profile.department ?? undefined);
 
   async function handleSave() {
     try {
       await updateProfile.mutateAsync({
         fullName: fullName.trim() || undefined,
         aspiringCourse: aspiringCourse.trim() || null,
-        targetScore: targetScore || null,
+        /* Only sent when changed, so an old score never blocks other edits. */
+        targetScore: targetScoreChanged ? targetScore : undefined,
+        department: departmentChanged ? department : undefined,
         emailUnsubscribed,
       });
       setSaveSuccess(true);
@@ -65,7 +88,8 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   const hasChanges =
     fullName !== profile.fullName ||
     (aspiringCourse || "") !== (profile.aspiringCourse || "") ||
-    targetScore !== (profile.targetScore ?? 80) ||
+    targetScoreChanged ||
+    departmentChanged ||
     emailUnsubscribed !== profile.emailUnsubscribed;
 
   return (
@@ -158,32 +182,65 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
           )}
         </FieldCard>
 
+        {/* Department, for boards like JAMB that ask for it */}
+        {showDepartment ? (
+          <FieldCard
+            icon={<BookOpen className="h-4 w-4" />}
+            label="Department"
+            editing={editingField === "department"}
+            onEdit={() => setEditingField("department")}
+            onClose={() => setEditingField(null)}
+          >
+            {editingField === "department" ? (
+              <DepartmentPicker
+                value={department}
+                onChange={(value) => {
+                  setDepartment(value);
+                  setEditingField(null);
+                }}
+              />
+            ) : (
+              <span
+                className={cn(
+                  "text-sm font-medium",
+                  department ? "text-white/80" : "text-white/25 italic",
+                )}
+              >
+                {departmentLabel(department) ?? "Not set"}
+              </span>
+            )}
+          </FieldCard>
+        ) : null}
+
         {/* Target Score */}
         <FieldCard
           icon={<Target className="h-4 w-4" />}
           label="Target Score"
           editing={editingField === "targetScore"}
-          onEdit={() => setEditingField("targetScore")}
+          onEdit={() => {
+            setEditingField("targetScore");
+            if (targetScore === null) setTargetScore(suggestedScore);
+          }}
           onClose={() => setEditingField(null)}
         >
           {editingField === "targetScore" ? (
             <div className="flex items-center gap-2 sm:gap-3 w-full">
               <input
                 type="range"
-                min={50}
-                max={100}
-                step={5}
-                value={targetScore}
+                min={Math.round(scoreMax / 2)}
+                max={scoreMax}
+                step={scoreMax / 20}
+                value={targetScore ?? suggestedScore}
                 onChange={(e) => setTargetScore(Number(e.target.value))}
                 className="flex-1 min-w-0 h-1.5 rounded-full appearance-none bg-white/[0.08] accent-[var(--sb-accent)] cursor-pointer"
               />
               <span className="text-[11px] sm:text-sm font-bold text-[var(--sb-accent)] min-w-[32px] sm:min-w-[40px] text-right">
-                {targetScore}
+                {targetScore ?? suggestedScore}
               </span>
             </div>
           ) : (
             <span className="text-sm text-white/80 font-medium">
-              {targetScore}/100
+              {targetScore ?? suggestedScore}/{scoreMax}
             </span>
           )}
         </FieldCard>

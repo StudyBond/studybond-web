@@ -79,6 +79,9 @@ export type LoginPayload = {
   device?: DeviceFingerprintPayload;
 };
 
+/** A student's class stream in secondary school. */
+export type Department = "SCIENCE" | "ART" | "COMMERCIAL";
+
 export type SignupPayload = {
   email: string;
   password: string;
@@ -86,6 +89,8 @@ export type SignupPayload = {
   institutionCode?: string;
   aspiringCourse?: string;
   targetScore?: number;
+  /** Required by boards that ask for it instead of the course (JAMB). */
+  department?: Department;
   deviceId?: string;
   deviceName?: string;
   device?: DeviceFingerprintPayload;
@@ -127,6 +132,7 @@ export type UserProfile = {
   role: string;
   aspiringCourse?: string | null;
   targetScore?: number | null;
+  department?: Department | null;
   isPremium: boolean;
   subscriptionEndDate?: string | null;
   deviceAccessMode?: "FREE" | "PREMIUM";
@@ -605,6 +611,7 @@ export type UpdateProfilePayload = {
   fullName?: string;
   aspiringCourse?: string | null;
   targetScore?: number | null;
+  department?: Department;
   emailUnsubscribed?: boolean;
 };
 

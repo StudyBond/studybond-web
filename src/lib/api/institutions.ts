@@ -43,8 +43,46 @@ export interface ExamProfile {
   allowMixedPartialExams: boolean;
   allowMixedFullExams: boolean;
   studyModeEnabled: boolean;
+  /** What the exam is called, e.g. "Post-UTME" or "UTME". */
+  trackName: string;
+  /** What the exam is scored out of: UI Post-UTME 100, JAMB 400. */
+  targetScoreMax: number;
+  /** Optional until every backend sends it. */
+  signupAsksDepartment?: boolean;
   /** Already in display order. */
   subjects: ExamProfileSubject[];
+}
+
+/**
+ * One board a student can see in signup or the board switcher. Admins set
+ * the status, so a board moves from coming-soon to open without a release.
+ * Hidden boards never appear here.
+ */
+export interface StudentBoard {
+  code: string;
+  name: string;
+  slug: string;
+  /** COMING_SOON boards are shown but cannot be chosen. */
+  status: "OPEN" | "COMING_SOON";
+  /*
+   * Optional because a backend deployed before these existed leaves them
+   * out. Signup falls back to the board name, out of 100, and the course.
+   */
+  /** What the board's exam is called, e.g. "Post-UTME" or "UTME". */
+  examName?: string;
+  /** What the exam is scored out of: UI Post-UTME 100, JAMB 400. */
+  targetScoreMax?: number;
+  /** Ask Science, Art or Commercial instead of the course. */
+  signupAsksDepartment?: boolean;
+}
+
+/** Public, so signup can call it before anyone has an account. */
+export async function listStudentBoards() {
+  const response = await apiClient<SuccessEnvelope<{ boards: StudentBoard[] }>>(
+    "/api/institutions",
+  );
+
+  return response.data.boards;
 }
 
 /** Defaults to the signed-in student's own institution. */
