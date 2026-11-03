@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { displayImageUrl } from "@/lib/utils/image-url";
 
 type ImageLightboxProps = {
   src: string | null;
@@ -58,7 +59,7 @@ export function ImageLightbox({ src, alt = "Image", onClose }: ImageLightboxProp
 
       {/* Image */}
       <img
-        src={src}
+        src={displayImageUrl(src, "zoom")}
         alt={alt}
         className="relative z-[1] max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl animate-in zoom-in-95 duration-200 sb-protected-img"
         onContextMenu={(e) => e.preventDefault()}

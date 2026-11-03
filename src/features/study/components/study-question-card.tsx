@@ -7,6 +7,7 @@ import { SharedStimulus } from "@/features/exam/components/shared-stimulus";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Eye, ArrowRight, ArrowLeft, Crown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { displayImageUrl } from "@/lib/utils/image-url";
 
 type StudyQuestionCardProps = {
   question: any;
@@ -55,7 +56,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
           {/* Question image */}
           {question.imageUrl ? (
             <img
-              src={question.imageUrl}
+              src={displayImageUrl(question.imageUrl)}
               alt="Question illustration"
               className="mt-4 max-h-56 sm:max-h-72 rounded-xl border border-white/[0.06] object-contain sb-protected-img"
               loading="lazy"
@@ -169,7 +170,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
 
             {question.explanation.imageUrl && (
               <img
-                src={question.explanation.imageUrl}
+                src={displayImageUrl(question.explanation.imageUrl)}
                 alt="Explanation illustration"
                 className="max-h-60 rounded-xl border border-white/[0.06] object-contain"
                 loading="lazy"

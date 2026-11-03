@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils/cn";
 import { MathMarkdown } from "@/components/ui/math-markdown";
+import { displayImageUrl } from "@/lib/utils/image-url";
 
 type SharedStimulusProps = {
   text: string | null | undefined;
@@ -21,7 +22,7 @@ export function SharedStimulus({ text, imageUrl, compact = false, onImageClick }
 
   const image = imageUrl ? (
     <img
-      src={imageUrl}
+      src={displayImageUrl(imageUrl)}
       alt="Diagram for this question"
       className={cn(
         "rounded-xl border border-white/[0.06] object-contain sb-protected-img",

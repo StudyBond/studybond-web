@@ -7,6 +7,7 @@ import { useExamStore, type OptionKey } from "@/features/exam/stores/exam-store"
 import { MathMarkdown } from "@/components/ui/math-markdown";
 import { SharedStimulus } from "@/features/exam/components/shared-stimulus";
 import type { ExamQuestion } from "@/lib/api/types";
+import { displayImageUrl } from "@/lib/utils/image-url";
 
 type QuestionCardProps = {
   question: ExamQuestion;
@@ -70,7 +71,7 @@ export function QuestionCard({ question, questionIndex, totalQuestions }: Questi
           {/* Question image */}
           {question.imageUrl ? (
             <img
-              src={question.imageUrl}
+              src={displayImageUrl(question.imageUrl)}
               alt="Question illustration"
               className="mt-4 max-h-72 rounded-xl border border-white/[0.06] object-contain sb-protected-img"
               loading="lazy"

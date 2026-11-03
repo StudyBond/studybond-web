@@ -8,6 +8,7 @@ import { SharedStimulus } from "@/features/exam/components/shared-stimulus";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import type { ExamResult, QuestionWithAnswer } from "@/lib/api/types";
 import { ReportQuestionModal } from "@/features/exam/components/report-question-modal";
+import { displayImageUrl } from "@/lib/utils/image-url";
 
 type AnswerReviewProps = {
   result: ExamResult;
@@ -43,7 +44,7 @@ function MediaNode({
   }
   return (
     <img
-      src={url}
+      src={displayImageUrl(url)}
       alt={alt}
       className={cn(className, "sb-protected-img")}
       onContextMenu={(e) => e.preventDefault()}

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils/cn";
 import type { OptionKey } from "@/features/exam/stores/exam-store";
 import type { ExamQuestion } from "@/lib/api/types";
 import { MathMarkdown } from "@/components/ui/math-markdown";
+import { displayImageUrl } from "@/lib/utils/image-url";
 
 type OptionGridProps = {
   question: ExamQuestion;
@@ -89,7 +90,7 @@ export function OptionGrid({ question, selectedAnswer, onSelect, disabled = fals
               {imageUrl ? (
                 <div className="mt-2">
                   <img
-                    src={imageUrl}
+                    src={displayImageUrl(imageUrl)}
                     alt={`Option ${key}`}
                     className="max-h-40 rounded-lg border border-white/[0.06] object-contain sb-protected-img"
                     loading="lazy"

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils/cn";
 import { Check, X } from "lucide-react";
 import type { OptionKey } from "@/features/study/stores/study-store";
 import { MathMarkdown } from "@/components/ui/math-markdown";
+import { displayImageUrl } from "@/lib/utils/image-url";
 
 type StudyOptionGridProps = {
   question: any;
@@ -124,7 +125,7 @@ export function StudyOptionGrid({
               {imageUrl ? (
                 <div className="mt-2">
                   <img
-                    src={imageUrl}
+                    src={displayImageUrl(imageUrl)}
                     alt={`Option ${key}`}
                     className={cn(
                       "max-h-32 sm:max-h-40 rounded-lg border border-white/[0.06] object-contain sb-protected-img transition-opacity duration-300",

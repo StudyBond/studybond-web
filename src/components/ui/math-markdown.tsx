@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
+import { displayImageUrl } from '@/lib/utils/image-url';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -323,7 +324,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
                   className="block text-left cursor-pointer transition-opacity hover:opacity-80 border-none bg-transparent p-0 w-full"
                 >
                   <img
-                    src={normalized}
+                    src={displayImageUrl(normalized)}
                     alt="Image"
                     className="my-2 max-h-64 rounded-lg border border-white/10 sb-protected-img"
                     onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
@@ -356,7 +357,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
                 className="block text-left cursor-pointer transition-opacity hover:opacity-80 border-none bg-transparent p-0 w-full"
               >
                 <img
-                  src={normalized}
+                  src={displayImageUrl(normalized)}
                   alt={imgAlt || 'Image'}
                   className="my-2 max-h-64 rounded-lg border border-white/10 sb-protected-img"
                   onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
