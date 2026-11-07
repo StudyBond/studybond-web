@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
 import { displayImageUrl } from '@/lib/utils/image-url';
+import { promoteOneLineDisplayMath } from '@/components/ui/display-math';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -165,6 +166,12 @@ export const MathMarkdown = React.memo(function MathMarkdown({
       .replace(/\\\[(.*?)\\\]/g, (_, formula) => `\n$$\n${formula}\n$$\n`)
       .trim();
 
+    // A one-line $$…$$ is display maths: render it full-size and centred.
+    // Options sit inside small answer buttons, so their maths stays inline.
+    if (variant !== 'option') {
+      processed = promoteOneLineDisplayMath(processed);
+    }
+
     // Auto-convert bare image URLs to markdown images, while ignoring existing markdown links and images.
     // Also normalizes Google Drive URLs on the fly.
     processed = processed.replace(
@@ -191,7 +198,7 @@ export const MathMarkdown = React.memo(function MathMarkdown({
     );
 
     return processed;
-  }, [content, isImageUrl, normalizeImageUrl]);
+  }, [content, variant, isImageUrl, normalizeImageUrl]);
 
   if (!content || content.trim() === '') {
     return null;
@@ -213,6 +220,9 @@ export const MathMarkdown = React.memo(function MathMarkdown({
         .katex-display {
           display: block;
           margin: 0.5rem 0;
+          padding: 0.25rem 0;
+          overflow-x: auto;
+          overflow-y: hidden;
         }
       `}</style>
       <ReactMarkdown
