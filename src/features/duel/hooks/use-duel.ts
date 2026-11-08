@@ -3,27 +3,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  cancelCollaborationSession,
-  createCollaborationSession,
-  getCollaborationSessionByCode,
-  joinCollaborationSession,
-  startCollaborationSession,
-  updateCollaborationSessionName,
-  leaveCollaborationSession,
+  cancelDuelSession,
+  createDuelSession,
+  getDuelSessionByCode,
+  joinDuelSession,
+  startDuelSession,
+  updateDuelSessionName,
+  leaveDuelSession,
   getDuelDurationOptions,
-  updateCollaborationDuration,
-  type CreateCollaborationPayload,
-} from "@/lib/api/collaboration";
+  updateDuelDuration,
+  type CreateDuelPayload,
+} from "@/lib/api/duel";
 import type { ApiError } from "@/lib/api/client";
 
-export function collaborationSessionQueryKey(code: string) {
-  return ["collaboration", "session", code.toUpperCase()] as const;
+export function duelSessionQueryKey(code: string) {
+  return ["duel", "session", code.toUpperCase()] as const;
 }
 
-export function useCollaborationSession(code: string, enabled = true) {
+export function useDuelSession(code: string, enabled = true) {
   return useQuery({
-    queryKey: collaborationSessionQueryKey(code),
-    queryFn: () => getCollaborationSessionByCode(code.toUpperCase()),
+    queryKey: duelSessionQueryKey(code),
+    queryFn: () => getDuelSessionByCode(code.toUpperCase()),
     enabled: enabled && code.trim().length > 0,
     refetchInterval: (query) => {
       const status = query.state.data?.session.status;
@@ -35,74 +35,74 @@ export function useCollaborationSession(code: string, enabled = true) {
   });
 }
 
-export function useCreateCollaborationMutation() {
+export function useCreateDuelMutation() {
   return useMutation({
-    mutationFn: (payload: CreateCollaborationPayload) =>
-      createCollaborationSession(payload),
+    mutationFn: (payload: CreateDuelPayload) =>
+      createDuelSession(payload),
   });
 }
 
-export function useJoinCollaborationMutation() {
+export function useJoinDuelMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (code: string) => joinCollaborationSession(code.toUpperCase()),
+    mutationFn: (code: string) => joinDuelSession(code.toUpperCase()),
     onSuccess: (data) => {
       queryClient.setQueryData(
-        collaborationSessionQueryKey(data.session.code),
+        duelSessionQueryKey(data.session.code),
         data,
       );
     },
   });
 }
 
-export function useStartCollaborationMutation() {
+export function useStartDuelMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (sessionId: number) => startCollaborationSession(sessionId),
+    mutationFn: (sessionId: number) => startDuelSession(sessionId),
     onSuccess: (data) => {
       queryClient.setQueryData(
-        collaborationSessionQueryKey(data.session.code),
+        duelSessionQueryKey(data.session.code),
         data,
       );
     },
   });
 }
 
-export function useLeaveCollaborationMutation() {
+export function useLeaveDuelMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (sessionId: number) => leaveCollaborationSession(sessionId),
+    mutationFn: (sessionId: number) => leaveDuelSession(sessionId),
     onSuccess: (data) => {
       // The leave endpoint returns { success, message, session? } which
-      // does NOT match the CollaborationSessionSnapshot shape the query
+      // does NOT match the DuelSessionSnapshot shape the query
       // cache expects. Invalidate instead of writing corrupted data.
       if (data.session?.code) {
         queryClient.invalidateQueries({
-          queryKey: collaborationSessionQueryKey(data.session.code),
+          queryKey: duelSessionQueryKey(data.session.code),
         });
       }
     },
   });
 }
 
-export function useCancelCollaborationMutation() {
+export function useCancelDuelMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (sessionId: number) => cancelCollaborationSession(sessionId),
+    mutationFn: (sessionId: number) => cancelDuelSession(sessionId),
     onSuccess: (data) => {
       queryClient.setQueryData(
-        collaborationSessionQueryKey(data.session.code),
+        duelSessionQueryKey(data.session.code),
         data,
       );
     },
   });
 }
 
-export function useRenameCollaborationMutation() {
+export function useRenameDuelMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -112,10 +112,10 @@ export function useRenameCollaborationMutation() {
     }: {
       sessionId: number;
       customName: string | null;
-    }) => updateCollaborationSessionName(sessionId, customName),
+    }) => updateDuelSessionName(sessionId, customName),
     onSuccess: (data) => {
       queryClient.setQueryData(
-        collaborationSessionQueryKey(data.session.code),
+        duelSessionQueryKey(data.session.code),
         data,
       );
     },
@@ -129,14 +129,14 @@ export function useRenameCollaborationMutation() {
 export function useDuelDurationOptions(subjects: string[], enabled = true) {
   const sorted = [...subjects].sort();
   return useQuery({
-    queryKey: ["collaboration", "duration-options", sorted.join(",")] as const,
+    queryKey: ["duel", "duration-options", sorted.join(",")] as const,
     queryFn: () => getDuelDurationOptions(sorted),
     enabled: enabled && sorted.length > 0,
     staleTime: 10 * 60 * 1000,
   });
 }
 
-export function useUpdateCollaborationDurationMutation() {
+export function useUpdateDuelDurationMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -146,14 +146,14 @@ export function useUpdateCollaborationDurationMutation() {
     }: {
       sessionId: number;
       durationSeconds: number;
-    }) => updateCollaborationDuration(sessionId, durationSeconds),
+    }) => updateDuelDuration(sessionId, durationSeconds),
     onSuccess: (data) => {
       queryClient.setQueryData(
-        collaborationSessionQueryKey(data.session.code),
+        duelSessionQueryKey(data.session.code),
         data,
       );
     },
   });
 }
 
-export type CollaborationMutationError = ApiError | Error;
+export type DuelMutationError = ApiError | Error;

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { playVsClash } from "@/features/collaboration/lib/duel-sounds";
+import { playVsClash } from "@/features/duel/lib/duel-sounds";
 import {
   ArrowRight,
   ClipboardCopy,
@@ -28,40 +28,40 @@ import { ErrorState } from "@/components/ui/error-state";
 import { InlineError } from "@/components/ui/inline-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Surface } from "@/components/ui/surface";
-import { LobbyDuelTime } from "@/features/collaboration/components/duel-duration-picker";
+import { LobbyDuelTime } from "@/features/duel/components/duel-duration-picker";
 import {
-  collaborationSessionQueryKey,
-  useCancelCollaborationMutation,
-  useCollaborationSession,
-  useJoinCollaborationMutation,
-  useLeaveCollaborationMutation,
-  useRenameCollaborationMutation,
-  useStartCollaborationMutation,
-} from "@/features/collaboration/hooks/use-collaboration";
-import { getQuestionSourceMeta } from "@/features/collaboration/lib/collaboration-config";
-import { rememberCollaborationRoom } from "@/features/collaboration/lib/recent-room-store";
+  duelSessionQueryKey,
+  useCancelDuelMutation,
+  useDuelSession,
+  useJoinDuelMutation,
+  useLeaveDuelMutation,
+  useRenameDuelMutation,
+  useStartDuelMutation,
+} from "@/features/duel/hooks/use-duel";
+import { getQuestionSourceMeta } from "@/features/duel/lib/duel-config";
+import { rememberDuelRoom } from "@/features/duel/lib/recent-room-store";
 import { offlineStore } from "@/features/exam/stores/offline-store";
 import { getExamQuestions } from "@/lib/api/exams";
 import type {
-  CollaborationParticipant,
-  CollaborationSessionStatus,
-  CollaborationStartResult,
+  DuelParticipant,
+  DuelSessionStatus,
+  DuelStartResult,
   ExamSessionData,
   UserProfile,
   UserStats,
 } from "@/lib/api/types";
 
-type CollaborationRoomPageProps = {
+type DuelRoomPageProps = {
   code: string;
   profile: UserProfile;
   stats: UserStats;
 };
 
-function formatStatusLabel(status: CollaborationSessionStatus) {
+function formatStatusLabel(status: DuelSessionStatus) {
   return status.replaceAll("_", " ");
 }
 
-function getStatusTone(status: CollaborationSessionStatus) {
+function getStatusTone(status: DuelSessionStatus) {
   if (status === "COMPLETED") return "success";
   if (status === "CANCELLED") return "danger";
   return "accent";
@@ -77,14 +77,14 @@ function getInitials(fullName: string) {
     .toUpperCase();
 }
 
-function participantTone(state: CollaborationParticipant["participantState"]) {
+function participantTone(state: DuelParticipant["participantState"]) {
   if (state === "FINISHED") return "success";
   if (state === "DISCONNECTED") return "danger";
   return "neutral";
 }
 
 function buildExamSessionData(
-  started: CollaborationStartResult,
+  started: DuelStartResult,
   myExamId: number,
 ) {
   return {
@@ -107,7 +107,7 @@ function RoomParticipantCard({
   isHost,
   isMe,
 }: {
-  participant: CollaborationParticipant;
+  participant: DuelParticipant;
   isHost: boolean;
   isMe: boolean;
 }) {
@@ -151,20 +151,20 @@ function RoomParticipantCard({
   );
 }
 
-export function CollaborationRoomPage({
+export function DuelRoomPage({
   code,
   profile,
   stats,
-}: CollaborationRoomPageProps) {
+}: DuelRoomPageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const sessionQuery = useCollaborationSession(code);
-  const joinMutation = useJoinCollaborationMutation();
-  const startMutation = useStartCollaborationMutation();
-  const leaveMutation = useLeaveCollaborationMutation();
-  const cancelMutation = useCancelCollaborationMutation();
-  const renameMutation = useRenameCollaborationMutation();
+  const sessionQuery = useDuelSession(code);
+  const joinMutation = useJoinDuelMutation();
+  const startMutation = useStartDuelMutation();
+  const leaveMutation = useLeaveDuelMutation();
+  const cancelMutation = useCancelDuelMutation();
+  const renameMutation = useRenameDuelMutation();
 
   const [roomError, setRoomError] = useState<string | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -210,7 +210,7 @@ export function CollaborationRoomPage({
 
   useEffect(() => {
     if (!session) return;
-    rememberCollaborationRoom(session);
+    rememberDuelRoom(session);
   }, [session]);
 
   // Ref to track if we have already initiated the launch to the exam arena.
@@ -300,7 +300,7 @@ export function CollaborationRoomPage({
 
       // If we are still active, schedule the redirect.
       timer = setTimeout(() => {
-        router.push(`/exams/${examId}?collab=${sessionCode}` as Route);
+        router.push(`/exams/${examId}?duel=${sessionCode}` as Route);
       }, 900);
     }
 
@@ -324,7 +324,7 @@ export function CollaborationRoomPage({
   async function handleCopyInvite() {
     if (!session) return;
 
-    const inviteUrl = `${window.location.origin}/dashboard/collaboration/${session.code}`;
+    const inviteUrl = `${window.location.origin}/dashboard/duel/${session.code}`;
 
     try {
       await navigator.clipboard.writeText(inviteUrl);
@@ -340,7 +340,7 @@ export function CollaborationRoomPage({
 
     try {
       const data = await joinMutation.mutateAsync(session.code);
-      rememberCollaborationRoom(data.session);
+      rememberDuelRoom(data.session);
       toast.success("You are in. Waiting for the host to launch.");
     } catch (error) {
       const message =
@@ -355,7 +355,7 @@ export function CollaborationRoomPage({
 
     try {
       const data = await startMutation.mutateAsync(session.id);
-      rememberCollaborationRoom(data.session);
+      rememberDuelRoom(data.session);
 
       const assignedExamId =
         data.myExamId ??
@@ -372,7 +372,7 @@ export function CollaborationRoomPage({
       toast.success("Room launched. Moving both players into the duel.");
       setIsLaunching(true);
       queryClient.setQueryData(
-        collaborationSessionQueryKey(data.session.code),
+        duelSessionQueryKey(data.session.code),
         data,
       );
     } catch (error) {
@@ -392,7 +392,7 @@ export function CollaborationRoomPage({
         sessionId: session.id,
         customName: trimmed.length > 0 ? trimmed : null,
       });
-      rememberCollaborationRoom(data.session);
+      rememberDuelRoom(data.session);
       setIsEditingName(false);
       toast.success("Room name updated.");
     } catch (error) {
@@ -411,10 +411,10 @@ export function CollaborationRoomPage({
     try {
       const data = await leaveMutation.mutateAsync(session.id);
       if (data.session) {
-        rememberCollaborationRoom(data.session);
+        rememberDuelRoom(data.session);
       }
       toast.success("You left the room.");
-      router.push("/dashboard/collaboration" as Route);
+      router.push("/dashboard/duel" as Route);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not leave the room.";
@@ -428,7 +428,7 @@ export function CollaborationRoomPage({
 
     try {
       const data = await cancelMutation.mutateAsync(session.id);
-      rememberCollaborationRoom(data.session);
+      rememberDuelRoom(data.session);
       toast.success("Room cancelled.");
     } catch (error) {
       const message =
@@ -465,13 +465,13 @@ export function CollaborationRoomPage({
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <ErrorState
-          title="This collaboration room could not be loaded"
+          title="This duel room could not be loaded"
           description={
             (sessionQuery.error as Error)?.message ||
             "The invite may be expired, cancelled, or unavailable right now."
           }
-          actionLabel="Back to collaboration"
-          onAction={() => router.push("/dashboard/collaboration" as Route)}
+          actionLabel="Back to duels"
+          onAction={() => router.push("/dashboard/duel" as Route)}
         />
       </div>
     );
@@ -518,7 +518,7 @@ export function CollaborationRoomPage({
 
             <div className="space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/28">
-                Collaboration Room
+                Duel Room
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl">
@@ -541,7 +541,7 @@ export function CollaborationRoomPage({
                     ? "This duel is active. StudyBond will keep syncing the room status while the exam runs."
                     : session.status === "COMPLETED"
                       ? "The room has finished. Scores, rank order, and room identity are now sealed."
-                      : "This room has been closed. You can spin up a fresh collaboration session whenever you want."}
+                      : "This room has been closed. You can spin up a fresh duel whenever you want."}
               </p>
             </div>
 
@@ -768,7 +768,7 @@ export function CollaborationRoomPage({
                 <Button
                   asChild
                   className="w-full"
-                  href={`/exams/${myExamId}?collab=${session.code}` as Route}
+                  href={`/exams/${myExamId}?duel=${session.code}` as Route}
                 >
                   <>
                     Enter my exam
@@ -818,10 +818,10 @@ export function CollaborationRoomPage({
                 asChild
                 variant="ghost"
                 className="w-full"
-                href={"/dashboard/collaboration" as Route}
+                href={"/dashboard/duel" as Route}
               >
                 <>
-                  Back to collaboration hub
+                  Back to duels
                   <RefreshCcw className="h-4 w-4" />
                 </>
               </Button>
@@ -854,7 +854,7 @@ export function CollaborationRoomPage({
               <div className="mb-3 flex items-center gap-2">
                 <ShieldOff className="h-4 w-4 text-[var(--sb-gold)]" />
                 <p className="text-sm font-medium text-white/82">
-                  Collaboration access locked
+                  Duels locked
                 </p>
               </div>
               <p className="text-sm leading-relaxed text-white/45">

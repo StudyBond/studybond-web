@@ -44,8 +44,8 @@ const preferenceCards: Array<{
     accentClassName: "text-emerald-300",
   },
   {
-    key: "collaboration",
-    label: "Collaboration",
+    key: "duel",
+    label: "Duels",
     description: "High-signal duel and session lifecycle updates without join-noise spam.",
     Icon: Swords,
     accentClassName: "text-sky-300",

@@ -27,9 +27,9 @@ import { useExamStore } from "@/features/exam/stores/exam-store";
 import type { ExamQuestion } from "@/lib/api/types";
 import { getUserProfile } from "@/lib/api/users";
 import { offlineStore } from "@/features/exam/stores/offline-store";
-import { useCollaborationSession } from "@/features/collaboration/hooks/use-collaboration";
-import { useDuelWebsocket } from "@/features/collaboration/hooks/use-duel-websocket";
-import { DuelWaitingLobby } from "@/features/collaboration/components/duel-waiting-lobby";
+import { useDuelSession } from "@/features/duel/hooks/use-duel";
+import { useDuelWebsocket } from "@/features/duel/hooks/use-duel-websocket";
+import { DuelWaitingLobby } from "@/features/duel/components/duel-waiting-lobby";
 
 const EMOJI_OPTIONS = ["🚀", "🔥", "😅", "😭", "💀", "👀"];
 
@@ -51,9 +51,10 @@ export function ExamArena({ examId }: ExamArenaProps) {
   });
   const myUserId = profile?.id ?? null;
 
-  const collabCode = searchParams.get("collab");
-  const { data: collabData, refetch: refetchCollabSession } = useCollaborationSession(collabCode || "", !!collabCode);
-  const collabSession = collabData?.session;
+  // "collab" is the old name; links saved before the duel rename still use it.
+  const duelCode = searchParams.get("duel") ?? searchParams.get("collab");
+  const { data: duelData, refetch: refetchDuelSession } = useDuelSession(duelCode || "", !!duelCode);
+  const duelSession = duelData?.session;
 
   const { data: session, isLoading, isError, error } = useExamSession(examId);
 
@@ -96,7 +97,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   // approach: compare against the authenticated user's numeric ID, NOT
   // the exam's displayNameLong (which is a generated title like
   // "1v1 Duel #3: Physics, Mathematics", not a person's name).
-  const opponent = collabSession?.participants.find(
+  const opponent = duelSession?.participants.find(
     (p) => typeof myUserId === "number" && p.userId !== myUserId,
   ) ?? null;
 
@@ -105,7 +106,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   }, []);
 
   const { sendProgress, sendEmoji } = useDuelWebsocket({
-    sessionId: collabSession?.id ?? null,
+    sessionId: duelSession?.id ?? null,
     myUserId,
     // The hook already filters out self-echo for client-originated events
     // (progress, emoji) using fromUserId. However, the `finished` event
@@ -141,8 +142,8 @@ export function ExamArena({ examId }: ExamArenaProps) {
       // Force-navigate to results regardless of local state — this is the
       // definitive end-of-duel event and resolves any race conditions
       // between the two players' `finished` events.
-      if (collabCode) {
-        router.push(`/exams/${examId}/results?collab=${collabCode}`);
+      if (duelCode) {
+        router.push(`/exams/${examId}/results?duel=${duelCode}`);
       } else {
         router.push(`/exams/${examId}/results`);
       }
@@ -163,33 +164,33 @@ export function ExamArena({ examId }: ExamArenaProps) {
 
   useEffect(() => {
     const opponentState = opponent?.participantState;
-    if (opponentState === "FINISHED" || collabSession?.status === "COMPLETED") {
+    if (opponentState === "FINISHED" || duelSession?.status === "COMPLETED") {
       // Defer state update to avoid synchronous setState inside effect which
       // can cause cascading renders. Schedule on next macrotask.
       const t = setTimeout(() => markOpponentFinished(), 0);
       return () => clearTimeout(t);
     }
-  }, [collabSession?.status, markOpponentFinished, opponent?.participantState]);
+  }, [duelSession?.status, markOpponentFinished, opponent?.participantState]);
 
   // Automatically route to results when both are finished and we are in the lobby.
   // This is the local-state fallback — the `onSessionCompleted` handler above is
   // the primary navigation trigger from the server.
   useEffect(() => {
-    if (isWaitingInLobby && (opponentFinished || collabSession?.status === "COMPLETED")) {
-      if (collabCode) {
-        router.push(`/exams/${examId}/results?collab=${collabCode}`);
+    if (isWaitingInLobby && (opponentFinished || duelSession?.status === "COMPLETED")) {
+      if (duelCode) {
+        router.push(`/exams/${examId}/results?duel=${duelCode}`);
       } else {
         router.push(`/exams/${examId}/results`);
       }
     }
-  }, [isWaitingInLobby, opponentFinished, router, examId, collabCode, collabSession?.status]);
+  }, [isWaitingInLobby, opponentFinished, router, examId, duelCode, duelSession?.status]);
 
   // Send progress whenever we change questions
   useEffect(() => {
-    if (collabSession && session) {
+    if (duelSession && session) {
       sendProgress(currentIndex + 1, session.questions.length);
     }
-  }, [currentIndex, collabSession, session, sendProgress]);
+  }, [currentIndex, duelSession, session, sendProgress]);
   // ------------------
 
   const needsSessionInit =
@@ -386,9 +387,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
         bookmarkParams = `bmSaved=${savedCount}&bmAttempted=${attemptedCount}&bmLimit=${limitReached ? "1" : "0"}`;
       }
 
-      if (collabSession && collabCode) {
-        const refreshedSession = await refetchCollabSession().catch(() => null);
-        const latestSession = refreshedSession?.data?.session ?? collabSession;
+      if (duelSession && duelCode) {
+        const refreshedSession = await refetchDuelSession().catch(() => null);
+        const latestSession = refreshedSession?.data?.session ?? duelSession;
         const latestOpponent = latestSession.participants.find(
           (participant) =>
             typeof myUserId === "number" && participant.userId !== myUserId,
@@ -396,7 +397,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
 
         if (latestSession.status === "COMPLETED") {
           const params = new URLSearchParams();
-          params.set("collab", collabCode);
+          params.set("duel", duelCode);
           if (bookmarkParams) {
             params.set("bmSaved", result.autoBookmarkResult!.savedCount.toString());
             params.set("bmAttempted", result.autoBookmarkResult!.attemptedCount.toString());
@@ -439,9 +440,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
     reset,
     router,
     dismissViolation,
-    collabSession,
-    collabCode,
-    refetchCollabSession,
+    duelSession,
+    duelCode,
+    refetchDuelSession,
     myUserId,
     markOpponentFinished,
   ]);
@@ -535,7 +536,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
       ))}
 
       {/* ═══ DUEL OPPONENT HUD — Desktop ═══ */}
-      {collabSession && opponent && (
+      {duelSession && opponent && (
         <div
           key={hudTickKey}
           className={cn(
@@ -583,7 +584,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
       )}
 
       {/* ═══ DUEL OPPONENT HUD — Mobile compact pill ═══ */}
-      {collabSession && opponent && (
+      {duelSession && opponent && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 md:hidden animate-in slide-in-from-top fade-in duration-300">
           <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#0c0c0f]/80 backdrop-blur-2xl px-3 py-1.5 shadow-lg">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-red-500/15 text-[10px] font-bold text-white">
@@ -602,7 +603,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
       )}
 
       {/* ═══ DUEL EMOJI BAR ═══ */}
-      {collabSession && (
+      {duelSession && (
         <div className="fixed bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-auto md:left-6 z-40 flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#0c0c0f]/70 backdrop-blur-2xl p-1 shadow-xl">
           {EMOJI_OPTIONS.map((emoji) => (
             <button

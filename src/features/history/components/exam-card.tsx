@@ -47,8 +47,8 @@ export function ExamCard({ exam }: ExamCardProps) {
     return "group-hover:bg-red-400/[0.03]";
   }, [isAbandoned, exam.percentage]);
 
-  const resultHref = exam.collaborationSessionCode
-    ? (`/exams/${exam.id}/results?collab=${exam.collaborationSessionCode}` as Route)
+  const resultHref = exam.duelSessionCode
+    ? (`/exams/${exam.id}/results?duel=${exam.duelSessionCode}` as Route)
     : (`/exams/${exam.id}/results` as Route);
 
   return (

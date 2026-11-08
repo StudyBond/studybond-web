@@ -39,7 +39,7 @@ export function useNotificationActivity(params?: {
   category?:
     | "STREAKS"
     | "ACHIEVEMENTS"
-    | "COLLABORATION"
+    | "DUEL"
     | "SUBSCRIPTION"
     | "REPORTS";
 }) {

@@ -39,7 +39,7 @@ export interface ExamProfile {
   maxSubjects: number;
   fullExamQuestions: number;
   fullExamDurationSeconds: number;
-  collaborationDurationSeconds: number;
+  duelDurationSeconds: number;
   allowMixedPartialExams: boolean;
   allowMixedFullExams: boolean;
   studyModeEnabled: boolean;

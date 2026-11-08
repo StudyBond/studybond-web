@@ -22,35 +22,35 @@ import { Button } from "@/components/ui/button";
 import { InlineError } from "@/components/ui/inline-error";
 import { Surface } from "@/components/ui/surface";
 import {
-  useCreateCollaborationMutation,
-  useJoinCollaborationMutation,
-} from "@/features/collaboration/hooks/use-collaboration";
+  useCreateDuelMutation,
+  useJoinDuelMutation,
+} from "@/features/duel/hooks/use-duel";
 import {
-  collaborationQuestionSources,
-  getCollaborationStatChips,
+  duelQuestionSources,
+  getDuelStatChips,
   getQuestionSourceMeta,
-} from "@/features/collaboration/lib/collaboration-config";
-import { generateDuelName } from "@/features/collaboration/lib/duel-name-generator";
+} from "@/features/duel/lib/duel-config";
+import { generateDuelName } from "@/features/duel/lib/duel-name-generator";
 import {
-  getRecentCollaborationRooms,
-  rememberCollaborationRoom,
-  type RecentCollaborationRoom,
-} from "@/features/collaboration/lib/recent-room-store";
+  getRecentDuelRooms,
+  rememberDuelRoom,
+  type RecentDuelRoom,
+} from "@/features/duel/lib/recent-room-store";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import { FindChallengerCard } from "@/features/duel-matchmaking/components/find-challenger-card";
 import {
   DuelDurationPicker,
   useDuelDurationChoice,
-} from "@/features/collaboration/components/duel-duration-picker";
+} from "@/features/duel/components/duel-duration-picker";
 import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
 import type {
-  CollaborationQuestionSource,
+  DuelQuestionSource,
   UserProfile,
   UserStats,
 } from "@/lib/api/types";
 import { cn } from "@/lib/utils/cn";
 
-type CollaborationPageProps = {
+type DuelHomePageProps = {
   profile: UserProfile;
   stats: UserStats;
 };
@@ -59,22 +59,22 @@ function sanitizeCode(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
 }
 
-export function CollaborationPage({
+export function DuelHomePage({
   profile,
   stats,
-}: CollaborationPageProps) {
+}: DuelHomePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const createMutation = useCreateCollaborationMutation();
-  const joinMutation = useJoinCollaborationMutation();
+  const createMutation = useCreateDuelMutation();
+  const joinMutation = useJoinDuelMutation();
 
   const [questionSource, setQuestionSource] =
-    useState<CollaborationQuestionSource>("REAL_PAST_QUESTION");
+    useState<DuelQuestionSource>("REAL_PAST_QUESTION");
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [customName, setCustomName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [recentRooms, setRecentRooms] = useState<RecentCollaborationRoom[]>([]);
+  const [recentRooms, setRecentRooms] = useState<RecentDuelRoom[]>([]);
 
   const isEligible = stats.isPremium && stats.realExamsCompleted >= 2;
   const duelTime = useDuelDurationChoice(selectedSubjects, isEligible);
@@ -84,16 +84,15 @@ export function CollaborationPage({
   const { data: examProfile, isLoading: subjectsLoading } = useExamProfile();
   const availableSubjects = examProfile?.subjects ?? [];
   const institutionMaxSubjects = examProfile?.maxSubjects ?? 4;
-  const compulsorySubjects = availableSubjects
-    .filter((subject) => subject.isCompulsory)
-    .map((subject) => subject.name);
+  /* No subject is compulsory in a duel (English included): players pick
+     any subjects they like, even for a full-size paper. */
   const maxSubjects =
     questionSource === "MIXED" && !examProfile?.allowMixedFullExams
       ? Math.max(1, institutionMaxSubjects - 1)
       : institutionMaxSubjects;
 
   useEffect(() => {
-    setRecentRooms(getRecentCollaborationRooms());
+    setRecentRooms(getRecentDuelRooms());
   }, []);
 
   /* Open with a sensible pair, once we know what the school actually offers. */
@@ -116,7 +115,7 @@ export function CollaborationPage({
 
   const sourceMeta = getQuestionSourceMeta(questionSource);
   const SourceIcon = sourceMeta.icon;
-  const statChips = getCollaborationStatChips(stats.realExamsCompleted);
+  const statChips = getDuelStatChips(stats.realExamsCompleted);
   const seatsFilled = Math.min(selectedSubjects.length, maxSubjects);
   const formTone = isEligible ? "accent" : "default";
 
@@ -125,28 +124,14 @@ export function CollaborationPage({
       return `Mixed rooms cap at ${maxSubjects} subject${maxSubjects === 1 ? "" : "s"} to keep the sprint sharp and fair.`;
     }
 
-    if (selectedSubjects.length === institutionMaxSubjects && compulsorySubjects.length > 0) {
-      return `${compulsorySubjects.join(" and ")} anchors every full duel to mirror the real admission rhythm.`;
-    }
-
     return "Pick the subjects that will make both players feel the pressure immediately.";
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionSource, selectedSubjects.length, maxSubjects, institutionMaxSubjects, compulsorySubjects.join(",")]);
+  }, [questionSource, maxSubjects]);
 
   function toggleSubject(subject: string) {
     setFormError(null);
 
     const exists = selectedSubjects.includes(subject);
     if (exists) {
-      if (
-        questionSource !== "MIXED" &&
-        selectedSubjects.length >= institutionMaxSubjects &&
-        compulsorySubjects.includes(subject)
-      ) {
-        setFormError(`${subject} stays locked in once you build a full duel.`);
-        return;
-      }
-
       setSelectedSubjects((current) => current.filter((item) => item !== subject));
       return;
     }
@@ -155,21 +140,8 @@ export function CollaborationPage({
       setFormError(
         questionSource === "MIXED"
           ? `Mixed sprint rooms can only hold ${maxSubjects} subject${maxSubjects === 1 ? "" : "s"}.`
-          : "You already have a full collaboration set.",
+          : "You already have a full duel set.",
       );
-      return;
-    }
-
-    const missingCompulsory = compulsorySubjects.filter(
-      (name) => !selectedSubjects.includes(name),
-    );
-    if (
-      questionSource !== "MIXED" &&
-      selectedSubjects.length === institutionMaxSubjects - 1 &&
-      missingCompulsory.length > 0 &&
-      !compulsorySubjects.includes(subject)
-    ) {
-      setFormError(`${missingCompulsory.join(" and ")} must complete any full collaboration exam.`);
       return;
     }
 
@@ -196,9 +168,9 @@ export function CollaborationPage({
         durationSeconds: duelTime.value ?? undefined,
       });
 
-      rememberCollaborationRoom(data.session);
+      rememberDuelRoom(data.session);
       toast.success("Room created. Your invite link is ready.");
-      router.push(`/dashboard/collaboration/${data.session.code}` as Route);
+      router.push(`/dashboard/duel/${data.session.code}` as Route);
     } catch (error) {
       let message = "Could not create the room. Please try again.";
       if (error instanceof Error) {
@@ -233,9 +205,9 @@ export function CollaborationPage({
 
     try {
       const data = await joinMutation.mutateAsync(nextCode);
-      rememberCollaborationRoom(data.session);
+      rememberDuelRoom(data.session);
       toast.success("Room joined. Syncing the lobby...");
-      router.push(`/dashboard/collaboration/${data.session.code}` as Route);
+      router.push(`/dashboard/duel/${data.session.code}` as Route);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not join that room.";
@@ -397,7 +369,7 @@ export function CollaborationPage({
               </div>
 
               <div className="sb-arena-mode-grid">
-                {collaborationQuestionSources.map((source) => {
+                {duelQuestionSources.map((source) => {
                   const Icon = source.icon;
                   const isActive = questionSource === source.value;
                   const accentColor = source.value === "REAL_PAST_QUESTION" ? "#d4a121" : source.value === "PRACTICE" ? "#60a5fa" : "#f43f5e";
@@ -641,7 +613,7 @@ export function CollaborationPage({
                     onClick={handleCreateRoom}
                     isLoading={createMutation.isPending}
                   >
-                    Open collaboration room
+                    Open duel room
                     <Sparkles className="h-4 w-4" />
                   </Button>
                 )}
@@ -678,7 +650,7 @@ export function CollaborationPage({
                 Paste a shareable code to jump into a friend&apos;s room instantly.
               </p>
 
-              <div className="sb-collab-join-input">
+              <div className="sb-duel-join-input">
                 <input
                   type="text"
                   placeholder="SB-DUEL-1A2B"
@@ -713,7 +685,7 @@ export function CollaborationPage({
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-[13px] text-white/45 leading-relaxed">
                 {isPremiumLocked ? (
                   <span>
-                    Collaboration rooms are premium-only for now. Upgrade and
+                    Duels are premium-only for now. Upgrade and
                     this join path opens instantly.
                   </span>
                 ) : (
@@ -748,7 +720,7 @@ export function CollaborationPage({
                 No recent rooms yet
               </p>
               <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-white/42">
-                Once you create or join a collaboration room, it will appear here for quick re-entry.
+                Once you create or join a duel, it will appear here so you can get back in quickly.
               </p>
             </Surface>
           ) : (
@@ -762,7 +734,7 @@ export function CollaborationPage({
                 return (
                   <Link
                     key={room.code}
-                    href={`/dashboard/collaboration/${room.code}` as Route}
+                    href={`/dashboard/duel/${room.code}` as Route}
                     className="sb-arena-room-card"
                     style={{
                       "--room-color": roomColor,

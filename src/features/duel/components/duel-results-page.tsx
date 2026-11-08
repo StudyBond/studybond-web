@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Crown, Swords, Share2, RefreshCcw, ArrowLeft, Zap, Target, Clock, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import type { ExamResult, CollaborationSessionSnapshot } from "@/lib/api/types";
+import type { ExamResult, DuelSessionSnapshot } from "@/lib/api/types";
 import { AnswerReview } from "@/features/exam/components/answer-review";
 import { ShareResultCard } from "@/features/exam/components/share-result-card";
-import { AnimatedCounter } from "@/features/collaboration/components/animated-counter";
-import { DuelConfetti } from "@/features/collaboration/components/duel-confetti";
+import { AnimatedCounter } from "@/features/duel/components/animated-counter";
+import { DuelConfetti } from "@/features/duel/components/duel-confetti";
 import {
   playScoreTick,
   playVictoryFanfare,
@@ -18,14 +18,14 @@ import {
   playConfettiBurst,
   playVsClash,
   playRevealWhoosh,
-} from "@/features/collaboration/lib/duel-sounds";
+} from "@/features/duel/lib/duel-sounds";
 import { cn } from "@/lib/utils/cn";
 
 // ─── Types ───
 
 type DuelResultsPageProps = {
   result: ExamResult;
-  collabSession: CollaborationSessionSnapshot["session"];
+  duelSession: DuelSessionSnapshot["session"];
   myUserId: number;
 };
 
@@ -154,14 +154,14 @@ function StatComparisonBar({
 
 // ─── Main Component ───
 
-export function DuelResultsPage({ result, collabSession, myUserId }: DuelResultsPageProps) {
+export function DuelResultsPage({ result, duelSession, myUserId }: DuelResultsPageProps) {
   const router = useRouter();
   const [phase, setPhase] = useState<RevealPhase>("entrance");
   const [skipped, setSkipped] = useState(false);
   const [confettiActive, setConfettiActive] = useState(false);
 
-  const me = collabSession.participants.find((p) => p.userId === myUserId);
-  const opponent = collabSession.participants.find((p) => p.userId !== myUserId);
+  const me = duelSession.participants.find((p) => p.userId === myUserId);
+  const opponent = duelSession.participants.find((p) => p.userId !== myUserId);
 
   const didIWin = me?.finalRank === 1 && opponent?.finalRank !== 1;
   const isDraw = me?.score === opponent?.score;
@@ -493,7 +493,7 @@ export function DuelResultsPage({ result, collabSession, myUserId }: DuelResults
           <Button
             size="lg"
             className="w-full sm:w-auto font-bold tracking-wide bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white shadow-[0_0_20px_rgba(212,161,33,0.2)] hover:shadow-[0_0_30px_rgba(212,161,33,0.3)]"
-            onClick={() => router.push("/dashboard/collaboration")}
+            onClick={() => router.push("/dashboard/duel")}
           >
             <RefreshCcw className="mr-2 h-4 w-4" />
             Rematch
@@ -502,7 +502,7 @@ export function DuelResultsPage({ result, collabSession, myUserId }: DuelResults
             result={result}
             duelOutcome={outcomeText as "VICTORY" | "DEFEAT" | "DRAW"}
             opponentName={opponent.fullName}
-            collabSession={collabSession}
+            duelSession={duelSession}
             myUserId={myUserId}
             customTrigger={
               <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold tracking-wide border-white/10 bg-white/5 text-white hover:bg-white/10">

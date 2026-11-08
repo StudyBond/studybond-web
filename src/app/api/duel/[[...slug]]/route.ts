@@ -11,3 +11,7 @@ export async function GET(request: NextRequest, context: OptionalSlugRouteContex
 export async function POST(request: NextRequest, context: OptionalSlugRouteContext) {
   return forwardAuthorizedRoute(request, context, "duel", "POST");
 }
+
+export async function PATCH(request: NextRequest, context: OptionalSlugRouteContext) {
+  return forwardAuthorizedRoute(request, context, "duel", "PATCH");
+}

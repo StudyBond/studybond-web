@@ -100,7 +100,7 @@ export function NotificationsPageClient() {
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/50">
                   Catch the moments that matter: streak pressure, premium lifecycle,
-                  collaboration outcomes, report updates, and operational notices.
+                  duel results, report updates, and operational notices.
                 </p>
               </div>
             </div>

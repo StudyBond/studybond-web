@@ -11,7 +11,7 @@ type CollaborationCardProps = {
 };
 
 export function CollaborationCard({ stats }: CollaborationCardProps) {
-  const duelsCompleted = stats.completedCollaborationExams;
+  const duelsCompleted = stats.completedDuelExams;
   const isEligible = stats.isPremium && stats.realExamsCompleted >= 2;
   const needsPremium = !stats.isPremium;
   const needsMoreRealExams = stats.isPremium && stats.realExamsCompleted < 2;
@@ -28,7 +28,7 @@ export function CollaborationCard({ stats }: CollaborationCardProps) {
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/28">
-                Collaboration
+                Duel
               </p>
               <h3 className="mt-1 text-lg font-semibold tracking-tight text-white">
                 Premium duel rooms
@@ -91,9 +91,9 @@ export function CollaborationCard({ stats }: CollaborationCardProps) {
 
         <div className="mt-6 flex flex-col gap-3">
           {isEligible ? (
-            <Button asChild className="w-full" href={"/dashboard/collaboration" as Route}>
+            <Button asChild className="w-full" href={"/dashboard/duel" as Route}>
               <>
-                Open collaboration hub
+                Open duels
                 <ArrowRight className="h-4 w-4" />
               </>
             </Button>

@@ -149,7 +149,7 @@ export type UserStats = {
   longestStreak: number;
   streakFreezesAvailable: number;
   realExamsCompleted: number;
-  completedCollaborationExams: number;
+  completedDuelExams: number;
   hasTakenFreeExam: boolean;
   aiExplanationsUsedToday: number;
   isPremium: boolean;
@@ -210,7 +210,7 @@ export type ExamSummary = {
   startedAt: string;
   completedAt: string | null;
   timeTakenSeconds: number | null;
-  collaborationSessionCode?: string | null;
+  duelSessionCode?: string | null;
 };
 
 // ─── Exam Session Types (for active exam-taking) ───
@@ -250,29 +250,29 @@ export type ExamSessionData = {
   questions: ExamQuestion[];
 };
 
-export type CollaborationQuestionSource =
+export type DuelQuestionSource =
   | "REAL_PAST_QUESTION"
   | "PRACTICE"
   | "MIXED";
 
-export type CollaborationSessionType = "ONE_V_ONE_DUEL";
+export type DuelSessionType = "ONE_V_ONE_DUEL";
 
-export type CollaborationSessionStatus =
+export type DuelSessionStatus =
   | "WAITING"
   | "IN_PROGRESS"
   | "COMPLETED"
   | "CANCELLED";
 
-export type CollaborationParticipantState =
+export type DuelParticipantState =
   | "JOINED"
   | "READY"
   | "DISCONNECTED"
   | "FINISHED";
 
-export type CollaborationParticipant = {
+export type DuelParticipant = {
   userId: number;
   fullName: string;
-  participantState: CollaborationParticipantState;
+  participantState: DuelParticipantState;
   joinedAt: string;
   finishedAt: string | null;
   score: number | null;
@@ -280,17 +280,17 @@ export type CollaborationParticipant = {
   finalRank: number | null;
 };
 
-export type CollaborationSession = {
+export type DuelSession = {
   id: number;
   code: string;
-  sessionType: CollaborationSessionType;
-  status: CollaborationSessionStatus;
+  sessionType: DuelSessionType;
+  status: DuelSessionStatus;
   sessionNumber: number;
   displayNameLong: string;
   displayNameShort: string;
   customName: string | null;
   effectiveDisplayName: string;
-  questionSource: CollaborationQuestionSource;
+  questionSource: DuelQuestionSource;
   subjects: string[];
   totalQuestions: number;
   /** The duel's clock. Null only on rooms opened before duel times existed. */
@@ -299,7 +299,7 @@ export type CollaborationSession = {
   hostUserId: number;
   startedAt: string | null;
   endedAt: string | null;
-  participants: CollaborationParticipant[];
+  participants: DuelParticipant[];
 };
 
 /** The normal duel time for some subjects, and what a host may pick. */
@@ -310,19 +310,19 @@ export type DuelDurationOptions = {
   stepSeconds: number;
 };
 
-export type CollaborationSessionSnapshot = {
-  session: CollaborationSession;
+export type DuelSessionSnapshot = {
+  session: DuelSession;
   myExamId?: number | null;
 };
 
-export type CollaborationExamAssignment = {
+export type DuelExamAssignment = {
   userId: number;
   examId: number;
 };
 
-export type CollaborationStartResult = CollaborationSessionSnapshot & {
+export type DuelStartResult = DuelSessionSnapshot & {
   questions: ExamQuestion[];
-  examAssignments: CollaborationExamAssignment[];
+  examAssignments: DuelExamAssignment[];
   timeAllowedSeconds: number;
   startedAt: string;
   expiresAt: string;
@@ -724,7 +724,7 @@ export type QuestionReport = {
 export type NotificationPreferences = {
   streaks: boolean;
   achievements: boolean;
-  collaboration: boolean;
+  duel: boolean;
   subscription: boolean;
   reports: boolean;
   announcements: boolean;

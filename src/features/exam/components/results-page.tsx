@@ -19,14 +19,15 @@ import { ReviewLockedPage } from "@/features/exam/components/review-locked-page"
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useCollaborationSession } from "@/features/collaboration/hooks/use-collaboration";
-import { DuelResultsPage } from "@/features/collaboration/components/duel-results-page";
-import { DuelWaitingLobby } from "@/features/collaboration/components/duel-waiting-lobby";
+import { useDuelSession } from "@/features/duel/hooks/use-duel";
+import { DuelResultsPage } from "@/features/duel/components/duel-results-page";
+import { DuelWaitingLobby } from "@/features/duel/components/duel-waiting-lobby";
 
 export function ResultsPageClient({ examId }: { examId: number }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const collabCode = searchParams.get("collab");
+  // "collab" is the old name; links saved before the duel rename still use it.
+  const duelCode = searchParams.get("duel") ?? searchParams.get("collab");
 
   const critical = useDashboardCriticalData();
   const {
@@ -36,9 +37,9 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     error,
   } = useExamDetail(examId);
 
-  const { data: collabData, isLoading: isCollabLoading } =
-    useCollaborationSession(collabCode || "", !!collabCode);
-  const collabSession = collabData?.session;
+  const { data: duelData, isLoading: isDuelLoading } =
+    useDuelSession(duelCode || "", !!duelCode);
+  const duelSession = duelData?.session;
 
   // Show auto-bookmarking limits feedback toast immediately after loading results
   useEffect(() => {
@@ -158,7 +159,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   ]);
 
   // ─── Loading ───
-  if (critical.isLoading || isResultLoading || isCollabLoading) {
+  if (critical.isLoading || isResultLoading || isDuelLoading) {
     return (
       <LearnerShell>
         <div className="flex h-[50vh] items-center justify-center">
@@ -212,19 +213,19 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   }
 
   // ─── Duel Results View ───
-  if (result.examType === "ONE_V_ONE_DUEL" && collabSession) {
+  if (result.examType === "ONE_V_ONE_DUEL" && duelSession) {
     const profile = critical.profile.data;
     const me = profile
-      ? collabSession.participants.find(
+      ? duelSession.participants.find(
           (participant) => participant.userId === profile.id,
         )
       : undefined;
     const opponent = profile
-      ? collabSession.participants.find(
+      ? duelSession.participants.find(
           (participant) => participant.userId !== profile.id,
         )
       : undefined;
-    const isDuelComplete = collabSession.status === "COMPLETED";
+    const isDuelComplete = duelSession.status === "COMPLETED";
 
     if (!isDuelComplete) {
       return (
@@ -251,7 +252,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
         />
         <DuelResultsPage
           result={result}
-          collabSession={collabSession}
+          duelSession={duelSession}
           myUserId={critical.profile.data.id}
         />
       </LearnerShell>

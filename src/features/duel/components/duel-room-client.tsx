@@ -4,9 +4,15 @@ import { Loader2 } from "lucide-react";
 
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData } from "@/features/dashboard/hooks/use-dashboard-data";
-import { CollaborationPage } from "@/features/collaboration/components/collaboration-page";
+import { DuelRoomPage } from "@/features/duel/components/duel-room-page";
 
-export function CollaborationClient() {
+type DuelRoomClientProps = {
+  code: string;
+};
+
+export function DuelRoomClient({
+  code,
+}: DuelRoomClientProps) {
   const critical = useDashboardCriticalData();
 
   if (critical.isLoading) {
@@ -23,7 +29,7 @@ export function CollaborationClient() {
     return (
       <LearnerShell>
         <div className="p-8 text-center text-red-400">
-          Failed to load collaboration data.
+          Could not load this duel.
         </div>
       </LearnerShell>
     );
@@ -34,7 +40,8 @@ export function CollaborationClient() {
       isPremium={critical.profile.data.isPremium}
       profile={critical.profile.data}
     >
-      <CollaborationPage
+      <DuelRoomPage
+        code={code}
         profile={critical.profile.data}
         stats={critical.stats.data}
       />

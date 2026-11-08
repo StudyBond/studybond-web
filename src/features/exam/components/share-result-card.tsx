@@ -6,8 +6,8 @@ import { createPortal } from "react-dom";
 import { Share2, Download, X, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
-import type { ExamResult, CollaborationSession } from "@/lib/api/types";
-import { getQuestionSourceMeta } from "@/features/collaboration/lib/collaboration-config";
+import type { ExamResult, DuelSession } from "@/lib/api/types";
+import { getQuestionSourceMeta } from "@/features/duel/lib/duel-config";
 
 // ─── Smart Messages Based on Score ───
 
@@ -495,7 +495,7 @@ async function renderShareCard(
 // ─── Duel Share Card Render ───
 async function renderDuelShareCard(
   result: ExamResult,
-  collabSession: CollaborationSession,
+  duelSession: DuelSession,
   myUserId: number,
   outcome: "VICTORY" | "DEFEAT" | "DRAW",
   headline: string,
@@ -508,9 +508,9 @@ async function renderDuelShareCard(
 
   if (!ctx) throw new Error("Canvas 2D context not available");
 
-  const me = collabSession.participants.find((p) => p.userId === myUserId);
-  const opponent = collabSession.participants.find((p) => p.userId !== myUserId);
-  if (!me || !opponent) throw new Error("Participants not found in collaboration session");
+  const me = duelSession.participants.find((p) => p.userId === myUserId);
+  const opponent = duelSession.participants.find((p) => p.userId !== myUserId);
+  if (!me || !opponent) throw new Error("Participants not found in duel session");
 
   // ═══════════════════════════════════════════════════════════════════
   // ─── BACKGROUND WITH SPLIT DIAGONAL THEME ───
@@ -665,7 +665,7 @@ async function renderDuelShareCard(
   ctx.font = "italic 700 40px 'Segoe UI', -apple-system, sans-serif";
   ctx.fillStyle = "#F59E0B";
   ctx.textAlign = "center";
-  ctx.fillText(collabSession.effectiveDisplayName || "1v1 Synced Duel", CARD_WIDTH / 2, 160, 880);
+  ctx.fillText(duelSession.effectiveDisplayName || "1v1 Synced Duel", CARD_WIDTH / 2, 160, 880);
   ctx.restore();
 
   // ═══════════════════════════════════════════════════════════════════
@@ -909,8 +909,8 @@ async function renderDuelShareCard(
 
   const myTime = result.timeTakenSeconds;
   let opponentTime = myTime;
-  if (opponent.finishedAt && collabSession.startedAt) {
-    opponentTime = Math.max(0, Math.round((new Date(opponent.finishedAt).getTime() - new Date(collabSession.startedAt).getTime()) / 1000));
+  if (opponent.finishedAt && duelSession.startedAt) {
+    opponentTime = Math.max(0, Math.round((new Date(opponent.finishedAt).getTime() - new Date(duelSession.startedAt).getTime()) / 1000));
   }
 
   const mySp = result.spEarned;
@@ -1044,9 +1044,9 @@ async function renderDuelShareCard(
   // ═══════════════════════════════════════════════════════════════════
 
   const metadataY = 1520;
-  const subjectList = collabSession.subjects.join(" × ") || "All Subjects";
-  const sourceLabel = getQuestionSourceMeta(collabSession.questionSource).label;
-  const matchDate = new Date(collabSession.startedAt || Date.now()).toLocaleDateString("en-US", {
+  const subjectList = duelSession.subjects.join(" × ") || "All Subjects";
+  const sourceLabel = getQuestionSourceMeta(duelSession.questionSource).label;
+  const matchDate = new Date(duelSession.startedAt || Date.now()).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -1243,7 +1243,7 @@ type ShareResultCardProps = {
   customTrigger?: React.ReactElement<{ onClick?: React.MouseEventHandler }>;
   duelOutcome?: "VICTORY" | "DEFEAT" | "DRAW";
   opponentName?: string;
-  collabSession?: CollaborationSession;
+  duelSession?: DuelSession;
   myUserId?: number;
 };
 
@@ -1252,7 +1252,7 @@ export function ShareResultCard({
   customTrigger,
   duelOutcome,
   opponentName,
-  collabSession,
+  duelSession,
   myUserId,
 }: ShareResultCardProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -1300,20 +1300,20 @@ export function ShareResultCard({
   }, [tier, duelOutcome, opponentName]);
 
   const opponentScore = useMemo(() => {
-    if (!collabSession || !myUserId) return undefined;
-    const opponent = collabSession.participants.find((p) => p.userId !== myUserId);
+    if (!duelSession || !myUserId) return undefined;
+    const opponent = duelSession.participants.find((p) => p.userId !== myUserId);
     return opponent?.score ?? undefined;
-  }, [collabSession, myUserId]);
+  }, [duelSession, myUserId]);
 
   const generateImage = useCallback(async () => {
     if (generatedUrl) return;
     setIsGenerating(true);
     try {
       let blob: Blob;
-      if (collabSession && myUserId != null) {
+      if (duelSession && myUserId != null) {
         blob = await renderDuelShareCard(
           result,
-          collabSession,
+          duelSession,
           myUserId,
           duelOutcome || "DRAW",
           headline,
@@ -1331,7 +1331,7 @@ export function ShareResultCard({
     } finally {
       setIsGenerating(false);
     }
-  }, [result, collabSession, myUserId, duelOutcome, headline, subtitle, finalMetadata, generatedUrl]);
+  }, [result, duelSession, myUserId, duelOutcome, headline, subtitle, finalMetadata, generatedUrl]);
 
   const handleOpen = useCallback(() => {
     setIsOpen(true);
@@ -1346,7 +1346,7 @@ export function ShareResultCard({
     if (!generatedUrl) return;
     const a = document.createElement("a");
     a.href = generatedUrl;
-    const filename = collabSession
+    const filename = duelSession
       ? `StudyBond-Duel-Result-${duelOutcome || "DRAW"}-${Math.round(result.percentage)}pct.png`
       : `StudyBond-Result-${Math.round(result.percentage)}pct.png`;
     a.download = filename;
@@ -1354,7 +1354,7 @@ export function ShareResultCard({
     a.click();
     document.body.removeChild(a);
     toast.success("Downloaded! Time to share your victory 🚀", { icon: "📸" });
-  }, [generatedUrl, result.percentage, collabSession, duelOutcome]);
+  }, [generatedUrl, result.percentage, duelSession, duelOutcome]);
 
   const handleShare = useCallback(async () => {
     const shareText = getShareText(
@@ -1371,7 +1371,7 @@ export function ShareResultCard({
       try {
         const file = new File(
           [blobRef.current],
-          collabSession
+          duelSession
             ? `StudyBond-Duel-Result-${duelOutcome || "DRAW"}-${Math.round(result.percentage)}pct.png`
             : `StudyBond-Result-${Math.round(result.percentage)}pct.png`,
           { type: "image/png" }
@@ -1396,7 +1396,7 @@ export function ShareResultCard({
     } catch {
       toast.error("Couldn't copy to clipboard.");
     }
-  }, [result, headline, finalMetadata, duelOutcome, opponentName, opponentScore, collabSession]);
+  }, [result, headline, finalMetadata, duelOutcome, opponentName, opponentScore, duelSession]);
 
   return (
     <>
@@ -1485,10 +1485,10 @@ export function ShareResultCard({
                   {finalMetadata.emoji}
                 </div>
                 <h2 className="text-xl sm:text-4xl font-extrabold text-white tracking-tight">
-                  {collabSession ? "Share Duel Result" : "Share Your Success"}
+                  {duelSession ? "Share Duel Result" : "Share Your Success"}
                 </h2>
                 <p className="text-white/50 text-xs sm:text-lg">
-                  {collabSession ? "Show off your performance in the arena" : "Inspire others with your achievement"}
+                  {duelSession ? "Show off your performance in the arena" : "Inspire others with your achievement"}
                 </p>
               </div>
 

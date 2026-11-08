@@ -78,13 +78,10 @@ export function isExamPath(pathname: string | null) {
 }
 
 /*
- * The Duel pages are moving from /dashboard/collaboration to /dashboard/duel.
- * Until that move ships, only the old path exists in production; once it
- * ships, the old path redirects to the new one. Linking to the old path works
- * either way. Switch this to "/dashboard/duel" once the move is live, and
- * before anything else reuses /dashboard/collaboration.
+ * The Duel pages moved from /dashboard/collaboration to /dashboard/duel. The
+ * old path redirects here (next.config.ts), so old links still land.
  */
-export const DUEL_HOME_PATH = "/dashboard/collaboration";
+export const DUEL_HOME_PATH = "/dashboard/duel";
 
 export function duelRoomPath(sessionCode: string) {
   return `${DUEL_HOME_PATH}/${sessionCode}`;

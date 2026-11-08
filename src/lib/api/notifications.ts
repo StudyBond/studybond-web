@@ -31,7 +31,7 @@ export async function getNotificationActivity(params?: {
   page?: number;
   limit?: number;
   state?: "all" | "unread";
-  category?: "STREAKS" | "ACHIEVEMENTS" | "COLLABORATION" | "SUBSCRIPTION" | "REPORTS";
+  category?: "STREAKS" | "ACHIEVEMENTS" | "DUEL" | "SUBSCRIPTION" | "REPORTS";
 }) {
   const response = await apiClient<SuccessEnvelope<NotificationsActivityList>>(
     `/api/notifications/activity${buildSearch({

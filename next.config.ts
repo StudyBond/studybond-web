@@ -44,6 +44,21 @@ const nextConfig: NextConfig = {
         destination: "/ui-post-utme",
         permanent: true,
       },
+      // 1v1 duels used to live under "collaboration". Old invite links and
+      // notification deeplinks saved in the database still point there.
+      // Temporary on purpose: browsers cache permanent redirects, and the
+      // collaboration path is reserved for a future group collab exam.
+      // Delete these two rules when that feature takes the path.
+      {
+        source: "/dashboard/collaboration",
+        destination: "/dashboard/duel",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/collaboration/:code",
+        destination: "/dashboard/duel/:code",
+        permanent: false,
+      },
     ];
   },
 };

@@ -1,4 +1,4 @@
-import type { CollaborationQuestionSource } from "@/lib/api/types";
+import type { DuelQuestionSource } from "@/lib/api/types";
 import {
   BookOpen,
   Flame,
@@ -7,8 +7,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export const collaborationQuestionSources: Array<{
-  value: CollaborationQuestionSource;
+export const duelQuestionSources: Array<{
+  value: DuelQuestionSource;
   label: string;
   eyebrow: string;
   description: string;
@@ -48,14 +48,14 @@ export const collaborationQuestionSources: Array<{
    institution, through useExamProfile, so a duel offers whatever that school
    actually teaches. */
 
-export function getQuestionSourceMeta(source: CollaborationQuestionSource) {
+export function getQuestionSourceMeta(source: DuelQuestionSource) {
   return (
-    collaborationQuestionSources.find((item) => item.value === source) ??
-    collaborationQuestionSources[0]
+    duelQuestionSources.find((item) => item.value === source) ??
+    duelQuestionSources[0]
   );
 }
 
-export function getCollaborationHeadline(isLocked: boolean) {
+export function getDuelHeadline(isLocked: boolean) {
   if (isLocked) {
     return "Earn your right to enter the arena.";
   }
@@ -63,7 +63,7 @@ export function getCollaborationHeadline(isLocked: boolean) {
   return "Craft a room that feels intentional before the first question lands.";
 }
 
-export function getCollaborationStatChips(realExamsCompleted: number) {
+export function getDuelStatChips(realExamsCompleted: number) {
   return [
     {
       label: "Format",

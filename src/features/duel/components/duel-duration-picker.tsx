@@ -7,9 +7,9 @@ import { InlineError } from "@/components/ui/inline-error";
 import { Surface } from "@/components/ui/surface";
 import {
   useDuelDurationOptions,
-  useUpdateCollaborationDurationMutation,
-} from "@/features/collaboration/hooks/use-collaboration";
-import type { CollaborationSession, DuelDurationOptions } from "@/lib/api/types";
+  useUpdateDuelDurationMutation,
+} from "@/features/duel/hooks/use-duel";
+import type { DuelSession, DuelDurationOptions } from "@/lib/api/types";
 import { cn } from "@/lib/utils/cn";
 
 /** "23 min", "22½ min", "1 h 30 min". */
@@ -165,12 +165,12 @@ export function LobbyDuelTime({
   session,
   isHost,
 }: {
-  session: CollaborationSession;
+  session: DuelSession;
   isHost: boolean;
 }) {
   const waiting = session.status === "WAITING";
   const options = useDuelDurationOptions(session.subjects, waiting);
-  const updateMutation = useUpdateCollaborationDurationMutation();
+  const updateMutation = useUpdateDuelDurationMutation();
   const [error, setError] = useState<string | null>(null);
 
   // A duel started before duel times existed: its clock lives in the exam.

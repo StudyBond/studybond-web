@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 // ─── Backend event type constants ───
-// Mirrors COLLAB_WEBSOCKET_EVENTS from the backend to avoid magic strings.
+// Mirrors DUEL_WEBSOCKET_EVENTS from the backend to avoid magic strings.
 const WS_EVENTS = {
   PROGRESS_UPDATE: "progress_update",
   EMOJI_REACTION: "emoji_reaction",
@@ -35,7 +35,7 @@ type CompletionStanding = {
 };
 
 type DuelWebsocketOptions = {
-  /** The collaboration session ID. Pass null to disable. */
+  /** The duel session ID. Pass null to disable. */
   sessionId: number | null;
 
   /**
@@ -74,7 +74,7 @@ type DuelWebsocketOptions = {
 };
 
 /**
- * Manages a single WebSocket connection to the collaboration session.
+ * Manages a single WebSocket connection to the duel session.
  *
  * Design constraints:
  * - The backend broadcasts every emitted event to ALL subscribers in the
@@ -299,7 +299,7 @@ export function useDuelWebsocket({
           throw new Error(tokenData.message || "Could not retrieve websocket token.");
         }
 
-        const wsUrl = `${tokenData.backendWsUrl}/api/collaboration/sessions/${sessionId}/ws?token=${tokenData.token}`;
+        const wsUrl = `${tokenData.backendWsUrl}/api/duel/sessions/${sessionId}/ws?token=${tokenData.token}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -326,7 +326,7 @@ export function useDuelWebsocket({
             pendingOutboundRef.current = [];
           }
 
-          // Heartbeat every 15s — matches backend COLLAB_LIMITS.HEARTBEAT_PING_INTERVAL_SECONDS.
+          // Heartbeat every 15s — matches backend DUEL_LIMITS.HEARTBEAT_PING_INTERVAL_SECONDS.
           pingInterval = setInterval(() => {
             if (ws.readyState === WebSocket.OPEN) {
               ws.send(JSON.stringify({ type: "heartbeat", eventId: crypto.randomUUID() }));

@@ -73,7 +73,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Community",
     items: [
-      { label: "Collaboration", href: "/dashboard/collaboration", icon: Swords },
+      { label: "Duel", href: "/dashboard/duel", icon: Swords },
       { label: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
     ],
   },

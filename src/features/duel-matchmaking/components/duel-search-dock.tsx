@@ -10,8 +10,8 @@ import { Loader2, Swords, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { formatDuelTime } from "@/features/collaboration/components/duel-duration-picker";
-import { playVsClash } from "@/features/collaboration/lib/duel-sounds";
+import { formatDuelTime } from "@/features/duel/components/duel-duration-picker";
+import { playVsClash } from "@/features/duel/lib/duel-sounds";
 import {
   useCancelDuelSearchMutation,
   useDuelMatchmakingCache,
