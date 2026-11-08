@@ -2083,3 +2083,121 @@ button, input, textarea, select {
 .sb-wa-pill-pulse {
   animation: sb-pulse-subtle 2.5s ease-in-out infinite;
 }
+
+/* ═══ NEW SCREENS: fonts + tokens (Duel and leaderboard redesign) ═══
+   Set up once by the Duel session; the Leaderboard session uses it as is.
+   A screen opts in with the `sb-ui` class on its root.
+
+   Fonts: Outfit for headings, scores, ranks, timers and SP; Satoshi for
+   reading text; Plus Jakarta Sans (var(--font-marketing)) for ₦ and any
+   symbol the two lack. Next renames Google fonts, so fall back to the
+   variable, never the literal "Plus Jakarta Sans".
+   Satoshi's files are downloaded at build time (scripts/fetch-satoshi.js)
+   and never committed: its licence forbids a public repository. */
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-VariableItalic.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  --font-satoshi: "Satoshi";
+}
+
+.sb-ui {
+  --ui-head: var(--font-outfit), var(--font-marketing), system-ui, sans-serif;
+  --ui-body: var(--font-satoshi), var(--font-marketing), system-ui, sans-serif;
+  --ui-num: var(--font-outfit), var(--font-marketing), system-ui, sans-serif;
+
+  /* The house palette, as live. */
+  --ui-desk: #09090b;
+  --ui-sheet: #131316;
+  --ui-sheet-2: #1c1c21;
+  --ui-hover: #222228;
+  --ui-ink: #fafafa;
+  --ui-ink-2: #a1a1aa;
+  --ui-ink-3: #848486;
+  --ui-rule: rgba(255, 255, 255, 0.08);
+  --ui-rule-soft: rgba(255, 255, 255, 0.06);
+  --ui-mark: #e09040;
+  --ui-mark-hover: #e8a058;
+  --ui-mark-ink: #f5c890;
+  --ui-mark-soft: rgba(224, 144, 64, 0.12);
+  --ui-mark-line: rgba(224, 144, 64, 0.55);
+  --ui-on-mark: #0a0a0a;
+  --ui-good: #4ade80;
+  --ui-good-soft: rgba(74, 222, 128, 0.1);
+  --ui-bad: #f87171;
+  --ui-bad-soft: rgba(248, 113, 113, 0.1);
+  --ui-warn: #d4a121;
+  --ui-gold: #d4a121;
+  --ui-wa: #25d366;
+  /* Duel players: you in Carbon Amber, the rival in blue. Red stays "wrong". */
+  --ui-you: #c17a28;
+  --ui-you-soft: rgba(193, 122, 40, 0.12);
+  --ui-rival: #3b82f6;
+  --ui-rival-soft: rgba(59, 130, 246, 0.12);
+  /* The printed duel slip and share card: amber paper, black ink. */
+  --ui-slip: #f5c890;
+  --ui-slip-ink: #1c1305;
+  --ui-slip-ink-2: #6b4f22;
+  --ui-slip-rule: rgba(28, 19, 5, 0.2);
+  --ui-lift: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+
+  color: var(--ui-ink);
+  font-family: var(--ui-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sb-ui h1,
+.sb-ui h2,
+.sb-ui h3 {
+  font-family: var(--ui-head);
+  letter-spacing: -0.01em;
+}
+
+.sb-ui .ui-num {
+  font-family: var(--ui-num);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thin dark scrollbars: the default white one spoils these screens. The page
+   scrollbar follows while one of them is on the page. */
+.sb-ui,
+.sb-ui *,
+html:has(.sb-ui) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.sb-ui ::-webkit-scrollbar,
+html:has(.sb-ui)::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.sb-ui ::-webkit-scrollbar-track,
+html:has(.sb-ui)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sb-ui ::-webkit-scrollbar-thumb,
+html:has(.sb-ui)::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+.sb-ui ::-webkit-scrollbar-thumb:hover,
+html:has(.sb-ui)::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

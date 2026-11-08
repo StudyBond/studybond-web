@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import {
   Inter,
   JetBrains_Mono,
+  Outfit,
   Plus_Jakarta_Sans,
   Space_Grotesk,
 } from "next/font/google";
@@ -29,6 +30,16 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-marketing",
   display: "swap",
   weight: ["400", "500", "600", "700"],
+});
+
+// Headings, scores, ranks, timers and SP on the Duel and leaderboard screens
+// (with Satoshi for reading text, set up in globals.css). Not preloaded: only
+// those screens use it, so other pages never download it.
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+  preload: false,
 });
 
 const spaceGrotesk = Space_Grotesk({
@@ -125,7 +136,7 @@ export default function RootLayout({
   return (
     <html
       lang="en-NG"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${plusJakartaSans.variable} ${spaceGrotesk.variable}`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${plusJakartaSans.variable} ${spaceGrotesk.variable} ${outfit.variable}`}
       suppressHydrationWarning
     >
       <body

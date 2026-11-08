@@ -28,3 +28,7 @@ yarn-error.log*
 .idea
 *.swp
 *.swo
+
+# Satoshi is downloaded at build time (scripts/fetch-satoshi.js). Its licence
+# forbids putting the font files in a public repository, so never commit them.
+public/fonts/Satoshi-*.woff2
