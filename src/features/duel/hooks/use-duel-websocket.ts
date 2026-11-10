@@ -12,6 +12,7 @@ const WS_EVENTS = {
   SESSION_COMPLETED: "session_completed",
   SESSION_CANCELLED: "session_cancelled",
   SESSION_NAME_UPDATED: "session_name_updated",
+  PLAYER_READY: "player_ready",
   PRESENCE_UPDATE: "presence_update",
   SERVER_ERROR: "server_error",
   CONNECTION_REPLACED: "connection_replaced",
@@ -66,6 +67,10 @@ type DuelWebsocketOptions = {
     sessionId: number;
     participants: PresenceParticipant[];
   }) => void;
+  /** The face-off's "I'm ready" (duel phase two). */
+  onPlayerReady?: (userId: number, readyAt: string) => void;
+  /** One of the six reactions, by key (omo, no_shaking, oya, chai, sharp, calm_down). */
+  onReaction?: (fromUserId: number, key: string) => void;
   onSessionNameUpdated?: (payload: {
     sessionId: number;
     customName: string | null;
@@ -96,6 +101,8 @@ export function useDuelWebsocket({
   onSessionCancelled,
   onPresenceUpdate,
   onSessionNameUpdated,
+  onPlayerReady,
+  onReaction,
 }: DuelWebsocketOptions) {
   const MAX_PENDING_OUTBOUND = 32;
   const [isConnected, setIsConnected] = useState(false);
@@ -117,6 +124,8 @@ export function useDuelWebsocket({
     onSessionCancelled,
     onPresenceUpdate,
     onSessionNameUpdated,
+    onPlayerReady,
+    onReaction,
   });
   useEffect(() => {
     callbacksRef.current = {
@@ -128,6 +137,8 @@ export function useDuelWebsocket({
       onSessionCancelled,
       onPresenceUpdate,
       onSessionNameUpdated,
+      onPlayerReady,
+      onReaction,
     };
   }, [
     onProgressUpdate,
@@ -138,6 +149,8 @@ export function useDuelWebsocket({
     onSessionCancelled,
     onPresenceUpdate,
     onSessionNameUpdated,
+    onPlayerReady,
+    onReaction,
   ]);
 
   // Store myUserId in a ref so the message handler always reads the
@@ -210,6 +223,10 @@ export function useDuelWebsocket({
         }
         case WS_EVENTS.EMOJI_REACTION: {
           if (isSelfEcho || !fromUserId) return;
+          if (typeof payload.reaction === "string") {
+            callbacksRef.current.onReaction?.(fromUserId, payload.reaction);
+            return;
+          }
           callbacksRef.current.onEmojiReaction?.(
             fromUserId,
             payload.emoji as string,
@@ -262,6 +279,13 @@ export function useDuelWebsocket({
         }
 
         // ─── Infrastructure events ───
+        case WS_EVENTS.PLAYER_READY: {
+          const readyUserId = payload.userId as number | undefined;
+          if (typeof readyUserId === "number") {
+            callbacksRef.current.onPlayerReady?.(readyUserId, String(payload.readyAt ?? ""));
+          }
+          return;
+        }
         case WS_EVENTS.SERVER_ERROR: {
           console.error("[Duel WS] Server error:", payload.code, payload.message);
           if (payload.code === "WS_CONNECTION_REPLACED") {
@@ -437,6 +461,14 @@ export function useDuelWebsocket({
     [sendEvent],
   );
 
+  /** One of the six reactions, by key. Old pages still send `emoji`. */
+  const sendReaction = useCallback(
+    (key: string) => {
+      sendEvent({ type: "emoji_reaction", payload: { reaction: key } });
+    },
+    [sendEvent],
+  );
+
   const sendFinished = useCallback(
     (examId: number) => {
       // `finished` is critical — must be queued if the socket isn't ready.
@@ -456,6 +488,7 @@ export function useDuelWebsocket({
     error,
     sendProgress,
     sendEmoji,
+    sendReaction,
     sendFinished,
   };
 }

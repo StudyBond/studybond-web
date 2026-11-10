@@ -6,10 +6,11 @@ import { Field } from "@/components/ui/field";
 import { useLoginMutation } from "@/features/auth/hooks/use-auth-mutations";
 import { buildWebDeviceContext } from "@/features/auth/lib/device-context";
 import { buildVerifyOtpUrl } from "@/features/auth/lib/build-verify-otp-url";
+import { safeNext } from "@/features/auth/lib/safe-next";
 import { ApiError } from "@/lib/api/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -26,6 +27,7 @@ function safeErrorMessage(error: unknown) {
 
 export function LoginForm() {
   const router = useRouter();
+  const next = useSearchParams().get("next");
   const mutation = useLoginMutation();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(schema),
@@ -44,11 +46,11 @@ export function LoginForm() {
     });
 
     if (response.requiresOTP) {
-      router.push(buildVerifyOtpUrl(values.email, response));
+      router.push(buildVerifyOtpUrl(values.email, response, next));
       return;
     }
 
-    router.push("/dashboard");
+    router.push(safeNext(next));
   });
 
   return (

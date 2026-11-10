@@ -8,8 +8,10 @@ import {
   useVerifyOtpMutation,
 } from "@/features/auth/hooks/use-auth-mutations";
 import { buildWebDeviceContext } from "@/features/auth/lib/device-context";
+import { safeNext } from "@/features/auth/lib/safe-next";
 import { ApiError } from "@/lib/api/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -117,7 +119,12 @@ export function VerifyOtpForm() {
       device,
     });
 
-    router.push(response.requiresOTP ? "/login" : "/dashboard");
+    const next = searchParams.get("next");
+    router.push(
+      response.requiresOTP
+        ? (next ? `/login?next=${encodeURIComponent(next)}` : "/login") as Route
+        : safeNext(next),
+    );
   });
 
   async function handleResend() {

@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { AuthPanel } from "@/features/auth/components/auth-panel";
 import { SignupForm } from "@/features/auth/components/signup-form";
 
@@ -8,7 +10,9 @@ export default function SignupPage() {
       eyebrow="Get started"
       title="Create your account"
     >
-      <SignupForm />
+      <Suspense>
+        <SignupForm />
+      </Suspense>
     </AuthPanel>
   );
 }

@@ -1,0 +1,25 @@
+/* The Duel home's laptop layout: what to do on the left, your rivals and
+   recent duels on the right. A phone keeps the single column. */
+
+.grid,
+.col {
+  display: contents;
+}
+
+@media (min-width: 1024px) {
+  .home.home {
+    max-width: 980px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+    gap: 0 32px;
+    align-items: start;
+  }
+
+  .col {
+    display: block;
+    min-width: 0;
+  }
+}

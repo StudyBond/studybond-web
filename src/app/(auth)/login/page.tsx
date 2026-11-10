@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import { AuthPanel } from "@/features/auth/components/auth-panel";
 import { LoginForm } from "@/features/auth/components/login-form";
 
@@ -8,7 +10,9 @@ export default function LoginPage() {
       eyebrow="Welcome back"
       title="Sign in to StudyBond"
     >
-      <LoginForm />
+      <Suspense>
+        <LoginForm />
+      </Suspense>
     </AuthPanel>
   );
 }

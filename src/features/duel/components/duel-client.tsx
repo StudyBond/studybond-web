@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData } from "@/features/dashboard/hooks/use-dashboard-data";
-import { DuelHomePage } from "@/features/duel/components/duel-home-page";
+import { DuelHome } from "@/features/duel/home/duel-home";
 
 export function DuelClient() {
   const critical = useDashboardCriticalData();
@@ -34,7 +34,7 @@ export function DuelClient() {
       isPremium={critical.profile.data.isPremium}
       profile={critical.profile.data}
     >
-      <DuelHomePage
+      <DuelHome
         profile={critical.profile.data}
         stats={critical.stats.data}
       />

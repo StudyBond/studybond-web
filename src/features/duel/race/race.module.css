@@ -1,0 +1,269 @@
+/* During the duel (mockup board 4): the race panel above the paper and the
+   reactions strip. Sits inside the exam page, under its header. */
+
+.wrap {
+  /* Never widen the exam page: the reactions strip scrolls inside. */
+  contain: inline-size;
+  min-width: 0;
+  position: sticky;
+  top: 56px;
+  z-index: 35;
+  max-width: 42rem;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--ui-rule);
+  background: var(--ui-sheet);
+}
+
+.race {
+  position: relative;
+  padding: 10px 14px 8px;
+}
+
+.raceTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.raceTop span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-ink-3);
+}
+
+.raceTop button,
+.mini button {
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ui-ink-3);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.raceTop button:hover,
+.mini button:hover {
+  background: var(--ui-sheet-2);
+  color: var(--ui-ink);
+}
+
+.lane {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+}
+
+.nm {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.q {
+  font-size: 13px;
+  text-align: right;
+}
+
+.track {
+  position: relative;
+  height: 28px;
+  margin: 0 14px;
+}
+
+.base {
+  position: absolute;
+  top: 13px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ui-rule);
+}
+
+.fill {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.runner {
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  transition: left 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ringed {
+  padding: 2px;
+  border-radius: 50%;
+}
+
+.you .fill {
+  background: var(--ui-you);
+}
+
+.rival .fill {
+  background: var(--ui-rival);
+}
+
+.you .ringed {
+  box-shadow: 0 0 0 2px var(--ui-you);
+}
+
+.rival .ringed {
+  box-shadow: 0 0 0 2px var(--ui-rival);
+}
+
+.say {
+  position: absolute;
+  bottom: 31px;
+  left: 50%;
+  z-index: 3;
+  padding: 4px 9px;
+  border-radius: 8px;
+  background: var(--ui-ink);
+  color: var(--ui-desk);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: bubble 2.6s ease both;
+}
+
+.subjects {
+  display: grid;
+  margin: 2px 58px 0 74px;
+  font-size: 10.5px;
+  color: var(--ui-ink-3);
+}
+
+.subjects span {
+  overflow: hidden;
+  padding-left: 4px;
+  border-left: 1px solid var(--ui-rule);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach {
+  min-height: 18px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ui-ink-2);
+}
+
+.mini {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.mini i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+}
+
+.mini button {
+  margin-left: auto;
+}
+
+.react {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  border-top: 1px solid var(--ui-rule);
+  scrollbar-width: none;
+}
+
+.react::-webkit-scrollbar {
+  display: none;
+}
+
+.react span {
+  align-self: center;
+  margin-right: 2px;
+  font-size: 12px;
+  color: var(--ui-ink-3);
+  white-space: nowrap;
+}
+
+.react button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--ui-rule);
+  color: var(--ui-ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.react button:hover:not(:disabled) {
+  background: var(--ui-sheet-2);
+}
+
+.react button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes bubble {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.8);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .runner {
+    transition: none;
+  }
+
+  .say {
+    animation: none;
+  }
+}

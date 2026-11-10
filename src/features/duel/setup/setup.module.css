@@ -1,0 +1,495 @@
+/* Challenge a friend (mockup board 2). Tokens from `sb-ui` in globals.css. */
+
+.form {
+  padding: 6px 18px 28px;
+}
+
+.field {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--ui-rule);
+}
+
+.field:last-of-type {
+  border-bottom: 0;
+}
+
+.fHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.fHead h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.fHead span {
+  font-size: 13px;
+  color: var(--ui-ink-3);
+}
+
+.count b {
+  font-family: var(--ui-num);
+  color: var(--ui-ink);
+  font-size: 15px;
+}
+
+.to {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--ui-rival-soft);
+}
+
+.to div {
+  display: grid;
+  min-width: 0;
+}
+
+.to b {
+  font-size: 15px;
+}
+
+.to small {
+  font-size: 12.5px;
+  color: var(--ui-ink-2);
+}
+
+/* ─── Subject list ─── */
+.slist {
+  display: grid;
+  gap: 6px;
+}
+
+.srow {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 9px 12px 9px 9px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-sheet-2);
+  box-shadow: inset 0 0 0 1px transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s, box-shadow 0.12s, opacity 0.15s;
+}
+
+.srow:hover {
+  background: var(--ui-hover);
+}
+
+.srow.on {
+  background: rgba(224, 144, 64, 0.08);
+  box-shadow: inset 0 0 0 1.5px var(--ui-mark-line);
+}
+
+.srow.full {
+  opacity: 0.45;
+}
+
+.srow.nudge {
+  animation: nudge 0.3s;
+}
+
+.stext {
+  display: grid;
+  min-width: 0;
+}
+
+.stext b {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.stext small {
+  font-size: 12.5px;
+  color: var(--ui-ink-3);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.22);
+  color: var(--ui-ink-3);
+}
+
+.mark svg {
+  width: 14px;
+  height: 14px;
+}
+
+.srow.on .mark {
+  background: var(--ui-mark);
+  color: var(--ui-on-mark);
+  box-shadow: none;
+  font-family: var(--ui-num);
+  font-size: 14px;
+  font-weight: 800;
+  animation: markin 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.3);
+}
+
+.paperLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 2px 0;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+}
+
+.paperLine span:last-child {
+  white-space: nowrap;
+}
+
+.paperLine b {
+  color: var(--ui-ink);
+  font-weight: 600;
+}
+
+.hint {
+  margin: 6px 2px 0;
+  min-height: 18px;
+  font-size: 13px;
+  color: var(--ui-ink-3);
+}
+
+.hint.warn {
+  color: var(--ui-warn);
+}
+
+/* ─── Question source ─── */
+.seg {
+  display: grid;
+  gap: 6px;
+}
+
+.opt {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--ui-rule);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.opt:hover {
+  background: var(--ui-sheet);
+}
+
+.opt .dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--ui-ink-3);
+}
+
+.opt.on {
+  background: rgba(224, 144, 64, 0.08);
+  box-shadow: inset 0 0 0 1.5px var(--ui-mark);
+}
+
+.opt.on .dot {
+  box-shadow: inset 0 0 0 6px var(--ui-mark);
+}
+
+.opt b {
+  font-size: 14.5px;
+}
+
+.opt small {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ui-ink-3);
+}
+
+.tag {
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--ui-mark-soft);
+  color: var(--ui-mark-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ─── Time ─── */
+.stepper {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper button {
+  display: grid;
+  place-items: center;
+  height: 52px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+.stepper button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stepper button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.stepper button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.stepper output {
+  display: grid;
+  justify-items: center;
+  line-height: 1.1;
+}
+
+.stepper output b {
+  font-family: var(--ui-num);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.stepper output span {
+  font-size: 12.5px;
+  color: var(--ui-ink-3);
+}
+
+.fixed {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--ui-sheet);
+  font-size: 13.5px;
+  color: var(--ui-ink-2);
+}
+
+.fixed b {
+  font-family: var(--ui-num);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ui-ink);
+  white-space: nowrap;
+}
+
+/* ─── Name ─── */
+.namebox {
+  display: flex;
+  gap: 6px;
+}
+
+.namebox input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-sheet);
+  box-shadow: inset 0 0 0 1px var(--ui-rule);
+  color: var(--ui-ink);
+  font: inherit;
+  outline: 0;
+}
+
+.namebox input::placeholder {
+  color: var(--ui-ink-3);
+}
+
+.namebox input:focus {
+  box-shadow: inset 0 0 0 1.5px var(--ui-mark);
+}
+
+.namebox button {
+  height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.namebox button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Taster switch ─── */
+.taster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--ui-sheet);
+  box-shadow: inset 0 0 0 1px var(--ui-rule);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.taster:hover {
+  background: var(--ui-sheet-2);
+}
+
+.taster.on {
+  background: rgba(224, 144, 64, 0.08);
+  box-shadow: inset 0 0 0 1.5px var(--ui-mark-line);
+}
+
+.taster.locked {
+  cursor: default;
+}
+
+.taster b {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.taster small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ui-ink-3);
+}
+
+.tsw {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background-color 0.2s;
+}
+
+.tsw i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fafafa;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.taster.on .tsw {
+  background: var(--ui-mark);
+}
+
+.taster.on .tsw i {
+  transform: translateX(18px);
+}
+
+/* ─── Sticky foot ─── */
+.foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 12px 18px 16px;
+  background: var(--ui-desk);
+  border-top: 1px solid var(--ui-rule);
+}
+
+.foot p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--ui-ink-3);
+  text-align: center;
+}
+
+@keyframes nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes markin {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .srow,
+  .srow.on .mark,
+  .tsw,
+  .tsw i {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Laptop: the form sits in a column with the paper summary beside it. */
+@media (min-width: 1024px) {
+  .form {
+    padding: 6px 0 28px;
+  }
+
+  .foot {
+    padding: 14px 0 18px;
+  }
+}
+
+/* Phones: the app's bottom menu covers the last 70px, so the sticky bar
+   sits just above it. */
+@media (max-width: 767px) {
+  .stickyBar {
+    bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+}

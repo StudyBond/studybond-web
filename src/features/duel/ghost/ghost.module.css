@@ -1,0 +1,198 @@
+/* Race a ghost (mockup 12b). */
+
+.scroll {
+  padding: 16px 16px 20px;
+}
+
+.intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--ui-sheet);
+}
+
+.intro b {
+  display: block;
+  font-size: 15.5px;
+}
+
+.intro p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+}
+
+.ghost {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  animation: drift 3s ease-in-out infinite;
+}
+
+.fade {
+  display: inline-flex;
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.h {
+  margin: 22px 2px 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.slist,
+.levels {
+  display: grid;
+  gap: 6px;
+}
+
+.levels {
+  gap: 8px;
+}
+
+.srow,
+.lvl {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-sheet-2);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.srow {
+  grid-template-columns: 36px minmax(0, 1fr) 24px;
+  min-height: 52px;
+  padding: 8px 12px 8px 8px;
+}
+
+.srow b {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lvl {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.srow:hover,
+.lvl:hover {
+  background: var(--ui-hover);
+}
+
+.on.on {
+  background: rgba(224, 144, 64, 0.08);
+  box-shadow: inset 0 0 0 1.5px var(--ui-mark-line);
+}
+
+.radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.25);
+}
+
+.on .radio {
+  box-shadow: inset 0 0 0 6.5px var(--ui-mark);
+}
+
+.lvl b {
+  display: block;
+  font-size: 15px;
+}
+
+.lvl small {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ui-ink-3);
+}
+
+.sc {
+  text-align: right;
+}
+
+.sc b {
+  font-family: var(--ui-num);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sc small {
+  font-size: 11.5px;
+}
+
+.note {
+  margin: 12px 2px 0;
+  font-size: 12.5px;
+  color: var(--ui-ink-3);
+}
+
+.foot {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--ui-rule);
+  background: var(--ui-desk);
+}
+
+.foot p {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+}
+
+.foot p b {
+  color: var(--ui-ink);
+  font-weight: 600;
+}
+
+.use {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-good);
+}
+
+.left {
+  color: var(--ui-mark-ink);
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost {
+    animation: none;
+  }
+}
+
+/* Phones: the app's bottom menu covers the last 70px, so the sticky bar
+   sits just above it. */
+@media (max-width: 767px) {
+  .stickyBar {
+    bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+}

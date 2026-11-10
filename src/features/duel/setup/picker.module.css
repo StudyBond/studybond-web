@@ -1,0 +1,324 @@
+/* Picking from many subjects (mockup board 9). */
+
+.picker {
+  display: grid;
+}
+
+.slots {
+  display: grid;
+  gap: 6px;
+}
+
+.slot {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  height: 84px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+
+.slotOn {
+  background: var(--ui-sheet-2);
+  box-shadow: inset 0 0 0 1.5px rgba(224, 144, 64, 0.45);
+  cursor: pointer;
+  animation: slotin 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+}
+
+.slotOn:hover {
+  background: var(--ui-hover);
+}
+
+.slotEmpty {
+  border: 1.5px dashed rgba(255, 255, 255, 0.16);
+  color: var(--ui-ink-3);
+}
+
+.slName {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.x {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ui-ink-2);
+}
+
+.x svg {
+  width: 10px;
+  height: 10px;
+}
+
+.n {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-family: var(--ui-num);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ui-mark-ink);
+}
+
+.plus {
+  font-family: var(--ui-num);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.slotEmpty small {
+  font-size: 11.5px;
+}
+
+.searchbox {
+  position: relative;
+  margin-top: 18px;
+}
+
+.mag {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  color: var(--ui-ink-3);
+  pointer-events: none;
+}
+
+.searchbox input {
+  width: 100%;
+  height: 48px;
+  padding: 0 44px 0 42px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-sheet);
+  box-shadow: inset 0 0 0 1px var(--ui-rule);
+  color: var(--ui-ink);
+  font: inherit;
+  font-size: 15px;
+  outline: 0;
+}
+
+.searchbox input::placeholder {
+  color: var(--ui-ink-3);
+}
+
+.searchbox input:focus {
+  box-shadow: inset 0 0 0 1.5px var(--ui-mark);
+}
+
+.searchbox input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ui-ink-3);
+  cursor: pointer;
+}
+
+.clear svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 12px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--ui-sheet);
+  box-shadow: inset 0 0 0 1px var(--ui-rule);
+}
+
+.tabs button {
+  display: grid;
+  justify-items: center;
+  min-height: 46px;
+  padding: 4px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--ui-ink-2);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tabs button b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tabs button small {
+  font-size: 11px;
+  color: var(--ui-ink-3);
+}
+
+.tabs .tabOn {
+  background: var(--ui-mark-soft);
+  color: var(--ui-mark-ink);
+  box-shadow: inset 0 0 0 1px rgba(224, 144, 64, 0.32);
+}
+
+.tabs .tabOn small {
+  color: #e8b87a;
+}
+
+.deptNote {
+  margin: 8px 2px 0;
+  font-size: 12.5px;
+  color: var(--ui-ink-3);
+}
+
+.list {
+  margin-top: 10px;
+  animation: fade 0.15s;
+}
+
+.srow {
+  grid-template-columns: 36px minmax(0, 1fr) 30px;
+  min-height: 54px;
+  padding: 8px 12px 8px 9px;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupWrap {
+  display: grid;
+  gap: 6px;
+}
+
+.grouprow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 8px 12px 8px 9px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--ui-rule);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grouprow:hover {
+  background: var(--ui-sheet);
+}
+
+.gi {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(192, 132, 252, 0.15);
+  color: #c084fc;
+  font-family: var(--ui-num);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.chev {
+  display: grid;
+  place-items: center;
+  color: var(--ui-ink-3);
+  transition: transform 0.18s;
+}
+
+.chev svg {
+  width: 18px;
+  height: 18px;
+}
+
+.open .chev {
+  transform: rotate(180deg);
+}
+
+.nested {
+  display: grid;
+  gap: 6px;
+  margin-left: 16px;
+  padding-left: 14px;
+  border-left: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.resultsH {
+  margin: 14px 2px 0;
+  font-size: 13px;
+  color: var(--ui-ink-3);
+}
+
+.emptyMsg {
+  margin-top: 12px;
+  padding: 18px 14px;
+  border-radius: 12px;
+  background: var(--ui-sheet);
+  color: var(--ui-ink-2);
+  font-size: 14px;
+  text-align: center;
+}
+
+@keyframes slotin {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slotOn,
+  .list,
+  .chev {
+    animation: none !important;
+    transition: none !important;
+  }
+}

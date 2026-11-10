@@ -20,8 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useDuelSession } from "@/features/duel/hooks/use-duel";
-import { DuelResultsPage } from "@/features/duel/components/duel-results-page";
-import { DuelWaitingLobby } from "@/features/duel/components/duel-waiting-lobby";
+import { DuelOutcome } from "@/features/duel/result/duel-outcome";
 
 export function ResultsPageClient({ examId }: { examId: number }) {
   const router = useRouter();
@@ -212,36 +211,8 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     );
   }
 
-  // ─── Duel Results View ───
-  if (result.examType === "ONE_V_ONE_DUEL" && duelSession) {
-    const profile = critical.profile.data;
-    const me = profile
-      ? duelSession.participants.find(
-          (participant) => participant.userId === profile.id,
-        )
-      : undefined;
-    const opponent = profile
-      ? duelSession.participants.find(
-          (participant) => participant.userId !== profile.id,
-        )
-      : undefined;
-    const isDuelComplete = duelSession.status === "COMPLETED";
-
-    if (!isDuelComplete) {
-      return (
-        <LearnerShell profile={critical.profile.data}>
-          <DuelWaitingLobby
-            opponentName={opponent?.fullName ?? "Your opponent"}
-            opponentProgress={null}
-            opponentFinished={opponent?.participantState === "FINISHED"}
-            myScore={result.score}
-            myTotalQuestions={result.totalQuestions}
-            myTimeTaken={result.timeTakenSeconds}
-          />
-        </LearnerShell>
-      );
-    }
-
+  // ─── Duel: marking, then the result (mockup boards 5-6) ───
+  if (result.examType === "ONE_V_ONE_DUEL" && duelSession && duelCode) {
     return (
       <LearnerShell profile={critical.profile.data}>
         <div className="sb-print-watermark" />
@@ -250,11 +221,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
           onDismiss={handleDismissViolation}
           mode="review"
         />
-        <DuelResultsPage
-          result={result}
-          duelSession={duelSession}
-          myUserId={critical.profile.data.id}
-        />
+        <DuelOutcome result={result} code={duelCode} profile={critical.profile.data} />
       </LearnerShell>
     );
   }

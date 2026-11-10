@@ -7,6 +7,7 @@ import { InlineError } from "@/components/ui/inline-error";
 import { useSignupMutation } from "@/features/auth/hooks/use-auth-mutations";
 import { buildWebDeviceContext } from "@/features/auth/lib/device-context";
 import { buildVerifyOtpUrl } from "@/features/auth/lib/build-verify-otp-url";
+import { safeNext } from "@/features/auth/lib/safe-next";
 import { DepartmentPicker } from "@/features/institution/components/department-picker";
 import { useStudentBoards } from "@/features/institution/hooks/use-student-boards";
 import { ApiError } from "@/lib/api/client";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils/cn";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -79,6 +80,10 @@ function boardLabel(board: StudentBoard) {
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+  /* A duel invite link opens signup on the host's board, so the two can play. */
+  const linkedBoard = searchParams.get("board")?.trim().toUpperCase() || null;
   const mutation = useSignupMutation();
   const boardsQuery = useStudentBoards();
   const boards = boardsQuery.data?.length ? boardsQuery.data : FALLBACK_BOARDS;
@@ -88,7 +93,7 @@ export function SignupForm() {
       fullName: "",
       email: "",
       password: "",
-      institution: "UI",
+      institution: linkedBoard ?? "UI",
       aspiringCourse: "",
       targetScore: "",
     },
@@ -143,11 +148,11 @@ export function SignupForm() {
     });
 
     if (response.requiresOTP) {
-      router.push(buildVerifyOtpUrl(values.email, response));
+      router.push(buildVerifyOtpUrl(values.email, response, next));
       return;
     }
 
-    router.push("/dashboard");
+    router.push(safeNext(next));
   });
 
   return (

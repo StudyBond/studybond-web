@@ -225,6 +225,8 @@ export type DuelHome = {
     endedAt: string | null;
   }>;
   incomingChallenges: IncomingChallenge[];
+  /** Free students who asked you for a taster from a full-paper slip. Older servers leave it out. */
+  tasterRequests?: TasterRequest[];
   freeDuel: {
     isPremium: boolean;
     /** Free students only: this week's free duel is unused. Null for premium. */
@@ -236,6 +238,12 @@ export type DuelHome = {
     lastFreeDuel: { result: DuelResultLetter; opponentName: string } | null;
   };
   reactions: Array<{ key: string; label: string }>;
+};
+
+export type TasterRequest = {
+  requestId: number;
+  askedAt: string;
+  from: { userId: number; fullName: string; course: string | null };
 };
 
 export type FaceOffPlayer = {
@@ -405,5 +413,46 @@ export async function getGhostResult(examId: number) {
 export async function getDuelByCode(code: string) {
   return (
     await apiClient<SuccessEnvelope<FullSnapshot>>(`/api/duel/code/${encodeURIComponent(code)}`)
+  ).data;
+}
+
+/* ─── Invite landing + taster requests (Phase 3) ──────────────────────── */
+
+/** What a slip link shows to anyone, signed in or not. No private data. */
+export type DuelInvite = {
+  code: string;
+  status: "OPEN" | "FULL" | "STARTED" | "FINISHED" | "CANCELLED" | "EXPIRED";
+  kind: DuelKind;
+  isTaster: boolean;
+  questionSource: string;
+  subjects: string[];
+  totalQuestions: number;
+  durationSeconds: number | null;
+  expiresAt: string | null;
+  board: { code: string; name: string; trackName: string | null };
+  host: { firstName: string; shortName: string; course: string | null; weeklyRank: number | null };
+};
+
+export async function getDuelInvite(code: string) {
+  return (
+    await apiClient<SuccessEnvelope<DuelInvite>>(`/api/duel/invites/${encodeURIComponent(code.replace(/[^A-Z0-9]/gi, "").toUpperCase())}`)
+  ).data;
+}
+
+/** A free student on a full-paper slip asks the host for a taster instead. */
+export async function askForTaster(sessionId: number) {
+  return (
+    await apiClient<SuccessEnvelope<{ asked: boolean; alreadyAsked: boolean }>>(
+      `/api/duel/sessions/${sessionId}/ask-taster`,
+      { method: "POST", headers: idem(`duel-ask-taster-${sessionId}`) },
+    )
+  ).data;
+}
+
+export async function dismissTasterRequest(requestId: number) {
+  return (
+    await apiClient<SuccessEnvelope<{ dismissed: boolean }>>(`/api/duel/taster-requests/${requestId}/dismiss`, {
+      method: "POST",
+    })
   ).data;
 }

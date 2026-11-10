@@ -1,5 +1,7 @@
 "use client";
 
+import type { Route } from "next";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -29,9 +31,9 @@ import { getUserProfile } from "@/lib/api/users";
 import { offlineStore } from "@/features/exam/stores/offline-store";
 import { useDuelSession } from "@/features/duel/hooks/use-duel";
 import { useDuelWebsocket } from "@/features/duel/hooks/use-duel-websocket";
-import { DuelWaitingLobby } from "@/features/duel/components/duel-waiting-lobby";
+import { DuelRace, reactionLabel, type IncomingReaction } from "@/features/duel/race/duel-race";
+import { GhostLane } from "@/features/duel/race/ghost-lane";
 
-const EMOJI_OPTIONS = ["🚀", "🔥", "😅", "😭", "💀", "👀"];
 
 type ExamArenaProps = {
   examId: number;
@@ -53,6 +55,8 @@ export function ExamArena({ examId }: ExamArenaProps) {
 
   // "collab" is the old name; links saved before the duel rename still use it.
   const duelCode = searchParams.get("duel") ?? searchParams.get("collab");
+  // A ghost race (?ghost=1): the ghost's lane, and its result page after submit.
+  const isGhostRace = searchParams.get("ghost") === "1";
   const { data: duelData, refetch: refetchDuelSession } = useDuelSession(duelCode || "", !!duelCode);
   const duelSession = duelData?.session;
 
@@ -88,9 +92,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   // --- DUEL STATE ---
   const [opponentProgress, setOpponentProgress] = useState<{ current: number; total: number } | null>(null);
   const [opponentFinished, setOpponentFinished] = useState(false);
-  const [isWaitingInLobby, setIsWaitingInLobby] = useState(false);
-  const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string }[]>([]);
-  const [hudTickKey, setHudTickKey] = useState(0);
+  const [incomingReaction, setIncomingReaction] = useState<IncomingReaction | null>(null);
   const opponentFinishedToastShownRef = useRef(false);
 
   // Identify the opponent by excluding ourselves. This is the correct
@@ -105,7 +107,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
     setOpponentFinished(true);
   }, []);
 
-  const { sendProgress, sendEmoji } = useDuelWebsocket({
+  const opponentFirstName = opponent?.fullName.trim().split(/s+/)[0] || "Your rival";
+
+  const { sendProgress, sendReaction } = useDuelWebsocket({
     sessionId: duelSession?.id ?? null,
     myUserId,
     // The hook already filters out self-echo for client-originated events
@@ -115,14 +119,13 @@ export function ExamArena({ examId }: ExamArenaProps) {
     // must filter self-events manually via the userId in the payload.
     onProgressUpdate: (_fromUserId, current, total) => {
       setOpponentProgress({ current, total });
-      setHudTickKey((k) => k + 1);
+    },
+    // The six reactions (duel phase two); older pages still send emoji.
+    onReaction: (_fromUserId, key) => {
+      setIncomingReaction({ id: crypto.randomUUID(), label: reactionLabel(key) });
     },
     onEmojiReaction: (_fromUserId, emoji) => {
-      const id = crypto.randomUUID();
-      setFloatingEmojis((prev) => [...prev, { id, emoji }]);
-      setTimeout(() => {
-        setFloatingEmojis((prev) => prev.filter((e) => e.id !== id));
-      }, 4000);
+      setIncomingReaction({ id: crypto.randomUUID(), label: emoji });
     },
     onFinished: (finishedUserId) => {
       // The server's `finished` event carries `userId` (not `fromUserId`),
@@ -132,8 +135,8 @@ export function ExamArena({ examId }: ExamArenaProps) {
       markOpponentFinished();
       if (opponentFinishedToastShownRef.current) return;
       opponentFinishedToastShownRef.current = true;
-      toast("⚡ Your opponent has submitted!", {
-        description: "They're watching your progress now. Stay focused!",
+      toast(`${opponentFirstName} has submitted.`, {
+        description: "Take your time. Marks win a duel, not speed.",
         duration: 5000,
       });
     },
@@ -156,11 +159,11 @@ export function ExamArena({ examId }: ExamArenaProps) {
     }
 
     opponentFinishedToastShownRef.current = true;
-    toast("Your opponent has submitted!", {
-      description: "They're watching your progress now. Stay focused!",
+    toast(`${opponentFirstName} has submitted.`, {
+      description: "Take your time. Marks win a duel, not speed.",
       duration: 5000,
     });
-  }, [opponentFinished]);
+  }, [opponentFinished, opponentFirstName]);
 
   useEffect(() => {
     const opponentState = opponent?.participantState;
@@ -171,19 +174,6 @@ export function ExamArena({ examId }: ExamArenaProps) {
       return () => clearTimeout(t);
     }
   }, [duelSession?.status, markOpponentFinished, opponent?.participantState]);
-
-  // Automatically route to results when both are finished and we are in the lobby.
-  // This is the local-state fallback — the `onSessionCompleted` handler above is
-  // the primary navigation trigger from the server.
-  useEffect(() => {
-    if (isWaitingInLobby && (opponentFinished || duelSession?.status === "COMPLETED")) {
-      if (duelCode) {
-        router.push(`/exams/${examId}/results?duel=${duelCode}`);
-      } else {
-        router.push(`/exams/${examId}/results`);
-      }
-    }
-  }, [isWaitingInLobby, opponentFinished, router, examId, duelCode, duelSession?.status]);
 
   // Send progress whenever we change questions
   useEffect(() => {
@@ -347,7 +337,6 @@ export function ExamArena({ examId }: ExamArenaProps) {
       !!session &&
       !isLoading &&
       storeExamId === examId &&
-      !isWaitingInLobby &&
       !submitDialogOpen &&
       !timeExpiredModalOpen &&
       !submitMutation.isPending,
@@ -411,7 +400,19 @@ export function ExamArena({ examId }: ExamArenaProps) {
           markOpponentFinished();
         }
 
-        setIsWaitingInLobby(true);
+        // The marking screen waits for the rival, then marks both papers.
+        const params = new URLSearchParams({ duel: duelCode });
+        if (bookmarkParams) {
+          params.set("bmSaved", result.autoBookmarkResult!.savedCount.toString());
+          params.set("bmAttempted", result.autoBookmarkResult!.attemptedCount.toString());
+          params.set("bmLimit", result.autoBookmarkResult!.limitReached ? "1" : "0");
+        }
+        router.push(`/exams/${examId}/results?${params.toString()}`);
+        return;
+      }
+
+      if (isGhostRace) {
+        router.push(`/dashboard/duel/ghost/${examId}` as Route);
         return;
       }
 
@@ -445,6 +446,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
     refetchDuelSession,
     myUserId,
     markOpponentFinished,
+    isGhostRace,
   ]);
 
   useEffect(() => {
@@ -521,109 +523,32 @@ export function ExamArena({ examId }: ExamArenaProps) {
         <ExamCalculator onClose={() => setIsCalculatorOpen(false)} />
       ) : null}
 
-      {/* Floating Emojis Overlay */}
-      {floatingEmojis.map(({ id, emoji }, index) => (
-        <div
-          key={id}
-          className="pointer-events-none fixed z-[300] text-5xl sb-emoji-float"
-          style={{
-            left: `${15 + (index % 3) * 10}%`,
-            bottom: "20%",
-          }}
-        >
-          {emoji}
-        </div>
-      ))}
-
-      {/* ═══ DUEL OPPONENT HUD — Desktop ═══ */}
-      {duelSession && opponent && (
-        <div
-          key={hudTickKey}
-          className={cn(
-            "fixed top-20 right-4 z-40 hidden md:block animate-in slide-in-from-right fade-in duration-500",
-            hudTickKey > 0 && "sb-duel-hud-tick",
-          )}
-        >
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c0c0f]/80 backdrop-blur-2xl p-4 w-[200px] shadow-xl">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500/20 to-red-400/10 text-sm font-bold text-white shadow-inner shadow-white/10">
-                {opponent.fullName.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white truncate">{opponent.fullName}</p>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-red-400/50">Rival</p>
-              </div>
-            </div>
-
-            {opponentFinished ? (
-              <div className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 py-2 animate-in fade-in zoom-in-95 duration-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Submitted</span>
-              </div>
-            ) : opponentProgress ? (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-white/30">Progress</span>
-                  <span className="sb-mono font-bold text-white/60">{opponentProgress.current}/{opponentProgress.total}</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-500/60 to-amber-400 rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${Math.min(100, (opponentProgress.current / opponentProgress.total) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-[10px] text-white/25">
-                <span className="h-1.5 w-1.5 rounded-full bg-white/20 animate-pulse" />
-                Syncing...
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ DUEL OPPONENT HUD — Mobile compact pill ═══ */}
-      {duelSession && opponent && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 md:hidden animate-in slide-in-from-top fade-in duration-300">
-          <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#0c0c0f]/80 backdrop-blur-2xl px-3 py-1.5 shadow-lg">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-red-500/15 text-[10px] font-bold text-white">
-              {opponent.fullName.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-[10px] font-bold text-white/70 max-w-[80px] truncate">{opponent.fullName.split(" ")[0]}</span>
-            {opponentFinished ? (
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            ) : opponentProgress ? (
-              <span className="sb-mono text-[9px] font-bold text-amber-400">{opponentProgress.current}/{opponentProgress.total}</span>
-            ) : (
-              <span className="h-1.5 w-1.5 rounded-full bg-white/20 animate-pulse" />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ DUEL EMOJI BAR ═══ */}
-      {duelSession && (
-        <div className="fixed bottom-6 right-1/2 translate-x-1/2 md:translate-x-0 md:right-auto md:left-6 z-40 flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#0c0c0f]/70 backdrop-blur-2xl p-1 shadow-xl">
-          {EMOJI_OPTIONS.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => sendEmoji(emoji)}
-              className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full text-lg md:text-xl transition-all duration-200 hover:scale-125 hover:bg-white/[0.1] active:scale-90"
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="flex">
         <main
           className={cn(
-            "flex-1 pt-16 pb-24 md:pb-8 transition-all duration-300 sb-exam-content",
+            "min-w-0 flex-1 pt-16 pb-24 md:pb-8 transition-all duration-300 sb-exam-content",
             navigatorOpen ? "md:mr-[280px]" : "",
           )}
         >
+          {duelSession && opponent ? (
+            <DuelRace
+              rivalName={opponent.fullName}
+              myQuestion={currentIndex + 1}
+              rivalQuestion={opponentProgress?.current ?? null}
+              rivalFinished={opponentFinished}
+              total={questions.length}
+              questionSubjects={questions.map((question) => question.subject)}
+              incoming={incomingReaction}
+              onReact={sendReaction}
+            />
+          ) : isGhostRace ? (
+            <GhostLane
+              examId={examId}
+              myQuestion={currentIndex + 1}
+              total={questions.length}
+              questionSubjects={questions.map((question) => question.subject)}
+            />
+          ) : null}
           <div className="mx-auto max-w-2xl px-4 py-6 md:px-6 sb-protected">
             <QuestionCard
               key={currentQuestion.id}
@@ -693,6 +618,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
       <SubmitDialog
         onConfirm={handleSubmit}
         isSubmitting={submitMutation.isPending}
+        duelRivalName={duelSession && opponent ? opponentFirstName : null}
       />
       <AbandonDialog
         onConfirm={handleAbandon}
@@ -700,16 +626,6 @@ export function ExamArena({ examId }: ExamArenaProps) {
       />
       <TimeExpiredModal onAutoSubmit={handleSubmit} />
 
-      {isWaitingInLobby && opponent && (
-        <DuelWaitingLobby
-          opponentName={opponent.fullName}
-          opponentProgress={opponentProgress}
-          opponentFinished={opponentFinished}
-          myScore={submitMutation.data && "score" in submitMutation.data ? submitMutation.data.score : undefined}
-          myTotalQuestions={session.questions.length}
-          myTimeTaken={submitMutation.data && "timeTakenSeconds" in submitMutation.data ? submitMutation.data.timeTakenSeconds : undefined}
-        />
-      )}
     </div>
   );
 }

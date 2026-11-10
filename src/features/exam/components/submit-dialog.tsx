@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 type SubmitDialogProps = {
   onConfirm: () => void;
   isSubmitting: boolean;
+  /** In a duel: the rival's first name, for "Tobi can't see your score…". */
+  duelRivalName?: string | null;
 };
 
-export function SubmitDialog({ onConfirm, isSubmitting }: SubmitDialogProps) {
+export function SubmitDialog({ onConfirm, isSubmitting, duelRivalName }: SubmitDialogProps) {
   const open = useExamStore((s) => s.submitDialogOpen);
   const setOpen = useExamStore((s) => s.setSubmitDialogOpen);
   const totalQuestions = useExamStore((s) => s.totalQuestions);
@@ -68,6 +70,7 @@ export function SubmitDialog({ onConfirm, isSubmitting }: SubmitDialogProps) {
           {allAnswered
             ? "All questions have been answered. Submit your exam to see your results."
             : "Are you sure you want to submit? Unanswered questions will be marked as incorrect."}
+          {duelRivalName ? ` ${duelRivalName} can't see your score until you both finish.` : null}
         </p>
 
         {/* Stats */}

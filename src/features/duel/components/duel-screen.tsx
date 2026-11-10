@@ -4,15 +4,16 @@ import { Loader2 } from "lucide-react";
 
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData } from "@/features/dashboard/hooks/use-dashboard-data";
-import { DuelRoomPage } from "@/features/duel/components/duel-room-page";
+import type { UserProfile, UserStats } from "@/lib/api/types";
 
-type DuelRoomClientProps = {
-  code: string;
-};
-
-export function DuelRoomClient({
-  code,
-}: DuelRoomClientProps) {
+/** The learner shell around a duel screen, once the profile has loaded. */
+export function DuelScreen({
+  errorText = "Could not load this page.",
+  children,
+}: {
+  errorText?: string;
+  children: (data: { profile: UserProfile; stats: UserStats }) => React.ReactNode;
+}) {
   const critical = useDashboardCriticalData();
 
   if (critical.isLoading) {
@@ -28,23 +29,14 @@ export function DuelRoomClient({
   if (critical.isError || !critical.profile.data || !critical.stats.data) {
     return (
       <LearnerShell>
-        <div className="p-8 text-center text-red-400">
-          Could not load this duel.
-        </div>
+        <div className="p-8 text-center text-red-400">{errorText}</div>
       </LearnerShell>
     );
   }
 
   return (
-    <LearnerShell
-      isPremium={critical.profile.data.isPremium}
-      profile={critical.profile.data}
-    >
-      <DuelRoomPage
-        code={code}
-        profile={critical.profile.data}
-        stats={critical.stats.data}
-      />
+    <LearnerShell isPremium={critical.profile.data.isPremium} profile={critical.profile.data}>
+      {children({ profile: critical.profile.data, stats: critical.stats.data })}
     </LearnerShell>
   );
 }

@@ -149,6 +149,17 @@ export function printedCode(code: string): string {
   return clean.length === 6 ? `${clean.slice(0, 3)} ${clean.slice(3)}` : clean;
 }
 
+/** The backend's error code (e.g. DUEL_TARGET_NEEDS_TASTER), if any. */
+export function apiErrorCode(error: unknown): string | null {
+  const payload = (error as { payload?: { error?: { code?: unknown }; code?: unknown } } | null)?.payload;
+  const code = payload?.error?.code ?? payload?.code;
+  return typeof code === "string" ? code : null;
+}
+
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export function minutesLabel(seconds: number | null | undefined): string {
   if (!seconds) return "";
   return `${Math.round(seconds / 60)} min`;

@@ -238,11 +238,11 @@ export function MarketingClient({
                   Challenge. Battle. <span className="bg-linear-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">Dominate.</span>
                 </h2>
                 <p className="mt-4 text-sm text-white/40 md:text-base leading-relaxed">
-                  Go head-to-head with other students in real-time exam duels. Pick your subject, set the stakes, and prove you&apos;re the best. Winners earn bonus Study Points (SP) and bragging rights.
+                  Go head-to-head with other students in real-time exam duels. Pick your subject, set the stakes, and prove you&apos;re the best. Winners earn 1.5x Study Points (SP) on every correct answer, and bragging rights.
                 </p>
                 <div className="flex items-center gap-4 text-xs text-white/25 mt-6 justify-center lg:justify-start flex-wrap">
                   <span className="flex items-center gap-1.5"><Zap className="h-3 w-3 text-[#e09040]" /> Real-time</span>
-                  <span className="flex items-center gap-1.5"><Star className="h-3 w-3 text-[#e09040]" /> Earn bonus SP</span>
+                  <span className="flex items-center gap-1.5"><Star className="h-3 w-3 text-[#e09040]" /> Winners earn 1.5x SP</span>
                   <span className="flex items-center gap-1.5"><Crown className="h-3 w-3 text-[#e09040]" /> Premium feature</span>
                 </div>
               </Reveal>

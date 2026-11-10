@@ -1,4 +1,6 @@
-import { DuelRoomClient } from "@/features/duel/components/duel-room-client";
+import { Suspense } from "react";
+
+import { DuelRoomPage } from "@/features/duel/room/duel-room";
 
 type DuelRoomRouteProps = {
   params: Promise<{
@@ -11,14 +13,16 @@ export async function generateMetadata({ params }: DuelRoomRouteProps) {
 
   return {
     title: `Duel ${code.toUpperCase()} | StudyBond`,
-    description: "Duel lobby — ready up and start.",
+    description: "Your duel slip and the face-off.",
   };
 }
 
-export default async function DuelRoomRoute({
-  params,
-}: DuelRoomRouteProps) {
+export default async function DuelRoomRoute({ params }: DuelRoomRouteProps) {
   const { code } = await params;
 
-  return <DuelRoomClient code={code} />;
+  return (
+    <Suspense>
+      <DuelRoomPage code={code} />
+    </Suspense>
+  );
 }
