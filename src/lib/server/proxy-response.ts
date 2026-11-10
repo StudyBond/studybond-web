@@ -61,13 +61,28 @@ function extractBackendMessage(payload: unknown): string | null {
   return null;
 }
 
+/**
+ * The backend's machine-readable error code (e.g. DUEL_FREE_PASS_USED), so
+ * screens can react to a known case. Only a plain upper-case code passes;
+ * nothing else from the backend's error body (stack, details) gets through.
+ */
+function extractBackendCode(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const p = payload as Record<string, unknown>;
+  const nested = p.error && typeof p.error === "object" ? (p.error as Record<string, unknown>).code : undefined;
+  const code = nested ?? p.code;
+  return typeof code === "string" && /^[A-Z][A-Z0-9_]{0,63}$/.test(code) ? code : null;
+}
+
 export function createSafeJsonResponse(payload: unknown, status: number) {
   if (status >= 400) {
     const backendMessage = extractBackendMessage(payload);
+    const backendCode = extractBackendCode(payload);
     return NextResponse.json(
       {
         success: false,
         message: backendMessage || safeMessageForStatus(status),
+        ...(backendCode ? { code: backendCode } : {}),
       },
       { status },
     );

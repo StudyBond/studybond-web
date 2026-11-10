@@ -172,7 +172,8 @@ export function DuelSetup({ profile }: { profile: UserProfile }) {
     const payload = {
       subjects: paper,
       questionSource: taster ? undefined : source,
-      customName: name.trim() || null,
+      // Left out when empty: the create and challenge bodies take it as optional, not null.
+      customName: name.trim() || undefined,
       durationSeconds: taster || chosenSeconds === null ? undefined : seconds ?? undefined,
       isTaster: taster,
     };
@@ -361,8 +362,10 @@ export function DuelSetup({ profile }: { profile: UserProfile }) {
       </div>
 
       <div className={cn(u.foot, u.stickyBar)}>
-        <p>
-          {taster
+        <p className={cn(warn && u.warn)} aria-live="polite">
+          {warn
+            ? warn
+            : taster
             ? "Anyone can join, free or premium. A free friend uses their free duel for the week."
             : "Your friend needs premium and 2 finished exams to join. Free friends can only join tasters."}
         </p>

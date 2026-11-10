@@ -445,6 +445,10 @@
   text-align: center;
 }
 
+.foot p.warn {
+  color: var(--ui-warn);
+}
+
 @keyframes nudge {
   0%,
   100% {
