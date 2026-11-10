@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "openapi:sync": "node scripts/sync-openapi-types.js"
+    "openapi:sync": "node scripts/sync-openapi-types.js",
+    "avatar:sync": "node scripts/sync-avatar-parts.js"
   },
   "dependencies": {
     "@fontsource/archivo": "^5.2.8",

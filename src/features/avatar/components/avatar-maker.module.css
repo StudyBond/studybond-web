@@ -1,0 +1,89 @@
+/* Scoped to the avatar maker, inside the shared sb-ui class (fonts,
+   palette, scrollbars from globals.css); these are local names for its
+   tokens. */
+.root {
+  --desk: var(--ui-desk);
+  --sheet: var(--ui-sheet);
+  --sheet-2: var(--ui-sheet-2);
+  --ink: var(--ui-ink);
+  --ink-2: var(--ui-ink-2);
+  --ink-3: var(--ui-ink-3);
+  --rule: var(--ui-rule);
+  --mark: var(--ui-mark);
+  --mark-ink: var(--ui-mark-ink);
+  --good: var(--ui-good);
+  --f-head: var(--ui-head);
+  --f-body: var(--ui-body);
+  font-family: var(--f-body);
+  color: var(--ink);
+}
+
+
+.head {
+  font-family: var(--f-head);
+  letter-spacing: -0.01em;
+}
+
+.num {
+  font-family: var(--f-head);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Button type sizes live here, not in Tailwind classes: globals.css has an
+   unlayered `button { font: inherit }`, which beats Tailwind's layered
+   utilities, so text-[13px] or font-bold on a button is ignored. */
+.surprise {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pill {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tile {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.pill[aria-pressed="true"] {
+  font-weight: 700;
+}
+
+.tile[aria-pressed="true"] {
+  font-weight: 800;
+}
+
+.save {
+  font-size: 15.5px;
+  font-weight: 800;
+}
+
+.bump {
+  animation: bump 0.25s ease;
+}
+
+.bumpAlt {
+  animation: bumpAlt 0.25s ease;
+}
+
+@keyframes bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bumpAlt {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .bump,
+  .bumpAlt {
+    animation: none;
+  }
+}

@@ -1,0 +1,233 @@
+/* The new leaderboard (mockup screens 7 and 14a). Sits inside the shared
+   sb-ui class (fonts, palette, scrollbars from globals.css); these are local
+   names for its tokens. */
+.root {
+  --desk: var(--ui-desk);
+  --sheet: var(--ui-sheet);
+  --sheet-2: var(--ui-sheet-2);
+  --ink: var(--ui-ink);
+  --ink-2: var(--ui-ink-2);
+  --ink-3: var(--ui-ink-3);
+  --rule: var(--ui-rule);
+  --mark: var(--ui-mark);
+  --mark-ink: var(--ui-mark-ink);
+  --good: var(--ui-good);
+  --f-head: var(--ui-head);
+  --f-body: var(--ui-body);
+  --mark-soft: rgba(224, 144, 64, 0.22);
+  --bad: var(--ui-bad);
+  --bar: rgba(255, 255, 255, 0.16);
+  --bar-me: var(--ui-you);
+  font-family: var(--f-body);
+  color: var(--ink);
+}
+
+
+.head {
+  font-family: var(--f-head);
+  letter-spacing: -0.01em;
+}
+
+.num {
+  font-family: var(--f-head);
+  font-variant-numeric: tabular-nums;
+}
+
+.rank {
+  font-family: var(--f-head);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* The student's own name, marked like a highlighter on paper. */
+.hl {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+}
+
+.hl::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -5px;
+  top: 0.12em;
+  bottom: 0.02em;
+  background: var(--mark-soft);
+  border-radius: 3px;
+  transform: skew(-10deg) rotate(-1.2deg);
+  z-index: -1;
+}
+
+.row {
+  transition: transform 0.75s cubic-bezier(0.2, 0.75, 0.2, 1), opacity 0.3s;
+}
+
+.bar i {
+  transition: width 0.75s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.flash {
+  animation: glint 1.6s ease;
+}
+
+@keyframes glint {
+  0% { background-color: var(--mark-soft); }
+  100% { background-color: transparent; }
+}
+
+.cutline::before,
+.cutline::after {
+  content: "";
+  flex: 1;
+  border-top: 2px dashed var(--mark);
+}
+
+.cutline::before {
+  flex: 0 0 14px;
+}
+
+.toast {
+  animation: toast 4.2s ease both;
+}
+
+@keyframes toast {
+  0% { opacity: 0; translate: 0 8px; }
+  8% { opacity: 1; translate: 0 0; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Buttons and button-like links. These live here, not in Tailwind classes:
+   globals.css has unlayered `a { color: inherit }` and
+   `button { font: inherit }`, which beat Tailwind's layered utilities, so a
+   Tailwind text colour on a link or font size/weight on a button is ignored.
+   A class selector wins over those element rules. */
+.btn {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-family: var(--f-body);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.btnInk {
+  background: #e09040;
+  color: #0a0a0a;
+  box-shadow: 0 4px 24px rgba(224, 144, 64, 0.15);
+}
+
+.btnInk:hover {
+  background: #e8a058;
+  color: #0a0a0a;
+}
+
+.btnInk:disabled {
+  background: rgba(224, 144, 64, 0.4);
+  box-shadow: none;
+  cursor: default;
+}
+
+.btnLine {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.btnLine:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tab {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.tab[aria-pressed="true"] {
+  font-weight: 700;
+}
+
+.textBtn {
+  font-weight: 700;
+}
+
+/* The row sheet: a bottom sheet on phones, a small card on wide screens. */
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 94vh;
+  margin: auto auto 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+  border: 0;
+  border-top: 1px solid var(--rule);
+  border-radius: 18px 18px 0 0;
+  background: var(--sheet-2);
+  color: var(--ink);
+  font-family: var(--f-body);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sheet[open] {
+  animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sheet::backdrop {
+  background: rgba(9, 9, 11, 0.72);
+}
+
+.stats > div + div {
+  padding-left: 12px;
+  border-left: 1px solid var(--rule);
+}
+
+@keyframes rise {
+  from { transform: translateY(24px); opacity: 0; }
+}
+
+@media (min-width: 768px) {
+  .sheet {
+    max-width: 420px;
+    margin: auto;
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+  }
+}
+
+/* The row itself opens the sheet. */
+.tap {
+  border-radius: 10px;
+  transition: background-color 0.15s;
+}
+
+.tap:hover {
+  background: var(--sheet);
+}
+
+.tap:focus-visible {
+  outline: 2px solid var(--mark);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .bar i {
+    transition: none;
+  }
+
+  .flash,
+  .toast,
+  .sheet[open] {
+    animation: none;
+  }
+}

@@ -15,3 +15,8 @@ export async function PATCH(request: NextRequest, context: OptionalSlugRouteCont
 export async function DELETE(request: NextRequest, context: OptionalSlugRouteContext) {
   return forwardAuthorizedRoute(request, context, "users", "DELETE");
 }
+
+/* PUT /api/users/avatar saves the student's avatar. */
+export async function PUT(request: NextRequest, context: OptionalSlugRouteContext) {
+  return forwardAuthorizedRoute(request, context, "users", "PUT");
+}

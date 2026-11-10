@@ -1,23 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { useUpdateProfile } from "@/features/settings/hooks/use-settings";
 import { CourseCombobox } from "@/components/ui/course-combobox";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import { AvatarPickerModal } from "@/features/settings/components/avatar-picker-modal";
+import Link from "next/link";
+import { Avatar } from "@/features/avatar/components/avatar";
 import {
   DepartmentPicker,
   departmentLabel,
 } from "@/features/institution/components/department-picker";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import {
-  getSavedAvatarId,
-  getAvatarById,
-} from "@/lib/avatars/avatar-collection";
-import {
   BookOpen,
-  Camera,
   User,
   GraduationCap,
   Target,
@@ -32,7 +27,7 @@ type ProfileTabProps = {
   isPremium: boolean;
 };
 
-export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
+export function ProfileTab({ profile }: ProfileTabProps) {
   const updateProfile = useUpdateProfile();
   const examProfile = useExamProfile();
 
@@ -41,9 +36,6 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   const suggestedScore = Math.round(scoreMax * 0.8);
   const showDepartment =
     Boolean(examProfile.data?.signupAsksDepartment) || Boolean(profile.department);
-
-  const [avatarId, setAvatarId] = useState(() => getSavedAvatarId(profile.id));
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const [fullName, setFullName] = useState(profile.fullName);
   const [aspiringCourse, setAspiringCourse] = useState(
@@ -63,7 +55,6 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const currentAvatar = getAvatarById(avatarId);
   const targetScoreChanged = targetScore !== (profile.targetScore ?? null);
   const departmentChanged = department !== (profile.department ?? undefined);
 
@@ -95,38 +86,16 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   return (
     <div className="space-y-6">
       {/* Avatar Section */}
-      <div className="flex flex-col items-center gap-4 pb-6 border-b border-white/[0.04]">
-        <button
-          onClick={() => setShowAvatarPicker(true)}
-          className="group relative cursor-pointer"
+      <div className="flex flex-col items-center gap-3 pb-6 border-b border-white/[0.04]">
+        <Link
+          href="/dashboard/settings/avatar"
+          className="group grid justify-items-center gap-3 rounded-2xl p-2 focus-visible:outline-2 focus-visible:outline-[#e09040]"
         >
-          <div className="relative">
-            <div
-              className="rounded-full p-[3px] transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl"
-              style={{
-                background: `linear-gradient(135deg, ${currentAvatar.gradient[0]}, ${currentAvatar.gradient[1]})`,
-              }}
-            >
-              <div className="h-24 w-24 rounded-full bg-[var(--sb-bg)] flex items-center justify-center overflow-hidden">
-                <UserAvatar avatarId={avatarId} size="xl" showRing={false} />
-              </div>
-            </div>
-            {/* Camera overlay */}
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 group-hover:bg-black/40 transition-colors duration-300">
-              <Camera className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-            {/* Ambient glow */}
-            <div
-              className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-20 blur-2xl -z-10 transition-opacity duration-300"
-              style={{
-                background: `linear-gradient(135deg, ${currentAvatar.gradient[0]}, ${currentAvatar.gradient[1]})`,
-              }}
-            />
-          </div>
-          <p className="text-[10px] font-semibold text-[var(--sb-accent-text)] mt-2 text-center">
-            {currentAvatar.name}
-          </p>
-        </button>
+          <Avatar look={profile.avatar ?? null} size={96} label="Your avatar" />
+          <span className="min-h-9 rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-white/80 ring-1 ring-inset ring-white/[0.08] transition group-hover:bg-white/[0.08]">
+            {profile.avatar && !profile.avatar.isDefault ? "Change your avatar" : "Make your avatar"}
+          </span>
+        </Link>
       </div>
 
       {/* Profile Fields */}
@@ -318,15 +287,6 @@ export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
         </p>
       )}
 
-      {/* Avatar Picker Modal */}
-      <AvatarPickerModal
-        isOpen={showAvatarPicker}
-        onClose={() => setShowAvatarPicker(false)}
-        onSelect={(id) => setAvatarId(id)}
-        currentAvatarId={avatarId}
-        isPremium={isPremium}
-        userId={profile.id}
-      />
     </div>
   );
 }

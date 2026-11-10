@@ -1,0 +1,226 @@
+{
+  "$comment": "StudyBond avatar parts, version 1. The one source of truth for the website, the phone app and the server's checks. Copied as-is into studybond-web (scripts/sync-avatar-parts.js) and later the app. Saved avatars store the option ids, never colours, so a colour can change here without touching saved data. Never remove or rename an id; add new ones and bump version only if old saved avatars would draw differently. Drawing: 64x64 viewBox, layers in paint order; a layer shows when every key in `when` lists the avatar's value for that part (a missing key means any value). Colour tokens: @skin, @top, @bg come from the chosen option; @hair, @line come from inks; @glass comes from the skin option.",
+  "version": 1,
+  "viewBox": "0 0 64 64",
+  "parts": ["skin", "hair", "head", "glasses", "top", "bg", "frame"],
+  "options": {
+    "skin": [
+      { "id": "tone1", "label": "Skin tone 1 of 7", "hex": "#3b2219", "glass": "#d8d1c6" },
+      { "id": "tone2", "label": "Skin tone 2 of 7", "hex": "#4a2c1e", "glass": "#d8d1c6" },
+      { "id": "tone3", "label": "Skin tone 3 of 7", "hex": "#5a3825", "glass": "#17110e" },
+      { "id": "tone4", "label": "Skin tone 4 of 7", "hex": "#7a4a2e", "glass": "#17110e" },
+      { "id": "tone5", "label": "Skin tone 5 of 7", "hex": "#96613d", "glass": "#17110e" },
+      { "id": "tone6", "label": "Skin tone 6 of 7", "hex": "#b07a52", "glass": "#17110e" },
+      { "id": "tone7", "label": "Skin tone 7 of 7", "hex": "#c99a72", "glass": "#17110e" }
+    ],
+    "hair": [
+      { "id": "lowcut", "label": "Low cut" },
+      { "id": "afro", "label": "Afro" },
+      { "id": "braids", "label": "Braids" },
+      { "id": "cornrows", "label": "Cornrows" },
+      { "id": "bun", "label": "Bun" },
+      { "id": "none", "label": "Clean shave" }
+    ],
+    "head": [
+      { "id": "none", "label": "Nothing" },
+      { "id": "hijab", "label": "Hijab" },
+      { "id": "fila", "label": "Fila" },
+      { "id": "facecap", "label": "Face cap" },
+      { "id": "gele", "label": "Gele" }
+    ],
+    "glasses": [
+      { "id": "none", "label": "None" },
+      { "id": "round", "label": "Round" },
+      { "id": "square", "label": "Square" }
+    ],
+    "top": [
+      { "id": "mustard", "label": "Mustard", "hex": "#c9a227" },
+      { "id": "green", "label": "Green", "hex": "#2f6f5e" },
+      { "id": "maroon", "label": "Maroon", "hex": "#8a3b3b" },
+      { "id": "blue", "label": "Blue", "hex": "#3a5a9a" },
+      { "id": "teal", "label": "Teal blue", "hex": "#3d6b8f" },
+      { "id": "purple", "label": "Purple", "hex": "#5b4a8a" },
+      { "id": "white", "label": "White", "hex": "#e8e1d4" },
+      { "id": "black", "label": "Black", "hex": "#1f1f24" }
+    ],
+    "bg": [
+      { "id": "slate", "label": "Slate blue", "hex": "#2a3550" },
+      { "id": "plum", "label": "Plum", "hex": "#3a2f4a" },
+      { "id": "deepgreen", "label": "Deep green", "hex": "#22403a" },
+      { "id": "brown", "label": "Brown", "hex": "#4a3424" },
+      { "id": "grey", "label": "Grey", "hex": "#3d3d46" },
+      { "id": "wine", "label": "Wine", "hex": "#4b2d33" }
+    ],
+    "frame": [
+      { "id": "none", "label": "No frame" },
+      { "id": "merit", "label": "Merit list", "ring": "#e09040", "badge": "10" },
+      { "id": "duel", "label": "Duel winner", "ring": "#c3c9d4", "badge": "W" },
+      { "id": "streak", "label": "30-day streak", "ring": "#e87b2e", "badge": "30" }
+    ]
+  },
+  "inks": {
+    "hair": "#17110e",
+    "line": "#5a4438",
+    "badgeText": "#0b0d11"
+  },
+  "frameStyle": {
+    "$comment": "The ring sits outside the circle: a gap ring in the page colour, then the frame colour, each ringWidth wide. ringWidth is 3 at size 72 and up, else 2. The badge (bottom right, offset -3) only shows at size 56 and up; its height is max(14, round(size * 0.3)), its font round(height * 0.5), with a 2px page-colour outline.",
+    "ringWidthLarge": 3,
+    "ringWidthSmall": 2,
+    "largeFrom": 72,
+    "badgeFrom": 56,
+    "badgeScale": 0.3,
+    "badgeMin": 14,
+    "badgeOffset": -3
+  },
+  "layers": [
+    {
+      "id": "afro",
+      "when": { "hair": ["afro"], "head": ["none"] },
+      "shapes": [
+        { "el": "circle", "cx": 32, "cy": 23, "r": 16.5, "fill": "@hair" }
+      ]
+    },
+    {
+      "id": "braids",
+      "when": { "hair": ["braids"], "head": ["none", "fila", "facecap", "gele"] },
+      "shapes": [
+        { "el": "rect", "x": 16.2, "y": 21, "width": 5.4, "height": 32, "rx": 2.7, "fill": "@hair" },
+        { "el": "rect", "x": 42.4, "y": 21, "width": 5.4, "height": 32, "rx": 2.7, "fill": "@hair" },
+        { "el": "rect", "x": 19.6, "y": 25, "width": 4.6, "height": 26, "rx": 2.3, "fill": "@hair" },
+        { "el": "rect", "x": 39.8, "y": 25, "width": 4.6, "height": 26, "rx": 2.3, "fill": "@hair" }
+      ]
+    },
+    {
+      "id": "hijab-back",
+      "when": { "head": ["hijab"] },
+      "shapes": [
+        { "el": "path", "d": "M32 10.6 C19 10.6 15.4 22 15.9 32 C16.4 43 21 49.2 32 50.6 C43 49.2 47.6 43 48.1 32 C48.6 22 45 10.6 32 10.6 Z", "fill": "@top" }
+      ]
+    },
+    {
+      "id": "body",
+      "shapes": [
+        { "el": "path", "d": "M8 66 C8 52.5 19 46.5 32 46.5 C45 46.5 56 52.5 56 66 Z", "fill": "@top" }
+      ]
+    },
+    {
+      "id": "neck",
+      "when": { "head": ["none", "fila", "facecap", "gele"] },
+      "shapes": [
+        { "el": "rect", "x": 27.5, "y": 37, "width": 9, "height": 11, "rx": 3, "fill": "@skin" },
+        { "el": "rect", "x": 27.5, "y": 37, "width": 9, "height": 6, "rx": 3, "fill": "#000000", "opacity": 0.2 },
+        { "el": "path", "d": "M28 46.4 L32 51.6 L36 46.4 Z", "fill": "@skin" }
+      ]
+    },
+    {
+      "id": "hijab-drape",
+      "when": { "head": ["hijab"] },
+      "shapes": [
+        { "el": "path", "d": "M10 66 C10 52 19.5 45.4 32 45.4 C44.5 45.4 54 52 54 66 Z", "fill": "@top" },
+        { "el": "path", "d": "M10 66 C10 52 19.5 45.4 32 45.4 C44.5 45.4 54 52 54 66 Z", "fill": "#000000", "opacity": 0.14 }
+      ]
+    },
+    {
+      "id": "ears",
+      "when": { "head": ["none", "fila", "facecap", "gele"] },
+      "shapes": [
+        { "el": "circle", "cx": 20.6, "cy": 30, "r": 2.6, "fill": "@skin" },
+        { "el": "circle", "cx": 43.4, "cy": 30, "r": 2.6, "fill": "@skin" }
+      ]
+    },
+    {
+      "id": "face",
+      "shapes": [
+        { "el": "ellipse", "cx": 32, "cy": 29, "rx": 11.5, "ry": 13.5, "fill": "@skin" },
+        { "el": "rect", "x": 25.3, "y": 25.1, "width": 4.6, "height": 1.25, "rx": 0.6, "fill": "@hair" },
+        { "el": "rect", "x": 34.1, "y": 25.1, "width": 4.6, "height": 1.25, "rx": 0.6, "fill": "@hair" },
+        { "el": "ellipse", "cx": 27.6, "cy": 29.4, "rx": 2, "ry": 1.5, "fill": "#f3ede6" },
+        { "el": "ellipse", "cx": 36.4, "cy": 29.4, "rx": 2, "ry": 1.5, "fill": "#f3ede6" },
+        { "el": "circle", "cx": 27.9, "cy": 29.5, "r": 1.1, "fill": "#17110e" },
+        { "el": "circle", "cx": 36.7, "cy": 29.5, "r": 1.1, "fill": "#17110e" },
+        { "el": "path", "d": "M30.9 32.8 Q32 34 33.1 32.8", "fill": "none", "stroke": "#000000", "strokeWidth": 1.1, "strokeLinecap": "round", "opacity": 0.32 },
+        { "el": "path", "d": "M28.6 35.8 Q32 39.8 35.4 35.8 Z", "fill": "#4a1a14" },
+        { "el": "path", "d": "M29.4 36.1 Q32 37.3 34.6 36.1 Z", "fill": "#f3ede6" }
+      ]
+    },
+    {
+      "id": "hair-cap",
+      "when": { "hair": ["lowcut", "afro", "braids", "cornrows", "bun"], "head": ["none", "fila", "facecap", "gele"] },
+      "shapes": [
+        { "el": "path", "d": "M20.6 27 C20.4 18.5 25.4 15 32 15 C38.6 15 43.6 18.5 43.4 27 C42 22.4 38.2 20.6 32 20.6 C25.8 20.6 22 22.4 20.6 27 Z", "fill": "@hair" }
+      ]
+    },
+    {
+      "id": "cornrow-lines",
+      "when": { "hair": ["cornrows"], "head": ["none"] },
+      "shapes": [
+        { "el": "path", "d": "M26.4 16.4 C26.8 18 27 19.4 27 21.2", "fill": "none", "stroke": "@line", "strokeWidth": 0.8, "strokeLinecap": "round" },
+        { "el": "path", "d": "M30 15.2 C30.2 17 30.3 18.6 30.3 20.6", "fill": "none", "stroke": "@line", "strokeWidth": 0.8, "strokeLinecap": "round" },
+        { "el": "path", "d": "M34 15.2 C33.8 17 33.7 18.6 33.7 20.6", "fill": "none", "stroke": "@line", "strokeWidth": 0.8, "strokeLinecap": "round" },
+        { "el": "path", "d": "M37.6 16.4 C37.2 18 37 19.4 37 21.2", "fill": "none", "stroke": "@line", "strokeWidth": 0.8, "strokeLinecap": "round" }
+      ]
+    },
+    {
+      "id": "bun",
+      "when": { "hair": ["bun"], "head": ["none"] },
+      "shapes": [
+        { "el": "circle", "cx": 32, "cy": 12.6, "r": 5.4, "fill": "@hair" }
+      ]
+    },
+    {
+      "id": "hijab-face",
+      "when": { "head": ["hijab"] },
+      "shapes": [
+        { "el": "path", "d": "M20 31 C19.6 20 24.8 15.2 32 15.2 C39.2 15.2 44.4 20 44 31 C42.8 23 38.4 19.4 32 19.4 C25.6 19.4 21.2 23 20 31 Z", "fill": "@top" }
+      ]
+    },
+    {
+      "id": "fila",
+      "when": { "head": ["fila"] },
+      "shapes": [
+        { "el": "path", "d": "M19.8 25 C19.2 15.5 25.5 11.2 33 11.2 C41 11.2 46.8 14.6 47.8 20 C48.3 23 46.2 24.6 44.4 24.2 Z", "fill": "@top" },
+        { "el": "path", "d": "M19.6 23.6 L44.6 22.6 L44.8 25.4 L19.8 26.4 Z", "fill": "@top" },
+        { "el": "path", "d": "M19.6 23.6 L44.6 22.6 L44.8 25.4 L19.8 26.4 Z", "fill": "#000000", "opacity": 0.24 }
+      ]
+    },
+    {
+      "id": "facecap",
+      "when": { "head": ["facecap"] },
+      "shapes": [
+        { "el": "path", "d": "M20.2 25.4 C20.2 16.2 25.4 12.4 32 12.4 C38.6 12.4 43.8 16.2 43.8 25.4 Z", "fill": "@top" },
+        { "el": "path", "d": "M30 23.6 L50.5 23.2 C52.2 23.2 52.2 26.4 50.5 26.4 L30 26.4 Z", "fill": "@top" },
+        { "el": "path", "d": "M30 23.6 L50.5 23.2 C52.2 23.2 52.2 26.4 50.5 26.4 L30 26.4 Z", "fill": "#000000", "opacity": 0.26 },
+        { "el": "circle", "cx": 32, "cy": 12.9, "r": 1.3, "fill": "#000000", "opacity": 0.26 }
+      ]
+    },
+    {
+      "id": "gele",
+      "when": { "head": ["gele"] },
+      "shapes": [
+        { "el": "path", "d": "M16.8 23.2 C14.6 14.4 21.6 8.2 30.8 9.6 C36.2 5.8 46.4 8.4 47.8 16 C49.2 20.2 47 24.2 44 24.6 L20.2 25.8 C18.6 25.8 17.2 24.8 16.8 23.2 Z", "fill": "@top" },
+        { "el": "path", "d": "M21.5 17.5 C26.5 13.2 33 13 38.5 16.2", "fill": "none", "stroke": "#000000", "strokeWidth": 1.3, "strokeLinecap": "round", "opacity": 0.24 },
+        { "el": "path", "d": "M23.5 21.8 C29 18.6 36 18.4 42.5 20.6", "fill": "none", "stroke": "#000000", "strokeWidth": 1.3, "strokeLinecap": "round", "opacity": 0.24 },
+        { "el": "path", "d": "M33 10.5 C36 12 38.5 12.2 41.5 11", "fill": "none", "stroke": "#ffffff", "strokeWidth": 1.2, "strokeLinecap": "round", "opacity": 0.2 }
+      ]
+    },
+    {
+      "id": "glasses-round",
+      "when": { "glasses": ["round"] },
+      "shapes": [
+        { "el": "circle", "cx": 27.6, "cy": 29.4, "r": 3.3, "fill": "none", "stroke": "@glass", "strokeWidth": 1.15 },
+        { "el": "circle", "cx": 36.4, "cy": 29.4, "r": 3.3, "fill": "none", "stroke": "@glass", "strokeWidth": 1.15 },
+        { "el": "path", "d": "M30.9 29 Q32 28.2 33.1 29", "fill": "none", "stroke": "@glass", "strokeWidth": 1.15 }
+      ]
+    },
+    {
+      "id": "glasses-square",
+      "when": { "glasses": ["square"] },
+      "shapes": [
+        { "el": "rect", "x": 24.1, "y": 26.6, "width": 7, "height": 5.6, "rx": 1.4, "fill": "none", "stroke": "@glass", "strokeWidth": 1.15 },
+        { "el": "rect", "x": 32.9, "y": 26.6, "width": 7, "height": 5.6, "rx": 1.4, "fill": "none", "stroke": "@glass", "strokeWidth": 1.15 },
+        { "el": "path", "d": "M31.1 28.6 L32.9 28.6", "fill": "none", "stroke": "@glass", "strokeWidth": 1.15 }
+      ]
+    }
+  ]
+}

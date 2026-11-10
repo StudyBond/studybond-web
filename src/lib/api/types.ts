@@ -1,3 +1,5 @@
+import type { AvatarView } from "@/features/avatar/avatar-look";
+
 export type SuccessEnvelope<T> = {
   success: true;
   data: T;
@@ -133,6 +135,8 @@ export type UserProfile = {
   aspiringCourse?: string | null;
   targetScore?: number | null;
   department?: Department | null;
+  /** Account-level avatar (part ids). Older servers may not send it. */
+  avatar?: AvatarView;
   isPremium: boolean;
   subscriptionEndDate?: string | null;
   deviceAccessMode?: "FREE" | "PREMIUM";
@@ -408,6 +412,7 @@ export type MyRank = {
   user: {
     id: number;
     fullName: string;
+    avatar?: AvatarView;
     weeklySp: number;
     totalSp: number;
   };
@@ -667,6 +672,7 @@ export type LeaderboardEntry = {
   points: number;
   weeklySp: number;
   totalSp: number;
+  avatar?: AvatarView;
   isCurrentUser: boolean;
 };
 
