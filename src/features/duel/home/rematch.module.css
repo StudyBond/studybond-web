@@ -1,0 +1,127 @@
+/* Rematch on the free plan (mockup M1). The sheet frame comes from duel.module.css. */
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.head h2 {
+  margin: 0;
+  font-family: var(--ui-head);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.head p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(224, 144, 64, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(224, 144, 64, 0.22);
+  font-size: 13px;
+  color: var(--ui-ink-2);
+}
+
+.note svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--ui-mark-ink);
+}
+
+.note b {
+  color: var(--ui-ink);
+  font-weight: 600;
+}
+
+/* A class beats globals.css's unlayered a { color: inherit }. */
+.noteLink {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--ui-mark-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.label {
+  margin: 18px 2px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-ink-2);
+}
+
+.subs {
+  display: grid;
+  gap: 6px;
+}
+
+.sub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 14px 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-sheet-2);
+  color: var(--ui-ink);
+  font-family: var(--ui-body);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sub.on {
+  background: rgba(224, 144, 64, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(224, 144, 64, 0.4);
+}
+
+.sub:focus-visible {
+  outline: 2px solid var(--ui-mark);
+  outline-offset: 2px;
+}
+
+.subName {
+  min-width: 0;
+}
+
+.sub em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ui-ink-3);
+}
+
+.dot {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.sub.on .dot {
+  box-shadow: inset 0 0 0 6px var(--ui-mark);
+}
+
+.fine {
+  margin: 10px 2px 12px;
+  font-size: 12px;
+  color: var(--ui-ink-3);
+}

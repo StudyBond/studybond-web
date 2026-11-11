@@ -236,6 +236,8 @@ export type DuelHome = {
     usedAt: string | null;
     usedOnGhostRace: boolean;
     lastFreeDuel: { result: DuelResultLetter; opponentName: string } | null;
+    /** Free students: when premium on this board last ended. Missing on older servers. */
+    premiumEndedAt?: string | null;
   };
   reactions: Array<{ key: string; label: string }>;
 };
@@ -353,13 +355,20 @@ export async function getRivalAnswers(sessionId: number) {
   return (await apiClient<SuccessEnvelope<RivalAnswers>>(`/api/duel/sessions/${sessionId}/rival-answers`)).data;
 }
 
-export async function requestRematch(sessionId: number) {
+/** Rematch. With a subject (one of the old duel's), it goes out as a one-subject taster. */
+export async function requestRematch(sessionId: number, subject?: string) {
   return (
     await apiClient<SuccessEnvelope<FullSnapshot>>(`/api/duel/sessions/${sessionId}/rematch`, {
       method: "POST",
       headers: idem(`duel-rematch-${sessionId}`),
+      ...(subject ? { body: JSON.stringify({ subject }) } : {}),
     })
   ).data;
+}
+
+/** A duel I was in, by id (the rematch sheet reads the old paper's subjects). */
+export async function getDuelSessionById(sessionId: number) {
+  return (await apiClient<SuccessEnvelope<FullSnapshot>>(`/api/duel/sessions/${sessionId}`)).data;
 }
 
 export async function createDuelChallenge(payload: CreateDuelPayload & { challengedUserId: number; isTaster?: boolean }) {

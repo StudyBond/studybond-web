@@ -82,7 +82,10 @@ export function useRivalAnswers(sessionId: number | null) {
 }
 
 export function useRematch() {
-  return useMutation({ mutationFn: (sessionId: number) => requestRematch(sessionId) });
+  return useMutation({
+    mutationFn: (input: number | { sessionId: number; subject?: string }) =>
+      typeof input === "number" ? requestRematch(input) : requestRematch(input.sessionId, input.subject),
+  });
 }
 
 export function useChallenge() {

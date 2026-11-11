@@ -26,6 +26,7 @@ import {
 } from "@/features/duel/hooks/use-duel-play";
 import {
   dismissTasterRequest,
+  getDuelSessionById,
   type DuelHome as DuelHomeData,
   type IncomingChallenge,
   type TasterRequest,
@@ -40,6 +41,7 @@ import {
   DuelAvatar,
   FormGuide,
   SubjectTile,
+  apiErrorCode,
   firstName,
   formatLeft,
   headToHeadLine,
@@ -50,6 +52,7 @@ import {
   useNow,
 } from "../ui/parts";
 import { JoinSheet } from "./join-sheet";
+import { RematchSheet, type RematchSheetMode } from "./rematch-sheet";
 
 const GATE_EXAMS = 2;
 
@@ -552,10 +555,66 @@ function IncomingChallenges({
   );
 }
 
+type Rival = DuelHomeData["rivals"][number];
+
 function Rivals({ data }: { data: DuelHomeData }) {
   const router = useRouter();
   const rematch = useRematch();
   const [sent, setSent] = useState<Record<number, boolean>>({});
+  const [checking, setChecking] = useState<number | null>(null);
+  const [sheet, setSheet] = useState<{ rival: Rival; mode: RematchSheetMode } | null>(null);
+  const freeDuel = data.freeDuel;
+
+  async function send(rival: Rival, subject?: string) {
+    if (!rival.lastDuel) return;
+    const rivalFirst = firstName(rival.opponentName);
+    try {
+      const snapshot = await rematch.mutateAsync({ sessionId: rival.lastDuel.sessionId, subject });
+      setSent((current) => ({ ...current, [rival.opponentId]: true }));
+      setSheet(null);
+      // Both asked: it's one duel now, so go straight in.
+      if (snapshot.session.participants.length === 2) {
+        router.push(`/dashboard/duel/${snapshot.session.code}` as Route);
+      } else {
+        toast.success(`Rematch sent. ${rivalFirst} gets 30 minutes to say yes.`);
+      }
+    } catch (error) {
+      // An older page view could still send a full-paper rematch for a free student.
+      if (apiErrorCode(error) === "DUEL_REMATCH_NEEDS_TASTER") {
+        void openSheet(rival);
+        return;
+      }
+      toast.error(error instanceof Error ? error.message : "Could not send the rematch.");
+    }
+  }
+
+  /* Free duels are one-subject tasters (mockup M1): a free student's rematch
+     of a full paper opens the sheet; a taster rematch goes straight out. */
+  async function openSheet(rival: Rival) {
+    if (!rival.lastDuel) return;
+    if (freeDuel.available === false) {
+      setSheet({ rival, mode: { kind: "used" } });
+      return;
+    }
+    setChecking(rival.opponentId);
+    try {
+      const old = (await getDuelSessionById(rival.lastDuel.sessionId)).session;
+      if (old.isTaster || old.subjects.length <= 1) {
+        await send(rival);
+      } else {
+        setSheet({ rival, mode: { kind: "pick", subjects: old.subjects } });
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not open the rematch.");
+    } finally {
+      setChecking(null);
+    }
+  }
+
+  function onRematch(rival: Rival) {
+    if (freeDuel.isPremium) return send(rival);
+    return openSheet(rival);
+  }
 
   return (
     <section className={s.block}>
@@ -595,43 +654,30 @@ function Rivals({ data }: { data: DuelHomeData }) {
                 <button
                   type="button"
                   className={cn(s.btn, s.line, s.sm, isSent && s.sent)}
-                  disabled={isSent || rematch.isPending || !rival.lastDuel}
-                  onClick={async () => {
-                    if (!rival.lastDuel) return;
-                    try {
-                      const snapshot = await rematch.mutateAsync(
-                        rival.lastDuel.sessionId,
-                      );
-                      setSent((current) => ({
-                        ...current,
-                        [rival.opponentId]: true,
-                      }));
-                      // Both asked: it's one duel now, so go straight in.
-                      if (snapshot.session.participants.length === 2) {
-                        router.push(
-                          `/dashboard/duel/${snapshot.session.code}` as Route,
-                        );
-                      } else {
-                        toast.success(
-                          `Rematch sent. ${rivalFirst} gets 30 minutes to say yes.`,
-                        );
-                      }
-                    } catch (error) {
-                      toast.error(
-                        error instanceof Error
-                          ? error.message
-                          : "Could not send the rematch.",
-                      );
-                    }
-                  }}
+                  disabled={isSent || rematch.isPending || checking !== null || !rival.lastDuel}
+                  onClick={() => void onRematch(rival)}
                 >
-                  {isSent ? "Sent" : "Rematch"}
+                  {isSent ? "Sent" : checking === rival.opponentId ? "One moment" : "Rematch"}
                 </button>
               </div>
             );
           })}
         </div>
       )}
+      {sheet ? (
+        <RematchSheet
+          rivalShort={shortName(sheet.rival.opponentName)}
+          rivalFirst={firstName(sheet.rival.opponentName)}
+          lastLine={lastDuelLine(sheet.rival.lastDuel, firstName(sheet.rival.opponentName))}
+          h2hLine={headToHeadLine(sheet.rival.wins, sheet.rival.losses, firstName(sheet.rival.opponentName))}
+          lastResult={sheet.rival.lastDuel?.result ?? null}
+          mode={sheet.mode}
+          freeDuel={freeDuel}
+          sending={rematch.isPending}
+          onSend={(subject) => void send(sheet.rival, subject)}
+          onClose={() => setSheet(null)}
+        />
+      ) : null}
     </section>
   );
 }
