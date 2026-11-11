@@ -13,7 +13,7 @@ import { ScoreSummary } from "@/features/exam/components/score-summary";
 import { SubjectBreakdown } from "@/features/exam/components/subject-breakdown";
 import { AnswerReview } from "@/features/exam/components/answer-review";
 import { RetakeButton } from "@/features/exam/components/retake-button";
-import { ShareResultCard } from "@/features/exam/components/share-result-card";
+import { ShareResultButton } from "@/features/duel/share/share-result-button";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { ReviewLockedPage } from "@/features/exam/components/review-locked-page";
 import { Button } from "@/components/ui/button";
@@ -274,7 +274,8 @@ export function ResultsPageClient({ examId }: { examId: number }) {
           </Button>
 
           <div className="flex items-center gap-3">
-            <ShareResultCard result={result} />
+            {/* Study sessions show answers as you go, so their score isn't shared. */}
+            {!isStudySession && <ShareResultButton examId={examId} />}
             {isStudySession ? (
               <Button
                 asChild

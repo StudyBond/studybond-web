@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import { duelHomeQueryKey, useDuelFaceOff, useDuelFull, useDuelHome, useRivalAnswers } from "@/features/duel/hooks/use-duel-play";
@@ -12,6 +11,7 @@ import { cn } from "@/lib/utils/cn";
 
 import s from "../ui/duel.module.css";
 import { firstName } from "../ui/parts";
+import { ShareSheet } from "../share/share-sheet";
 import { DuelResult } from "./duel-result";
 import { Marking } from "./marking";
 import { outcomeFor, subjectRows, turnLine } from "./outcome-data";
@@ -60,6 +60,7 @@ export function DuelOutcome({ result, code, profile }: { result: ExamResult; cod
   const faceOff = useDuelFaceOff(completed && duel ? duel.id : null);
   const [rivalQuestion, setRivalQuestion] = useState<number | null>(null);
   const [view, setView] = useState<"marking" | "result" | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const rivalParticipant = duel?.participants.find((p) => p.userId !== profile.id) ?? null;
   const rival = firstName(rivalParticipant?.fullName);
@@ -104,19 +105,9 @@ export function DuelOutcome({ result, code, profile }: { result: ExamResult; cod
     setView("result");
   }
 
-  async function share() {
-    // Phase 4 replaces this with the share sheet and its cards.
-    const verb = facts!.outcome === "W" ? "won" : facts!.outcome === "L" ? "lost" : "drew";
-    const text = `I ${verb} a StudyBond duel ${facts!.myScore}–${facts!.rivalScore}${duel?.isTaster ? " (taster)" : ""}.`;
-    try {
-      if (navigator.share) await navigator.share({ text, url: window.location.origin });
-      else {
-        await navigator.clipboard.writeText(`${text} ${window.location.origin}`);
-        toast.success("Copied. Paste it anywhere.");
-      }
-    } catch {
-      // The student closed the share menu.
-    }
+  function share() {
+    // The share sheet (mockup 11a): cards, result number, challenge link.
+    setShareOpen(true);
   }
 
   if (currentView === "marking" || !rows) {
@@ -159,6 +150,7 @@ export function DuelOutcome({ result, code, profile }: { result: ExamResult; cod
         isPremium={home.data?.freeDuel.isPremium ?? profile.isPremium}
         onShare={share}
       />
+      <ShareSheet examId={result.examId} open={shareOpen} onClose={() => setShareOpen(false)} rivalFirstName={rival} />
     </div>
   );
 }

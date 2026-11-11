@@ -13,6 +13,7 @@ import type { UserProfile } from "@/lib/api/types";
 import { cn } from "@/lib/utils/cn";
 
 import { Marking } from "../result/marking";
+import { ShareSheet } from "../share/share-sheet";
 import { turnLine, type Outcome } from "../result/outcome-data";
 import m from "../result/result.module.css";
 import s from "../ui/duel.module.css";
@@ -35,6 +36,7 @@ function GhostResult({ examId, profile }: { examId: number; profile: UserProfile
   const exam = useExamDetail(examId);
   const home = useDuelHome();
   const [view, setView] = useState<"marking" | "result">("marking");
+  const [shareOpen, setShareOpen] = useState(false);
   const isPremium = home.data?.freeDuel.isPremium ?? profile.isPremium;
   const { data: plan } = useQuery({
     queryKey: ["settings", "subscription-status"],
@@ -165,9 +167,13 @@ function GhostResult({ examId, profile }: { examId: number; profile: UserProfile
         )}
         <div className={m.row}>
           <Link className={cn(s.btn, s.line)} href={`/exams/${examId}/results` as Route}>Review answers</Link>
-          <Link className={cn(s.btn, s.line)} href={"/dashboard/duel" as Route}>Back to Duel</Link>
+          <button type="button" className={cn(s.btn, s.line)} onClick={() => setShareOpen(true)}>
+            Share result
+          </button>
         </div>
+        <Link className={cn(s.btn, s.line, s.wide)} href={"/dashboard/duel" as Route}>Back to Duel</Link>
       </div>
+      <ShareSheet examId={examId} open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );
 }

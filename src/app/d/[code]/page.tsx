@@ -15,10 +15,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const what = invite.isTaster
     ? `A ${invite.subjects[0]} taster, ${invite.totalQuestions} questions`
     : `${invite.subjects.join(", ")}, ${invite.totalQuestions} questions`;
+  const title = `${invite.host.firstName} challenged you to a duel`;
+  const description = `${what} on ${inviteBoardLabel(invite)}. Same paper, same clock.`;
+  // The slip as a link preview (mockup 11h), drawn by /api/og/invite.
+  const image = `/api/og/invite/${invite.code}`;
   return {
-    title: `${invite.host.firstName} challenged you to a duel | StudyBond`,
-    description: `${what} on ${inviteBoardLabel(invite)}. Same paper, same clock.`,
+    title: `${title} | StudyBond`,
+    description,
     robots: { index: false },
+    openGraph: { title, description, url: `/d/${invite.code}`, images: [{ url: image, width: 1200, height: 630, alt: title }] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
