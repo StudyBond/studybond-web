@@ -125,9 +125,24 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
     }
   };
 
+  const saveButton = (
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={!changed || save.isPending}
+          className={cn(styles.save, "flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[10px] bg-[#e09040] text-[#0a0a0a] shadow-[0_4px_24px_rgba(224,144,64,0.15)] transition hover:bg-[#e8a058] disabled:cursor-default disabled:opacity-50 disabled:hover:bg-[#e09040]")}
+        >
+          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {changed ? "Save avatar" : "Saved"}
+        </button>
+  );
+
   return (
-    <div className={cn("sb-ui", styles.root, "relative mx-auto flex min-h-[calc(100dvh-64px)] w-full max-w-[480px] flex-col")}>
-      <header className="flex h-14 flex-none items-center gap-1 border-b border-[var(--rule)] pl-1 pr-2.5">
+    /* A size container: wide enough and the preview moves into a panel on
+       the left that stays in view, with the parts on the right. */
+    <div className={styles.frame}>
+    <div className={cn("sb-ui", styles.root, styles.layout, "relative mx-auto flex min-h-[calc(100dvh-64px)] w-full max-w-[480px] flex-col")}>
+      <header className={cn(styles.header, "flex h-14 flex-none items-center gap-1 border-b border-[var(--rule)] pl-1 pr-2.5")}>
         <Link
           href="/dashboard/settings"
           aria-label="Back to profile"
@@ -135,7 +150,7 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
         >
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className={cn(styles.head, "mr-auto ml-0.5 text-[17px] font-bold")}>Your avatar</h1>
+        <h1 className={cn(styles.head, styles.title, "mr-auto ml-0.5 text-[17px] font-bold")}>Your avatar</h1>
         <button
           type="button"
           onClick={() => {
@@ -147,7 +162,8 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
         </button>
       </header>
 
-      <section aria-label="Preview" className="grid justify-items-center gap-2.5 border-b border-[var(--rule)] bg-[var(--sheet)] px-[18px] pb-[18px] pt-[22px]">
+      <div className={styles.side}>
+      <section aria-label="Preview" className={cn(styles.preview, "grid justify-items-center gap-2.5 border-b border-[var(--rule)] bg-[var(--sheet)] px-[18px] pb-[18px] pt-[22px]")}>
         <div key={bump} className={bump % 2 ? styles.bump : styles.bumpAlt}>
           <Avatar look={look} size={148} label="Your avatar" />
         </div>
@@ -165,7 +181,12 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
         </div>
       </section>
 
-      <div className="flex-1 pb-6">
+      <div className={cn(styles.saveBar, "sticky bottom-0 z-10 flex-none border-t border-[var(--rule)] bg-[var(--desk)] px-4 pb-4 pt-3")}>
+        {saveButton}
+      </div>
+      </div>
+
+      <div className={cn(styles.parts, "flex-1 pb-6")}>
         <Part title="Skin tone">
           <div className="flex flex-wrap gap-2">
             {AVATAR_OPTIONS.skin.map((option) => (
@@ -175,7 +196,7 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
         </Part>
 
         <Part title="Hair" note={covered ? "hidden under your hijab" : undefined}>
-          <div className="grid grid-cols-3 gap-2">
+          <div className={cn(styles.thumbs, "grid grid-cols-3 gap-2")}>
             {AVATAR_OPTIONS.hair.map((option) => (
               <Thumb
                 key={option.id}
@@ -190,7 +211,7 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
         </Part>
 
         <Part title="On your head">
-          <div className="grid grid-cols-3 gap-2">
+          <div className={cn(styles.thumbs, "grid grid-cols-3 gap-2")}>
             {AVATAR_OPTIONS.head.map((option) => (
               <Thumb key={option.id} label={option.label} on={look.head === option.id} look={{ ...look, head: option.id }} onPick={() => set({ head: option.id })} />
             ))}
@@ -239,7 +260,7 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
         </Part>
 
         <Part title="Frames" note="earned, not bought">
-          <div className="grid gap-2">
+          <div className={cn(styles.frames, "grid gap-2")}>
             {frames.map((frame) => {
               const on = look.frame === frame.id;
               const wearing = on && frame.earned;
@@ -287,19 +308,8 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
         </Part>
       </div>
 
-      <div className="sticky bottom-0 z-10 flex-none border-t border-[var(--rule)] bg-[var(--desk)] px-4 pb-4 pt-3">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!changed || save.isPending}
-          className={cn(styles.save, "flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[10px] bg-[#e09040] text-[#0a0a0a] shadow-[0_4px_24px_rgba(224,144,64,0.15)] transition hover:bg-[#e8a058] disabled:cursor-default disabled:opacity-50 disabled:hover:bg-[#e09040]")}
-        >
-          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {changed ? "Save avatar" : "Saved"}
-        </button>
-      </div>
-
       <BoardToast toast={toast} />
+    </div>
     </div>
   );
 }

@@ -76,10 +76,14 @@ export function LeaderboardScreen(props: Readonly<ScreenProps>) {
   }
 
   return (
+    /* The frame is a size container: wide enough (a laptop, not a phone
+       turned sideways) and the screen splits into two columns. */
+    <div className={styles.frame}>
     <div className={cn("sb-ui", styles.root, "mx-auto w-full max-w-[560px] px-3.5 pb-24 pt-3")}>
-      <h1 className={cn(styles.head, "mb-3 px-1 text-[17px] font-bold")}>Leaderboard</h1>
+      <header className={styles.top}>
+      <h1 className={cn(styles.head, styles.title, "mb-3 px-1 text-[17px] font-bold")}>Leaderboard</h1>
 
-      <div role="group" aria-label="Which leaderboard" className="grid grid-cols-3 gap-0.5 rounded-xl bg-[var(--sheet)] p-[3px] ring-1 ring-inset ring-[var(--rule)]">
+      <div role="group" aria-label="Which leaderboard" className={cn(styles.tabs, "grid grid-cols-3 gap-0.5 rounded-xl bg-[var(--sheet)] p-[3px] ring-1 ring-inset ring-[var(--rule)]")}>
         {tabs.map(([id, label]) => (
           <button
             key={id}
@@ -102,10 +106,11 @@ export function LeaderboardScreen(props: Readonly<ScreenProps>) {
         ))}
       </div>
 
-      <div className="mx-1 mt-3.5 flex items-baseline justify-between gap-2.5 text-[13px] text-[var(--ink-3)]">
+      <div className={cn(styles.when, "mx-1 mt-3.5 flex items-baseline justify-between gap-2.5 text-[13px] text-[var(--ink-3)]")}>
         <span className="min-w-0">{whenLeft}</span>
         {countdown ? <b className={cn(styles.num, "shrink-0 text-sm font-bold text-[var(--ink)]")}>{countdown}</b> : null}
       </div>
+      </header>
 
       {query.isLoading ? (
         <div className="flex h-[40vh] items-center justify-center">
@@ -119,7 +124,7 @@ export function LeaderboardScreen(props: Readonly<ScreenProps>) {
           </button>
         </div>
       ) : tab === "all" ? (
-        <AllTime data={data} />
+        <AllTime data={data} onWeek={() => setTab("week")} />
       ) : tab === "group" && !data.group?.value ? (
         <GroupPrompt departmentBoard={props.departmentBoard} />
       ) : data.me.rank === null && tab === "week" ? (
@@ -127,6 +132,23 @@ export function LeaderboardScreen(props: Readonly<ScreenProps>) {
       ) : (
         <Ranked data={data} tab={tab} {...props} />
       )}
+    </div>
+    </div>
+  );
+}
+
+/* One column on a phone: lead (your card), then main (the list), then tail.
+   On a wide screen: main on the left, lead and tail in a column on the
+   right. The side wrapper is `display: contents` on a phone so its two
+   children can sit either side of the list. */
+function Split({ lead, main, tail }: { lead?: ReactNode; main: ReactNode; tail?: ReactNode }) {
+  return (
+    <div className={styles.split}>
+      <div className={styles.main}>{main}</div>
+      <div className={styles.side}>
+        {lead ? <div className={styles.lead}>{lead}</div> : null}
+        {tail ? <div className={styles.tail}>{tail}</div> : null}
+      </div>
     </div>
   );
 }
@@ -158,8 +180,8 @@ function Ranked({ data, tab, viewerId, fullPaperSp, departmentBoard }: { data: L
   }
 
   return (
-    <>
-      {me ? (
+    <Split
+      lead={me ? (
         <section aria-live="polite" className="mt-3 rounded-2xl border border-white/[0.06] bg-[var(--sheet)] px-4 pb-3.5 pt-4">
           <h2 className={cn(styles.head, "text-[22px] font-extrabold")}>
             You&apos;re #{data.me.rank}{" "}
@@ -187,7 +209,7 @@ function Ranked({ data, tab, viewerId, fullPaperSp, departmentBoard }: { data: L
           </div>
         </section>
       ) : null}
-
+      main={
       <BoardList
         data={data}
         viewerId={viewerId}
@@ -203,9 +225,9 @@ function Ranked({ data, tab, viewerId, fullPaperSp, departmentBoard }: { data: L
         belowNoun={group ? (departmentBoard ? `${groupName.toLowerCase()}` : `${groupName} hopefuls`) : "students"}
         rankLabel={group ? (departmentBoard ? "in your department" : "in your course") : "this week"}
       />
-
-      {tab === "week" && data.lastWeek ? <LastWeek data={data} /> : null}
-    </>
+      }
+      tail={tab === "week" && data.lastWeek ? <LastWeek data={data} /> : null}
+    />
   );
 }
 
@@ -333,9 +355,9 @@ function BoardList({ data, viewerId, animate, title, belowNoun, lineLabel, rankL
                   {[row.rank === 1 && second ? `Leads by ${fmt(row.points - second.points)}` : null, row.subtitle].filter(Boolean).join(" · ")}
                 </span>
               </span>
-              <span className="grid min-w-[74px] justify-items-end gap-1">
+              <span className="grid min-w-[var(--bar-w)] justify-items-end gap-1">
                 <b className={cn(styles.num, "text-[15px] font-bold")}>{fmt(row.points)}</b>
-                <span className={cn(styles.bar, "block h-1 w-[74px] overflow-hidden rounded-sm bg-[var(--rule)]")} aria-hidden="true">
+                <span className={cn(styles.bar, "block h-1 w-[var(--bar-w)] overflow-hidden rounded-sm bg-[var(--rule)]")} aria-hidden="true">
                   <i className="block h-full rounded-sm" style={{ width: `${Math.round((row.points / top) * 100)}%`, background: isMe ? "var(--bar-me)" : "var(--bar)" }} />
                 </span>
               </span>
@@ -415,7 +437,7 @@ function LastWeek({ data }: { data: LeaderboardBoard }) {
 
 /* ─── All time ─── */
 
-function AllTime({ data }: { data: LeaderboardBoard }) {
+function AllTime({ data, onWeek }: { data: LeaderboardBoard; onWeek: () => void }) {
   const top = data.entries.slice(0, data.meritList.size);
   const shownIds = new Set(top.map((entry) => entry.userId));
   const tail = [data.ladder.above, data.me.entry, data.ladder.below].filter(
@@ -423,6 +445,40 @@ function AllTime({ data }: { data: LeaderboardBoard }) {
   );
   const gap = tail.length > 0 ? tail[0].rank - top.length - 1 : 0;
 
+  return (
+    <Split
+      main={<AllTimeList data={data} top={top} tail={tail} gap={gap} />}
+      lead={
+        /* Wide screens only: the phone already says this under the list. */
+        <section className={cn(styles.wideOnly, "rounded-2xl border border-white/[0.06] bg-[var(--sheet)] px-4 pb-4 pt-4")}>
+          {data.me.rank !== null ? (
+            <h2 className={cn(styles.head, "text-[22px] font-extrabold")}>
+              You&apos;re #{data.me.rank}{" "}
+              <small className="ml-1 text-sm font-semibold text-[var(--ink-3)]">of {fmt(data.totalParticipants)}</small>
+            </h2>
+          ) : (
+            <h2 className={cn(styles.head, "text-xl font-bold")}>Not on the all-time board yet</h2>
+          )}
+          <p className="mt-2 text-[13.5px] text-[var(--ink-2)]">
+            {data.me.rank !== null ? (
+              <>
+                <b className="text-[var(--ink)]">{fmt(data.me.points)} SP</b> since you joined.{" "}
+              </>
+            ) : (
+              "Your first SP puts you on it. "
+            )}
+            All time never resets. The weekly board is where you can climb fast.
+          </p>
+          <button type="button" onClick={onWeek} className={cn(styles.btn, styles.btnLine, "mt-3 w-full")}>
+            See this week
+          </button>
+        </section>
+      }
+    />
+  );
+}
+
+function AllTimeList({ data, top, tail, gap }: { data: LeaderboardBoard; top: BoardEntry[]; tail: BoardEntry[]; gap: number }) {
   return (
     <div className="pt-[18px]">
       <div className="mx-1 mb-1.5 flex items-baseline justify-between">
@@ -437,17 +493,19 @@ function AllTime({ data }: { data: LeaderboardBoard }) {
         ) : null}
         {tail.map((entry) => <StaticRow key={entry.userId} entry={entry} />)}
       </ol>
-      {data.me.rank === null ? (
-        <p className="mx-1 mt-2 text-[12.5px] text-[var(--ink-3)]">You&apos;re not on the all-time board yet. Your first SP puts you on it.</p>
-      ) : null}
-      <p className="mx-1 mt-1.5 text-[12.5px] text-[var(--ink-3)]">All time never resets. The weekly board is where you can climb fast.</p>
+      <div className={styles.narrowOnly}>
+        {data.me.rank === null ? (
+          <p className="mx-1 mt-2 text-[12.5px] text-[var(--ink-3)]">You&apos;re not on the all-time board yet. Your first SP puts you on it.</p>
+        ) : null}
+        <p className="mx-1 mt-1.5 text-[12.5px] text-[var(--ink-3)]">All time never resets. The weekly board is where you can climb fast.</p>
+      </div>
     </div>
   );
 }
 
-function StaticRow({ entry }: { entry: BoardEntry }) {
+function StaticRow({ entry, className }: { entry: BoardEntry; className?: string }) {
   return (
-    <li className={cn("grid h-14 grid-cols-[40px_36px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] pl-1 pr-1.5", entry.isCurrentUser && "bg-[var(--sheet)]")}>
+    <li className={cn("grid h-14 grid-cols-[40px_36px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] pl-1 pr-1.5", entry.isCurrentUser && "bg-[var(--sheet)]", className)}>
       <span className={cn(styles.rank, "justify-self-center", entry.rank <= 3 ? "text-[27px] text-[var(--ink)]" : "text-xl text-[var(--ink-3)]")}>{entry.rank}</span>
       <Avatar look={entry.avatar} size={36} />
       <span className="grid min-w-0">
@@ -465,7 +523,7 @@ function StaticRow({ entry }: { entry: BoardEntry }) {
 
 function GroupPrompt({ departmentBoard }: { departmentBoard: boolean }) {
   return (
-    <section className="mt-3 rounded-2xl border border-white/[0.06] bg-[var(--sheet)] p-4">
+    <section className={cn(styles.promptCard, "mt-3 rounded-2xl border border-white/[0.06] bg-[var(--sheet)] p-4")}>
       <h2 className={cn(styles.head, "text-xl font-bold")}>
         {departmentBoard ? "Which department are you in?" : "Which course are you aiming for?"}
       </h2>
@@ -487,9 +545,12 @@ function GroupPrompt({ departmentBoard }: { departmentBoard: boolean }) {
 /* ─── Not on this week's board yet (mockup 14a) ─── */
 
 function NotOnBoardYet({ data, isPremium }: { data: LeaderboardBoard; isPremium: boolean }) {
-  const top = useMemo(() => data.entries.slice(0, 5), [data.entries]);
+  // Five on a phone; the wide list has room for the whole top 10.
+  const top = useMemo(() => data.entries.slice(0, 10), [data.entries]);
   return (
-    <>
+    <Split
+      tail={data.lastWeek ? <div className={styles.wideOnly}><LastWeek data={data} /></div> : null}
+      lead={
       <section className="mt-3 rounded-2xl border border-white/[0.06] bg-[var(--sheet)] px-4 pb-4 pt-[18px]">
         <span className="inline-flex items-center gap-2 rounded-full bg-[var(--sheet-2)] py-1 pl-1 pr-2.5 text-[12.5px] font-semibold text-[var(--ink-2)]">
           <span className={cn(styles.num, "grid h-[26px] w-[26px] place-items-center rounded-full border-[1.5px] border-dashed border-white/25 text-xs text-[var(--ink-3)]")}>?</span>
@@ -520,7 +581,9 @@ function NotOnBoardYet({ data, isPremium }: { data: LeaderboardBoard; isPremium:
           </p>
         ) : null}
       </section>
-
+      }
+      main={
+      <>
       {top.length > 0 ? (
         <>
           <div className="mx-1 mb-1.5 mt-[22px] flex items-baseline justify-between">
@@ -528,7 +591,7 @@ function NotOnBoardYet({ data, isPremium }: { data: LeaderboardBoard; isPremium:
             <span className="text-[12.5px] text-[var(--ink-3)]">SP</span>
           </div>
           <ol>
-            {top.map((entry) => <StaticRow key={entry.userId} entry={entry} />)}
+            {top.map((entry, index) => <StaticRow key={entry.userId} entry={entry} className={index >= 5 ? styles.wideOnly : undefined} />)}
           </ol>
         </>
       ) : null}
@@ -541,7 +604,9 @@ function NotOnBoardYet({ data, isPremium }: { data: LeaderboardBoard; isPremium:
         </span>
         <span className={cn(styles.num, "font-bold text-[var(--ink-3)]")}>0</span>
       </div>
-    </>
+      </>
+      }
+    />
   );
 }
 

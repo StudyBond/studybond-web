@@ -29,6 +29,99 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ─── Layout: one column on a phone, preview panel + parts on a laptop ───
+   The frame is a size container, so the switch follows the width the shell
+   gives the screen (sidebar open or closed), not the window. */
+.frame {
+  container-type: inline-size;
+}
+
+/* On a phone the side wrapper disappears: preview on top, the parts, then
+   the Save bar stuck to the bottom of the screen. */
+.side {
+  display: contents;
+}
+
+.preview {
+  order: 1;
+}
+
+.parts {
+  order: 2;
+}
+
+.saveBar {
+  order: 3;
+}
+
+@container (min-width: 860px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 40px;
+    max-width: none;
+    min-height: 0;
+    align-items: start;
+  }
+
+  .header {
+    grid-column: 1 / -1;
+    height: auto;
+    margin-bottom: 22px;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .title {
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  /* The preview and Save stay in view while you scroll the parts. */
+  .side {
+    position: sticky;
+    top: calc(var(--sb-topbar-height, 64px) + 20px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .preview {
+    padding: 30px 20px 22px;
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+  }
+
+  .saveBar {
+    position: static;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .parts {
+    padding-bottom: 40px;
+  }
+
+  .parts > section {
+    padding: 0 0 22px;
+  }
+
+  .parts > section + section {
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .thumbs {
+    grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  }
+
+  .frames {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Button type sizes live here, not in Tailwind classes: globals.css has an
    unlayered `button { font: inherit }`, which beats Tailwind's layered
    utilities, so text-[13px] or font-bold on a button is ignored. */
