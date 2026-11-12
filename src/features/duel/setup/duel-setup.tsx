@@ -212,166 +212,212 @@ export function DuelSetup({ profile }: { profile: UserProfile }) {
           : "That's the most a mixed duel takes."
         : "Tap to add or remove. Numbers show the order on the paper.");
 
+  const sourceLabel = taster
+    ? "Taster set, the same for both of you"
+    : SOURCES.find((option) => option.id === source)?.label ?? "";
+
   return (
-    <div className={cn("sb-ui", s.page)}>
-      <header className={s.top}>
-        <Link className={s.iconBtn} href={"/dashboard/duel" as Route} aria-label="Back to Duel">
-          <BackIcon />
-        </Link>
-        <h1 className={s.topTitle}>{targetName ? `Challenge ${shortName(targetName)}` : "Challenge a friend"}</h1>
-      </header>
+    <div className={u.frame}>
+      <div className={cn("sb-ui", s.page, u.page)}>
+        <header className={cn(s.top, u.top)}>
+          <Link className={s.iconBtn} href={"/dashboard/duel" as Route} aria-label="Back to Duel">
+            <BackIcon />
+          </Link>
+          <h1 className={cn(s.topTitle, u.title)}>{targetName ? `Challenge ${shortName(targetName)}` : "Challenge a friend"}</h1>
+        </header>
 
-      <div className={u.form}>
-        {targetName && (
-          <section className={u.field}>
-            <div className={u.to}>
-              <DuelAvatar size={44} />
-              <div>
-                <b>{shortName(targetName)}</b>
-                <small>Gets your challenge on their Duel page. They have 30 minutes to say yes.</small>
+        {/* Phone: one column. Laptop: the form on the left; the paper you are
+            about to send and the button on the right, always in view. */}
+        <div className={u.body}>
+          <div className={u.form}>
+            {targetName && (
+              <section className={cn(u.field, u.toField)}>
+                <div className={u.to}>
+                  <DuelAvatar size={44} />
+                  <div>
+                    <b>{shortName(targetName)}</b>
+                    <small>Gets your challenge on their Duel page. They have 30 minutes to say yes.</small>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            <section className={u.field}>
+              <button
+                type="button"
+                className={cn(u.taster, taster && u.on, !isPremium && u.locked)}
+                role="switch"
+                aria-checked={taster}
+                onClick={toggleTaster}
+              >
+                <span>
+                  <b>Taster duel</b>
+                  <small>
+                    {!isPremium
+                      ? "Free duels are always tasters: one subject, 15 questions."
+                      : taster
+                        ? "On. Free friends can join. One subject, 15 questions from the taster set."
+                        : "Switch on so a free friend can join. One subject, 15 questions."}
+                  </small>
+                </span>
+                <span className={u.tsw} aria-hidden="true"><i /></span>
+              </button>
+            </section>
+
+            <section className={u.field}>
+              <div className={u.fHead}>
+                <h2>Subjects</h2>
+                <span className={u.count}><b>{paper.length}</b> of {max}</span>
               </div>
-            </div>
-          </section>
-        )}
-
-        <section className={u.field}>
-          <button
-            type="button"
-            className={cn(u.taster, taster && u.on, !isPremium && u.locked)}
-            role="switch"
-            aria-checked={taster}
-            onClick={toggleTaster}
-          >
-            <span>
-              <b>Taster duel</b>
-              <small>
-                {!isPremium
-                  ? "Free duels are always tasters: one subject, 15 questions."
-                  : taster
-                    ? "On. Free friends can join. One subject, 15 questions from the taster set."
-                    : "Switch on so a free friend can join. One subject, 15 questions."}
-              </small>
-            </span>
-            <span className={u.tsw} aria-hidden="true"><i /></span>
-          </button>
-        </section>
-
-        <section className={u.field}>
-          <div className={u.fHead}>
-            <h2>Subjects</h2>
-            <span className={u.count}><b>{paper.length}</b> of {max}</span>
-          </div>
-          {bigBoard ? (
-            <BigSubjectPicker
-              subjects={subjects}
-              picked={paper}
-              max={max}
-              department={profile.department ?? null}
-              taster={taster}
-              onToggle={toggle}
-              nudge={nudge}
-            />
-          ) : (
-            <div className={u.slist} role="group" aria-label="Pick your subjects">
-              {subjects.map((subject) => (
-                <SubjectRow
-                  key={subject.name}
-                  subject={subject}
-                  order={paper.indexOf(subject.name)}
-                  full={!taster && !paper.includes(subject.name) && paper.length >= max}
+              {bigBoard ? (
+                <BigSubjectPicker
+                  subjects={subjects}
+                  picked={paper}
+                  max={max}
+                  department={profile.department ?? null}
                   taster={taster}
-                  nudge={nudge === subject.name}
-                  onToggle={() => toggle(subject.name)}
+                  onToggle={toggle}
+                  nudge={nudge}
                 />
-              ))}
-            </div>
-          )}
-          <div className={u.paperLine}>
-            <span>Your paper: <b>{paper.length ? paper.join(", ") : "nothing yet"}</b></span>
-            <span className="ui-num">{questions} Qs</span>
-          </div>
-          <p className={cn(u.hint, warn && u.warn)} aria-live="polite">{subjectNote}</p>
-        </section>
+              ) : (
+                <div className={u.slist} role="group" aria-label="Pick your subjects">
+                  {subjects.map((subject) => (
+                    <SubjectRow
+                      key={subject.name}
+                      subject={subject}
+                      order={paper.indexOf(subject.name)}
+                      full={!taster && !paper.includes(subject.name) && paper.length >= max}
+                      taster={taster}
+                      nudge={nudge === subject.name}
+                      onToggle={() => toggle(subject.name)}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className={u.paperLine}>
+                <span>Your paper: <b>{paper.length ? paper.join(", ") : "nothing yet"}</b></span>
+                <span className="ui-num">{questions} Qs</span>
+              </div>
+              <p className={cn(u.hint, warn && u.warn)} aria-live="polite">{subjectNote}</p>
+            </section>
 
-        {taster ? (
-          <section className={u.field}>
-            <div className={u.fHead}><h2>Questions and time</h2></div>
-            <div className={u.fixed}>
-              <span>From the taster set, the same for both of you. We pick ones neither of you has seen, where we can.</span>
-              <b>{TASTER_QUESTIONS} · {TASTER_MINUTES} min</b>
-            </div>
-          </section>
-        ) : (
-          <>
-            <section className={u.field}>
-              <div className={u.fHead}><h2>Questions</h2></div>
-              <div className={u.seg}>
-                {SOURCES.map((option) => {
-                  const on = source === option.id;
-                  return (
-                    <button key={option.id} type="button" className={cn(u.opt, on && u.on)} aria-pressed={on} onClick={() => pickSource(option.id)}>
-                      <span className={u.dot} aria-hidden="true" />
-                      <span>
-                        <b>{option.label}</b>
-                        <small>{option.id === "MIXED" && mixedMax < maxSubjects ? `Some of each, up to ${mixedMax} subjects` : option.note(board)}</small>
-                      </span>
-                      {option.tag ? <span className={u.tag}>{option.tag}</span> : <span />}
+            {taster ? (
+              <section className={u.field}>
+                <div className={u.fHead}><h2>Questions and time</h2></div>
+                <div className={u.fixed}>
+                  <span>From the taster set, the same for both of you. We pick ones neither of you has seen, where we can.</span>
+                  <b>{TASTER_QUESTIONS} · {TASTER_MINUTES} min</b>
+                </div>
+              </section>
+            ) : (
+              <>
+                <section className={u.field}>
+                  <div className={u.fHead}><h2>Questions</h2></div>
+                  <div className={u.seg}>
+                    {SOURCES.map((option) => {
+                      const on = source === option.id;
+                      return (
+                        <button key={option.id} type="button" className={cn(u.opt, on && u.on)} aria-pressed={on} onClick={() => pickSource(option.id)}>
+                          <span className={u.dot} aria-hidden="true" />
+                          <span>
+                            <b>{option.label}</b>
+                            <small>{option.id === "MIXED" && mixedMax < maxSubjects ? `Some of each, up to ${mixedMax} subjects` : option.note(board)}</small>
+                          </span>
+                          {option.tag ? <span className={u.tag}>{option.tag}</span> : <span />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className={u.field}>
+                  <div className={u.fHead}><h2>Time</h2><span>{questions} questions</span></div>
+                  <div className={u.stepper}>
+                    <button type="button" aria-label="Less time" disabled={!options || seconds === null || seconds <= options.minSeconds} onClick={() => step(-1)}>
+                      <MinusIcon />
                     </button>
-                  );
-                })}
-              </div>
-            </section>
+                    <output>
+                      <b>{minutes ?? "–"}</b>
+                      <span>
+                        {diff === 0 ? "minutes · the normal time" : diff > 0 ? `minutes · ${diff} more than normal` : `minutes · ${-diff} less than normal`}
+                      </span>
+                    </output>
+                    <button type="button" aria-label="More time" disabled={!options || seconds === null || seconds >= options.maxSeconds} onClick={() => step(1)}>
+                      <PlusIcon />
+                    </button>
+                  </div>
+                </section>
+              </>
+            )}
 
             <section className={u.field}>
-              <div className={u.fHead}><h2>Time</h2><span>{questions} questions</span></div>
-              <div className={u.stepper}>
-                <button type="button" aria-label="Less time" disabled={!options || seconds === null || seconds <= options.minSeconds} onClick={() => step(-1)}>
-                  <MinusIcon />
-                </button>
-                <output>
-                  <b>{minutes ?? "–"}</b>
-                  <span>
-                    {diff === 0 ? "minutes · the normal time" : diff > 0 ? `minutes · ${diff} more than normal` : `minutes · ${-diff} less than normal`}
-                  </span>
-                </output>
-                <button type="button" aria-label="More time" disabled={!options || seconds === null || seconds >= options.maxSeconds} onClick={() => step(1)}>
-                  <PlusIcon />
-                </button>
+              <div className={u.fHead}>
+                <h2><label htmlFor="duel-name">Name</label></h2>
+                <span>optional</span>
+              </div>
+              <div className={u.namebox}>
+                <input
+                  id="duel-name"
+                  type="text"
+                  maxLength={40}
+                  placeholder="e.g. Saturday paper"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+                <button type="button" onClick={rollName}>Make one up</button>
               </div>
             </section>
-          </>
-        )}
-
-        <section className={u.field}>
-          <div className={u.fHead}>
-            <h2><label htmlFor="duel-name">Name</label></h2>
-            <span>optional</span>
           </div>
-          <div className={u.namebox}>
-            <input
-              id="duel-name"
-              type="text"
-              maxLength={40}
-              placeholder="e.g. Saturday paper"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-            <button type="button" onClick={rollName}>Make one up</button>
-          </div>
-        </section>
-      </div>
 
-      <div className={cn(u.foot, u.stickyBar)}>
-        <p className={cn(warn && u.warn)} aria-live="polite">
-          {warn
-            ? warn
-            : taster
-            ? "Anyone can join, free or premium. A free friend uses their free duel for the week."
-            : "Your friend needs premium and 2 finished exams to join. Free friends can only join tasters."}
-        </p>
-        <button type="button" className={cn(s.btn, s.ink, s.wide)} disabled={busy || paper.length === 0} onClick={submit}>
-          {busy ? "Printing…" : targetName ? `Send the challenge to ${firstName(targetName)}` : "Make the duel slip"}
-        </button>
+          <div className={u.side}>
+            <section className={u.summary} aria-label="Your paper">
+              {targetName ? (
+                <div className={u.sumTo}>
+                  <DuelAvatar size={36} />
+                  <span>
+                    <b>To {shortName(targetName)}</b>
+                    <small>They have 30 minutes to say yes.</small>
+                  </span>
+                </div>
+              ) : (
+                <h2 className={u.sumHead}>{taster ? "Your taster duel" : "Your paper"}</h2>
+              )}
+              {paper.length > 0 ? (
+                <ol className={u.sumList}>
+                  {paper.map((nameOf, index) => (
+                    <li key={nameOf}>
+                      <span className={u.sumN}>{index + 1}</span>
+                      <span className={u.sumName}>{nameOf}</span>
+                      <span className="ui-num">{taster ? TASTER_QUESTIONS : bySubject.get(nameOf)?.questionCount ?? 0} Qs</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className={u.sumEmpty}>No subject yet. Pick one on the left.</p>
+              )}
+              <p className={u.sumTotal}>
+                <b className="ui-num">{questions}</b> questions · <b className="ui-num">{minutes ?? "–"}</b> min
+              </p>
+              <p className={u.sumMeta}>
+                {sourceLabel}
+                {name.trim() ? <> · &ldquo;{name.trim()}&rdquo;</> : null}
+              </p>
+            </section>
+
+            <div className={cn(u.foot, u.stickyBar)}>
+              <p className={cn(warn && u.warn)} aria-live="polite">
+                {warn
+                  ? warn
+                  : taster
+                  ? "Anyone can join, free or premium. A free friend uses their free duel for the week."
+                  : "Your friend needs premium and 2 finished exams to join. Free friends can only join tasters."}
+              </p>
+              <button type="button" className={cn(s.btn, s.ink, s.wide)} disabled={busy || paper.length === 0} onClick={submit}>
+                {busy ? "Printing…" : targetName ? `Send the challenge to ${firstName(targetName)}` : "Make the duel slip"}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,24 @@
 /* Challenge a friend (mockup board 2). Tokens from `sb-ui` in globals.css. */
 
+/* ─── Layout: one column on a phone, two on a laptop ───
+   The frame is a size container (named so the shared subject picker can
+   follow it too), so the switch follows the width the shell actually gives
+   the page, sidebar open or closed, not the window. */
+.frame {
+  container: duelpage / inline-size;
+}
+
+/* On a phone the side wrapper disappears, so the sticky bar keeps the whole
+   form as its scroll range. The paper summary is laptop only: on a phone
+   the "Your paper" line under the subjects does that job. */
+.side {
+  display: contents;
+}
+
+.summary {
+  display: none;
+}
+
 .form {
   padding: 6px 18px 28px;
 }
@@ -479,15 +498,200 @@
   }
 }
 
-/* Laptop: the form sits in a column with the paper summary beside it. */
-@media (min-width: 1024px) {
+/* ─── Laptop: the form on the left; the paper and the button on the right,
+   in view while the form scrolls. Doubled classes beat the shared
+   duel.module.css rules whatever order the two files load in. ─── */
+@container duelpage (min-width: 860px) {
+  .page.page {
+    max-width: none;
+    padding-bottom: 32px;
+  }
+
+  .top.top {
+    gap: 8px;
+    height: auto;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  /* Pull the back button left so its arrow lines up with the columns
+     below. */
+  .top.top > :first-child {
+    margin-left: -12px;
+  }
+
+  .title.title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    column-gap: 36px;
+    align-items: start;
+    margin-top: 4px;
+  }
+
   .form {
-    padding: 6px 0 28px;
+    padding: 0 0 8px;
+  }
+
+  /* "To Tobi" moves into the summary on the right. */
+  .toField {
+    display: none;
+  }
+
+  .slist {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .paperLine {
+    display: none;
+  }
+
+  .stepper {
+    max-width: 400px;
+  }
+
+  .namebox {
+    max-width: 520px;
+  }
+
+  .side {
+    position: sticky;
+    top: calc(var(--sb-topbar-height, 56px) + 2px);
+    display: flex;
+    flex-direction: column;
+    padding-top: 18px;
+  }
+
+  .summary {
+    display: block;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--ui-sheet);
+    box-shadow: inset 0 0 0 1px var(--ui-rule);
   }
 
   .foot {
-    padding: 14px 0 18px;
+    position: static;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 0 0;
+    border-top: 0;
+    background: transparent;
   }
+
+  /* The note goes under the button. */
+  .foot p {
+    order: 2;
+    margin: 10px 2px 0;
+    text-align: left;
+  }
+}
+
+/* ─── The paper summary (laptop) ─── */
+.sumHead {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.sumTo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sumTo span {
+  display: grid;
+  min-width: 0;
+}
+
+.sumTo b {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.sumTo small {
+  font-size: 12.5px;
+  color: var(--ui-ink-3);
+}
+
+.sumList {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sumList li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 14px;
+}
+
+.sumList li > :last-child {
+  font-size: 13px;
+  color: var(--ui-ink-3);
+}
+
+.sumN {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ui-mark);
+  color: var(--ui-on-mark);
+  font-family: var(--ui-num);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sumName {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sumEmpty {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ui-ink-3);
+}
+
+.sumTotal {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--ui-rule);
+  font-size: 14px;
+  color: var(--ui-ink-2);
+}
+
+.sumTotal b {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ui-ink);
+}
+
+.sumMeta {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--ui-ink-3);
+  overflow-wrap: anywhere;
 }
 
 /* Phones: the app's bottom menu covers the last 70px, so the sticky bar

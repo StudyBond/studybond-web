@@ -314,6 +314,24 @@
   }
 }
 
+/* Laptop: the Duel pages put the picker in a wide left column (the
+   duelpage container is set on Race a ghost and Challenge a friend), so the
+   list goes two across. A language group takes the full width. */
+@container duelpage (min-width: 860px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .groupWrap {
+    grid-column: 1 / -1;
+  }
+
+  .nested {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .slotOn,
   .list,

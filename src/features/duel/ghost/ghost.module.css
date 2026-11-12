@@ -1,7 +1,34 @@
 /* Race a ghost (mockup 12b). */
 
-.scroll {
-  padding: 16px 16px 20px;
+/* ─── Layout: one column on a phone, two on a laptop ───
+   The frame is a size container (named so the shared subject picker can
+   follow it too), so the switch follows the width the shell actually gives
+   the page, sidebar open or closed, not the window. */
+.frame {
+  container: duelpage / inline-size;
+}
+
+.titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.sub {
+  display: none;
+}
+
+.main {
+  padding: 16px 16px 0;
+}
+
+/* On a phone the side wrapper disappears, so the sticky Start bar keeps the
+   whole page as its scroll range. */
+.side {
+  display: contents;
+}
+
+.ghostPart {
+  padding: 0 16px;
 }
 
 .intro {
@@ -141,6 +168,10 @@
   color: var(--ui-ink-3);
 }
 
+.fine {
+  margin: 12px 18px 20px;
+}
+
 .foot {
   position: sticky;
   bottom: 0;
@@ -186,6 +217,114 @@
 @media (prefers-reduced-motion: reduce) {
   .ghost {
     animation: none;
+  }
+}
+
+/* Laptop: subjects on the left; the ghost, the summary and Start on the
+   right, in view while the subjects scroll. Doubled classes beat the shared
+   duel.module.css rules whatever order the two files load in. */
+@container duelpage (min-width: 860px) {
+  .page.page {
+    max-width: none;
+    padding-bottom: 32px;
+  }
+
+  .top.top {
+    align-items: flex-start;
+    gap: 8px;
+    height: auto;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  /* Pull the back button left so its arrow lines up with the columns
+     below. */
+  .top.top > :first-child {
+    margin-left: -12px;
+  }
+
+  .title.title {
+    margin: 5px 0 0;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .sub {
+    display: block;
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--ui-ink-2);
+  }
+
+  .body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    column-gap: 36px;
+    align-items: start;
+    margin-top: 18px;
+  }
+
+  .main,
+  .ghostPart {
+    padding: 0;
+  }
+
+  .intro {
+    display: none;
+  }
+
+  .h {
+    margin: 0 2px 12px;
+  }
+
+  .slist {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .srow {
+    min-height: 56px;
+  }
+
+  /* Tighter ghost cards, so Start fits on a 1280 x 580 laptop view. */
+  .levels {
+    gap: 6px;
+  }
+
+  .lvl {
+    padding: 10px 12px;
+  }
+
+  .lvl small {
+    line-height: 1.35;
+  }
+
+  .side {
+    position: sticky;
+    top: calc(var(--sb-topbar-height, 56px) + 20px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .foot {
+    order: 2;
+    position: static;
+    margin-top: 12px;
+    padding: 12px 0 0;
+    background: transparent;
+  }
+
+  .foot p {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  /* The small print goes under the button, out of the way. */
+  .fine {
+    order: 3;
+    margin: 14px 2px 0;
   }
 }
 

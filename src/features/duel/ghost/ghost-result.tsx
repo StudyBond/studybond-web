@@ -103,7 +103,7 @@ function GhostResult({ examId, profile }: { examId: number; profile: UserProfile
   const free = home.data?.freeDuel;
 
   return (
-    <div className={cn("sb-ui", s.page)}>
+    <div className={cn("sb-ui", s.page, m.wideResult)}>
       <header className={s.top}>
         <Link className={s.iconBtn} href={"/dashboard/duel" as Route} aria-label="Back to Duel">
           <BackIcon />
@@ -111,67 +111,75 @@ function GhostResult({ examId, profile }: { examId: number; profile: UserProfile
         <h1 className={s.topTitle}>Ghost race result</h1>
       </header>
 
-      <section className={cn(m.verdict, outcome !== "L" && m.verdictJolt)}>
-        {outcome !== "L" && (
-          <span className={cn(m.stamp, outcome === "W" ? m.stampWon : m.stampDraw)} aria-hidden="true">{outcome === "W" ? "WON" : "DRAW"}</span>
-        )}
-        <p className={m.kick}>{data.subject ?? "Ghost race"} · {data.totalQuestions} questions{data.isTaster ? " · Taster" : ""}</p>
-        <h2 className={m.head}>{head}</h2>
-        <div className={m.scoreline} aria-label={`You ${data.myScore}, ghost ${data.ghostScore}`}>
-          <div className={cn(m.slSide, data.myScore < data.ghostScore && m.lose)}>
-            <div className={m.ringY}><DuelAvatar self size={52} /></div>
-            <b>{data.myScore}</b>
-            <span>You</span>
-          </div>
-          <span className={m.slDash} aria-hidden="true">–</span>
-          <div className={cn(m.slSide, data.ghostScore < data.myScore && m.lose)}>
-            <GhostFace size={52} />
-            <b>{data.ghostScore}</b>
-            <span>Ghost</span>
-          </div>
-        </div>
-        <p className={m.turn}>{turn}</p>
-      </section>
-
-      <section className={m.block}>
-        <h3 className={m.h}>What this race did</h3>
-        <ul className={m.got}>
-          <li>
-            <span><b>Study Points</b><small>{rows[0].mine} correct at the normal rate. Ghost races pay 1×.</small></span>
-            <span className={cn(m.val, m.sp)}>+{data.spEarned} SP</span>
-          </li>
-          <li>
-            <span><b>Your duel record</b><small>Ghost races don&apos;t count towards rivals or your record.</small></span>
-            <span className={m.val}>–</span>
-          </li>
-        </ul>
-      </section>
-
-      <div className={m.actions}>
-        {!isPremium && free ? (
-          <div className={m.freebox}>
-            <b>That was your free duel this week</b>
-            <p>Race a ghost or a friend again on Sunday, or go premium for three ghost races a day and full duels.</p>
-            <span className={m.when}>Next free duel in {formatLeft(new Date(free.nextFreeDuelAt).getTime() - now)}</span>
-            <Link className={cn(s.btn, s.ink, s.wide)} href={"/dashboard/settings?tab=subscription" as Route}>
-              See premium
-            </Link>
-            {plan && (
-              <small>₦{plan.priceNaira.toLocaleString("en-NG")} for {plan.durationMonths} month{plan.durationMonths === 1 ? "" : "s"} · unlimited duels</small>
+      {/* Laptop: the verdict on the left; what the race did and the buttons
+          on the right, like the duel result. */}
+      <div className={m.resultGrid}>
+        <div>
+          <section className={cn(m.verdict, outcome !== "L" && m.verdictJolt)}>
+            {outcome !== "L" && (
+              <span className={cn(m.stamp, outcome === "W" ? m.stampWon : m.stampDraw)} aria-hidden="true">{outcome === "W" ? "WON" : "DRAW"}</span>
             )}
-          </div>
-        ) : (
-          <Link className={cn(s.btn, s.ink, s.wide)} href={"/dashboard/duel/ghost" as Route}>
-            Race another ghost
-          </Link>
-        )}
-        <div className={m.row}>
-          <Link className={cn(s.btn, s.line)} href={`/exams/${examId}/results` as Route}>Review answers</Link>
-          <button type="button" className={cn(s.btn, s.line)} onClick={() => setShareOpen(true)}>
-            Share result
-          </button>
+            <p className={m.kick}>{data.subject ?? "Ghost race"} · {data.totalQuestions} questions{data.isTaster ? " · Taster" : ""}</p>
+            <h2 className={m.head}>{head}</h2>
+            <div className={m.scoreline} aria-label={`You ${data.myScore}, ghost ${data.ghostScore}`}>
+              <div className={cn(m.slSide, data.myScore < data.ghostScore && m.lose)}>
+                <div className={m.ringY}><DuelAvatar self size={52} /></div>
+                <b>{data.myScore}</b>
+                <span>You</span>
+              </div>
+              <span className={m.slDash} aria-hidden="true">–</span>
+              <div className={cn(m.slSide, data.ghostScore < data.myScore && m.lose)}>
+                <GhostFace size={52} />
+                <b>{data.ghostScore}</b>
+                <span>Ghost</span>
+              </div>
+            </div>
+            <p className={m.turn}>{turn}</p>
+          </section>
         </div>
-        <Link className={cn(s.btn, s.line, s.wide)} href={"/dashboard/duel" as Route}>Back to Duel</Link>
+
+        <div>
+          <section className={m.block}>
+            <h3 className={m.h}>What this race did</h3>
+            <ul className={m.got}>
+              <li>
+                <span><b>Study Points</b><small>{rows[0].mine} correct at the normal rate. Ghost races pay 1×.</small></span>
+                <span className={cn(m.val, m.sp)}>+{data.spEarned} SP</span>
+              </li>
+              <li>
+                <span><b>Your duel record</b><small>Ghost races don&apos;t count towards rivals or your record.</small></span>
+                <span className={m.val}>–</span>
+              </li>
+            </ul>
+          </section>
+
+          <div className={m.actions}>
+            {!isPremium && free ? (
+              <div className={m.freebox}>
+                <b>That was your free duel this week</b>
+                <p>Race a ghost or a friend again on Sunday, or go premium for three ghost races a day and full duels.</p>
+                <span className={m.when}>Next free duel in {formatLeft(new Date(free.nextFreeDuelAt).getTime() - now)}</span>
+                <Link className={cn(s.btn, s.ink, s.wide)} href={"/dashboard/settings?tab=subscription" as Route}>
+                  See premium
+                </Link>
+                {plan && (
+                  <small>₦{plan.priceNaira.toLocaleString("en-NG")} for {plan.durationMonths} month{plan.durationMonths === 1 ? "" : "s"} · unlimited duels</small>
+                )}
+              </div>
+            ) : (
+              <Link className={cn(s.btn, s.ink, s.wide)} href={"/dashboard/duel/ghost" as Route}>
+                Race another ghost
+              </Link>
+            )}
+            <div className={m.row}>
+              <Link className={cn(s.btn, s.line)} href={`/exams/${examId}/results` as Route}>Review answers</Link>
+              <button type="button" className={cn(s.btn, s.line)} onClick={() => setShareOpen(true)}>
+                Share result
+              </button>
+            </div>
+            <Link className={cn(s.btn, s.line, s.wide)} href={"/dashboard/duel" as Route}>Back to Duel</Link>
+          </div>
+        </div>
       </div>
       <ShareSheet examId={examId} open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>

@@ -82,106 +82,119 @@ function GhostRace({ profile }: { profile: UserProfile }) {
   }
 
   return (
-    <div className={cn("sb-ui", s.page)}>
-      <header className={s.top}>
-        <Link className={s.iconBtn} href={"/dashboard/duel" as Route} aria-label="Back to Duel">
-          <BackIcon />
-        </Link>
-        <h1 className={s.topTitle}>Race a ghost</h1>
-      </header>
+    <div className={g.frame}>
+      <div className={cn("sb-ui", s.page, g.page)}>
+        <header className={cn(s.top, g.top)}>
+          <Link className={s.iconBtn} href={"/dashboard/duel" as Route} aria-label="Back to Duel">
+            <BackIcon />
+          </Link>
+          <div className={g.titles}>
+            <h1 className={cn(s.topTitle, g.title)}>Race a ghost</h1>
+            <p className={g.sub}>Each ghost replays real StudyBond students&apos; answers and times, question by question. No names, no faces.</p>
+          </div>
+        </header>
 
-      <div className={g.scroll}>
-        <section className={g.intro}>
-          <GhostFace size={52} />
-          <div>
-            <b>What&apos;s a ghost?</b>
-            <p>
-              For each question, the ghost uses an answer a real StudyBond student already gave, and the time they took. So it races
-              like a live duel, on any questions. No names, no faces.
+        {/* Phone: one column. Laptop: subjects on the left; the ghost, the
+            summary and Start on the right, always in view. */}
+        <div className={g.body}>
+          <div className={g.main}>
+            <section className={g.intro}>
+              <GhostFace size={52} />
+              <div>
+                <b>What&apos;s a ghost?</b>
+                <p>
+                  For each question, the ghost uses an answer a real StudyBond student already gave, and the time they took. So it
+                  races like a live duel, on any questions. No names, no faces.
+                </p>
+              </div>
+            </section>
+
+            <h2 className={g.h}>Pick one subject</h2>
+            {bigBoard ? (
+              <BigSubjectPicker
+                subjects={subjects}
+                picked={chosen ? [chosen] : []}
+                max={1}
+                department={profile.department ?? null}
+                taster
+                onToggle={(name) => setSubject(name)}
+                nudge={null}
+              />
+            ) : (
+              <div className={g.slist} role="radiogroup" aria-label="Subject">
+                {subjects.map((item) => (
+                  <button
+                    key={item.name}
+                    type="button"
+                    className={cn(g.srow, chosen === item.name && g.on)}
+                    role="radio"
+                    aria-checked={chosen === item.name}
+                    onClick={() => {
+                      playDuelSound("tap");
+                      setSubject(item.name);
+                    }}
+                  >
+                    <SubjectTile iconName={item.iconName} code={item.code} colorToken={item.colorToken} size={36} />
+                    <b>{item.name}</b>
+                    <span className={g.radio} aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className={g.side}>
+            <div className={g.ghostPart}>
+              <h2 className={g.h}>Pick your ghost</h2>
+              <div className={g.levels} role="radiogroup" aria-label="Ghost">
+                {(data?.levels ?? []).map((option, index) => (
+                  <button
+                    key={option.level}
+                    type="button"
+                    className={cn(g.lvl, level === option.level && g.on)}
+                    role="radio"
+                    aria-checked={level === option.level}
+                    onClick={() => {
+                      playDuelSound("tap");
+                      setLevel(option.level);
+                    }}
+                  >
+                    <GhostFace size={40} delay={index * 0.4} />
+                    <span>
+                      <b>{option.label}</b>
+                      <small>{option.who}</small>
+                    </span>
+                    <span className={g.sc}>
+                      <b>{option.expectedScore}/{data?.totalQuestions}</b>
+                      <small>{option.secondsPerQuestion}s a question</small>
+                    </span>
+                  </button>
+                ))}
+                {options.isLoading && chosen && <p className={g.note}>Finding ghosts for {chosen}…</p>}
+                {!chosen && <p className={g.note}>Pick a subject to see its ghosts.</p>}
+              </div>
+            </div>
+            <p className={cn(g.note, g.fine)}>
+              {isPremium
+                ? "Ghost races pay normal SP, not the duel rate, and don't count towards rivals or your duel record."
+                : `Taster ghosts race on the same ${data?.totalQuestions ?? 15} questions you get, from a fixed set of about 40 per subject.`}{" "}
+              Where students have answered a question, the ghost replays one of their real answers and times.
             </p>
-          </div>
-        </section>
 
-        <h2 className={g.h}>Pick one subject</h2>
-        {bigBoard ? (
-          <BigSubjectPicker
-            subjects={subjects}
-            picked={chosen ? [chosen] : []}
-            max={1}
-            department={profile.department ?? null}
-            taster
-            onToggle={(name) => setSubject(name)}
-            nudge={null}
-          />
-        ) : (
-          <div className={g.slist} role="radiogroup" aria-label="Subject">
-            {subjects.map((item) => (
-              <button
-                key={item.name}
-                type="button"
-                className={cn(g.srow, chosen === item.name && g.on)}
-                role="radio"
-                aria-checked={chosen === item.name}
-                onClick={() => {
-                  playDuelSound("tap");
-                  setSubject(item.name);
-                }}
-              >
-                <SubjectTile iconName={item.iconName} code={item.code} colorToken={item.colorToken} size={36} />
-                <b>{item.name}</b>
-                <span className={g.radio} aria-hidden="true" />
+            <div className={cn(g.foot, g.stickyBar)}>
+              <p>
+                <span>
+                  {chosen ?? "No subject"} · <b>{data?.totalQuestions ?? "–"} questions</b>
+                  {data ? ` · ${Math.round(data.durationSeconds / 60)} min` : ""}
+                </span>
+                <span className={cn(g.use, data?.isPremium && g.left)}>{useText}</span>
+              </p>
+              <button type="button" className={cn(s.btn, s.ink, s.wide)} disabled={!chosen || !data || blocked || start.isPending} onClick={go}>
+                {start.isPending ? "Starting…" : "Start the race"}
               </button>
-            ))}
+            </div>
           </div>
-        )}
-
-        <h2 className={g.h}>Pick your ghost</h2>
-        <div className={g.levels} role="radiogroup" aria-label="Ghost">
-          {(data?.levels ?? []).map((option, index) => (
-            <button
-              key={option.level}
-              type="button"
-              className={cn(g.lvl, level === option.level && g.on)}
-              role="radio"
-              aria-checked={level === option.level}
-              onClick={() => {
-                playDuelSound("tap");
-                setLevel(option.level);
-              }}
-            >
-              <GhostFace size={40} delay={index * 0.4} />
-              <span>
-                <b>{option.label}</b>
-                <small>{option.who}</small>
-              </span>
-              <span className={g.sc}>
-                <b>{option.expectedScore}/{data?.totalQuestions}</b>
-                <small>{option.secondsPerQuestion}s a question</small>
-              </span>
-            </button>
-          ))}
-          {options.isLoading && chosen && <p className={g.note}>Finding ghosts for {chosen}…</p>}
-          {!chosen && <p className={g.note}>Pick a subject to see its ghosts.</p>}
         </div>
-        <p className={g.note}>
-          {isPremium
-            ? "Ghost races pay normal SP, not the duel rate, and don't count towards rivals or your duel record."
-            : `Taster ghosts race on the same ${data?.totalQuestions ?? 15} questions you get, from a fixed set of about 40 per subject.`}{" "}
-          Where students have answered a question, the ghost replays one of their real answers and times.
-        </p>
-      </div>
-
-      <div className={cn(g.foot, g.stickyBar)}>
-        <p>
-          <span>
-            {chosen ?? "No subject"} · <b>{data?.totalQuestions ?? "–"} questions</b>
-            {data ? ` · ${Math.round(data.durationSeconds / 60)} min` : ""}
-          </span>
-          <span className={cn(g.use, data?.isPremium && g.left)}>{useText}</span>
-        </p>
-        <button type="button" className={cn(s.btn, s.ink, s.wide)} disabled={!chosen || !data || blocked || start.isPending} onClick={go}>
-          {start.isPending ? "Starting…" : "Start the race"}
-        </button>
       </div>
     </div>
   );
