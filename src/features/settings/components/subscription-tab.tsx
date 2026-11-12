@@ -88,9 +88,16 @@ export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTab
                     onSuccess: async (result) => {
                       await refreshPremiumState();
 
-                      if (result.paymentStatus === "SUCCESS") {
+                      if (result.activated) {
                         toast.success("Premium Activated!", {
                           description: result.message,
+                        });
+                      } else if (result.paymentStatus === "SUCCESS") {
+                        // Paid, but held: a plan is still running on another
+                        // exam. The team refunds it or sets the plan up by hand.
+                        toast.warning("Payment received", {
+                          description: `${result.message} Questions? Email ${PAYMENT_SUPPORT_EMAIL}.`,
+                          duration: 20000,
                         });
                       } else {
                         toast.error("Payment Not Successful", {

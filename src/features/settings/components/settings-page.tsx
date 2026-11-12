@@ -110,9 +110,17 @@ export function SettingsPageClient() {
         {
           onSuccess: (data) => {
             if (data.paymentStatus === "SUCCESS") {
-              toast.success("Premium Activated!", {
-                description: data.message,
-              });
+              if (data.activated) {
+                toast.success("Premium Activated!", {
+                  description: data.message,
+                });
+              } else {
+                // Paid, but held: a plan is still running on another exam.
+                toast.warning("Payment received", {
+                  description: `${data.message} Questions? Email studybondapp@gmail.com.`,
+                  duration: 20000,
+                });
+              }
               refetchSubscription();
               // Clean up URL
               router.replace("/dashboard/settings?tab=subscription");
