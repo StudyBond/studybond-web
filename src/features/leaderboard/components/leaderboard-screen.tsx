@@ -573,7 +573,7 @@ function NotOnBoardYet({ data, isPremium }: { data: LeaderboardBoard; isPremium:
             pts={isPremium ? null : "up to 23"}
             icon="duel"
           />
-          <Step href="/dashboard/practice?mode=DAILY_CHALLENGE" title="Take the daily challenge" small="A few questions, every day" pts="40" icon="paper" />
+          <Step href="/dashboard/practice?mode=DAILY_CHALLENGE" title="Take the daily challenge" small="A few questions, every day" pts="up to 40" icon="paper" />
         </div>
         {data.lastWeek?.cutoffPoints ? (
           <p className="mt-3 text-[13px] text-[var(--ink-3)]">

@@ -81,7 +81,7 @@ const EXAM_MODES: {
   {
     id: "DAILY_CHALLENGE",
     title: "Daily Challenge",
-    tagline: "4 questions · 3 minutes · 40 SP",
+    tagline: "4 questions · 3 minutes · up to 40 SP",
     features: ["1 attempt per day", "Build consistency", "Climb the leaderboard"],
     icon: Flame,
     colorFrom: "#d946ef",
@@ -453,7 +453,7 @@ export function PracticeSetupPage({ profile }: { profile: UserProfile }) {
           {selectedMode === "DAILY_CHALLENGE" && (
             <div className="mt-3 flex items-center gap-2 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-4 py-1.5 w-fit animate-in fade-in zoom-in duration-500">
               <Clock3 className="h-4 w-4 text-fuchsia-400" />
-              <span className="text-sm font-medium text-fuchsia-300">3 Minutes • 4 Questions • 40 SP</span>
+              <span className="text-sm font-medium text-fuchsia-300">3 Minutes • 4 Questions • Up to 40 SP</span>
             </div>
           )}
 
