@@ -18,6 +18,7 @@ import { SubscriptionTab } from "@/features/settings/components/subscription-tab
 import { DangerZone } from "@/features/settings/components/danger-zone";
 import { CommunityTab } from "@/features/settings/components/community-tab";
 import { AdminTab } from "@/features/settings/components/admin-tab";
+import { ExamTab } from "@/features/settings/components/exam-tab";
 import { useSwipe } from "@/hooks/use-swipe";
 import {
   Settings,
@@ -28,6 +29,7 @@ import {
   Loader2,
   BellRing,
   MessageCircle,
+  ClipboardList,
 } from "lucide-react";
 
 const baseTabs = [
@@ -43,6 +45,12 @@ const notificationsTab = {
   icon: BellRing,
 } as const;
 
+const examTab = {
+  id: "exam",
+  label: "Exam",
+  icon: ClipboardList,
+} as const;
+
 const communityTab = {
   id: "community",
   label: "Community",
@@ -55,9 +63,9 @@ const adminTab = {
   icon: Shield,
 } as const;
 
-type TabId = "profile" | "security" | "subscription" | "community" | "notifications" | "admin" | "danger";
+type TabId = "profile" | "security" | "subscription" | "exam" | "community" | "notifications" | "admin" | "danger";
 
-const VALID_TAB_IDS: readonly string[] = ["profile", "security", "subscription", "community", "notifications", "admin", "danger"];
+const VALID_TAB_IDS: readonly string[] = ["profile", "security", "subscription", "exam", "community", "notifications", "admin", "danger"];
 
 function isTabId(value: string): value is TabId {
   return VALID_TAB_IDS.includes(value);
@@ -74,6 +82,7 @@ export function SettingsPageClient() {
     baseTabs[0],
     baseTabs[1],
     baseTabs[2],
+    examTab,
     communityTab,
     ...(notificationsUiEnabled ? [notificationsTab] : []),
     ...(isAdmin ? [adminTab] : []),
@@ -261,6 +270,7 @@ export function SettingsPageClient() {
                   subscriptionData={subscriptionData ?? undefined}
                 />
               )}
+              {activeTab === "exam" && <ExamTab />}
               {activeTab === "notifications" && <NotificationsSettingsTab />}
               {activeTab === "community" && <CommunityTab isPremium={isPremium} />}
               {activeTab === "admin" && <AdminTab />}

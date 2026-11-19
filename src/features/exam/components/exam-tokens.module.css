@@ -1,0 +1,37 @@
+/* House tokens for the exam, submit check and results screens.
+   Apply `.tokens` on the screen's root next to its own layout class. */
+.tokens {
+  --bg: #09090b;
+  --s1: #0f0f12;
+  --s2: #131316;
+  --s3: #1c1c21;
+  --text: #fafafa;
+  --t2: #a1a1aa;
+  --t3: #848486;
+  --line: rgba(255, 255, 255, 0.06);
+  --line2: rgba(255, 255, 255, 0.12);
+  --panel: rgba(255, 255, 255, 0.03);
+  --amber: #e09040;
+  --amber-h: #e8a058;
+  --amber-fg: #0a0a0a;
+  --amber-t: #f5c890;
+  --amber-s: rgba(224, 144, 64, 0.1);
+  --glow: 0 4px 24px rgba(224, 144, 64, 0.15);
+  --good: #4ade80;
+  --bad: #f87171;
+  --gold: #d4a121;
+  --rival: #3b82f6;
+  --scrim: rgba(5, 5, 7, 0.74);
+  --lift: 0 16px 48px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --f-ui: var(--font-outfit), "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-read: "Satoshi", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --amber-l: rgba(224, 144, 64, 0.28);
+  --good-s: rgba(74, 222, 128, 0.1);
+  --bad-s: rgba(248, 113, 113, 0.1);
+  --line3: rgba(255, 255, 255, 0.18);
+  /* The paper colour, set inline per paper; amber until then. */
+  --paper: #e09040;
+  --paper-s: rgba(224, 144, 64, 0.12);
+  color-scheme: dark;
+}

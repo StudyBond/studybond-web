@@ -352,6 +352,10 @@ export type QuestionWithAnswer = ExamQuestion & {
     text: string;
     imageUrl: string | null;
     additionalNotes: string | null;
+    /** The same texts with their {{B}} option markers kept, so the review can
+        draw option letters as badges. Older backends leave these out. */
+    markedText?: string | null;
+    markedNotes?: string | null;
   } | null;
 };
 

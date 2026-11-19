@@ -14,27 +14,34 @@ type RetakeButtonProps = {
   className?: string;
 };
 
-export function RetakeButton({ examId, retakesRemaining, className }: RetakeButtonProps) {
+/** Starts a retake of this exam and opens it. Shared by every retake button. */
+export function useRetake(examId: number) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  // If we know there are no retakes, do not render or render disabled
-  if (retakesRemaining === 0) {
-    return null;
-  }
-
-  const handleRetake = async () => {
+  const retake = async () => {
     setIsLoading(true);
     try {
       const session = await retakeExam(examId);
       toast.success("Retake session initiated.");
       router.push(`/exams/${session.examId}`);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to initiate retake session.");
+    } catch (err: unknown) {
+      toast.error((err instanceof Error && err.message) || "Failed to initiate retake session.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  return { retake, isLoading };
+}
+
+export function RetakeButton({ examId, retakesRemaining, className }: RetakeButtonProps) {
+  const { retake: handleRetake, isLoading } = useRetake(examId);
+
+  // If we know there are no retakes, do not render or render disabled
+  if (retakesRemaining === 0) {
+    return null;
+  }
 
   return (
     <Button 

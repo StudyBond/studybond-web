@@ -80,3 +80,23 @@ export async function getAchievements() {
     await apiClient<SuccessEnvelope<Achievement[]>>("/api/users/achievements");
   return response.data;
 }
+
+/** Paper colour and the auto-advance default, saved on the account. */
+export type ExamPreferences = {
+  paperColour: boolean;
+  autoAdvance: boolean;
+};
+
+export async function getExamPreferences() {
+  const response = await apiClient<SuccessEnvelope<ExamPreferences>>("/api/users/exam-preferences");
+  return response.data;
+}
+
+/** Sends only the keys that changed; the rest keep their saved value. */
+export async function updateExamPreferences(payload: Partial<ExamPreferences>) {
+  const response = await apiClient<SuccessEnvelope<ExamPreferences>>("/api/users/exam-preferences", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  return response.data;
+}

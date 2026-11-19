@@ -2,18 +2,34 @@
 
 import type { Route } from "next";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, Rows2, X } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 import { ErrorState } from "@/components/ui/error-state";
 import { ExamLoading } from "@/features/exam/components/exam-loading";
-import { ExamHeader } from "@/features/exam/components/exam-header";
-import { QuestionCard } from "@/features/exam/components/question-card";
-import { QuestionNavigator } from "@/features/exam/components/question-navigator";
+import { ExamReading } from "@/features/exam/components/exam-reading";
+import { PaperRail } from "@/features/exam/components/paper-rail";
+import { QuestionRibbon, RibbonCells } from "@/features/exam/components/question-ribbon";
+import { RivalPill } from "@/features/exam/components/rival-pill";
+import { ExamMenu } from "@/features/exam/components/exam-menu";
+import { useExamTick } from "@/features/exam/hooks/use-exam-tick";
+import { useExamPrefs, useSyncExamPrefs } from "@/features/exam/stores/exam-prefs-store";
+import {
+  FLAT_COLOUR,
+  answeredInPaper,
+  paperColours,
+  paperLabel,
+  paperOfIndex,
+  softColour,
+} from "@/features/exam/lib/papers";
+import { useOfflineStatus } from "@/providers/offline-sync-provider";
+import { firstName } from "@/features/duel/ui/parts";
+import s from "@/features/exam/components/exam-shell.module.css";
+import tk from "@/features/exam/components/exam-tokens.module.css";
 import { SubmitDialog } from "@/features/exam/components/submit-dialog";
 import { AbandonDialog } from "@/features/exam/components/abandon-dialog";
 import { TimeExpiredModal } from "@/features/exam/components/time-expired-modal";
@@ -31,8 +47,8 @@ import { getUserProfile } from "@/lib/api/users";
 import { offlineStore } from "@/features/exam/stores/offline-store";
 import { useDuelSession } from "@/features/duel/hooks/use-duel";
 import { useDuelWebsocket } from "@/features/duel/hooks/use-duel-websocket";
-import { DuelRace, reactionLabel, type IncomingReaction } from "@/features/duel/race/duel-race";
-import { GhostLane } from "@/features/duel/race/ghost-lane";
+import { reactionLabel, type IncomingReaction } from "@/features/duel/race/duel-race";
+import { useGhostPosition } from "@/features/duel/race/ghost-lane";
 
 
 type ExamArenaProps = {
@@ -43,6 +59,18 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [ribbonOpen, setRibbonOpen] = useState(false);
+  const { isOnline } = useOfflineStatus();
+  useExamTick();
+
+  // Settings hold the defaults. Auto-advance can be flipped for this sitting
+  // only from the ... menu; null means "follow the setting".
+  useSyncExamPrefs();
+  const paperColourOn = useExamPrefs((p) => p.paperColour);
+  const autoAdvanceDefault = useExamPrefs((p) => p.autoAdvance);
+  const [autoAdvanceOverride, setAutoAdvanceOverride] = useState<boolean | null>(null);
+  const autoAdvance = autoAdvanceOverride ?? autoAdvanceDefault;
 
   // ─── Current user identity ───
   // The profile query is already warm from the dashboard shell. We read
@@ -66,8 +94,9 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const storeExamId = useExamStore((s) => s.examId);
   const totalQuestions = useExamStore((s) => s.totalQuestions);
   const currentIndex = useExamStore((s) => s.currentIndex);
-  const navigatorOpen = useExamStore((s) => s.navigatorOpen);
-  const setNavigatorOpen = useExamStore((s) => s.setNavigatorOpen);
+  const subjectRanges = useExamStore((s) => s.subjectRanges);
+  const goToQuestion = useExamStore((s) => s.goToQuestion);
+  const toggleFlag = useExamStore((s) => s.toggleFlag);
   const nextQuestion = useExamStore((s) => s.nextQuestion);
   const prevQuestion = useExamStore((s) => s.prevQuestion);
   const markEntered = useExamStore((s) => s.markEntered);
@@ -82,6 +111,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const setTimeExpiredModalOpen = useExamStore((s) => s.setTimeExpiredModalOpen);
   const submitDialogOpen = useExamStore((s) => s.submitDialogOpen);
   const timeExpiredModalOpen = useExamStore((s) => s.timeExpiredModalOpen);
+  const abandonDialogOpen = useExamStore((s) => s.abandonDialogOpen);
 
   const submitMutation = useSubmitExamMutation();
   const abandonMutation = useAbandonExamMutation();
@@ -107,7 +137,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
     setOpponentFinished(true);
   }, []);
 
-  const opponentFirstName = opponent?.fullName.trim().split(/s+/)[0] || "Your rival";
+  const opponentFirstName = opponent ? firstName(opponent.fullName) : "Your rival";
 
   const { sendProgress, sendReaction } = useDuelWebsocket({
     sessionId: duelSession?.id ?? null,
@@ -246,7 +276,13 @@ export function ExamArena({ examId }: ExamArenaProps) {
         return;
       }
 
+      // Shortcuts with a modifier belong to the browser (Ctrl+F, Ctrl+P ...).
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      // While a menu, the ribbon drawer or a dialog is open, keys belong to it.
+      if (menuOpen || ribbonOpen || submitDialogOpen || timeExpiredModalOpen || abandonDialogOpen) return;
+
       const key = event.key.toLowerCase();
+      const isLast = currentIndex === (session?.questions.length ?? 0) - 1;
 
       if (key === "s") {
         event.preventDefault();
@@ -254,13 +290,27 @@ export function ExamArena({ examId }: ExamArenaProps) {
         return;
       }
 
-      if (event.key === "ArrowRight" || event.key === "ArrowDown" || key === "n") {
+      if (key === "f") {
+        const question = session?.questions?.[currentIndex];
+        if (!question) return;
         event.preventDefault();
-        nextQuestion();
+        toggleFlag(question.id);
         return;
       }
 
-      if (event.key === "ArrowLeft" || event.key === "ArrowUp" || key === "p") {
+      // Inside the ribbon the arrow keys move between its cells instead.
+      const inRibbon = event.target instanceof HTMLElement && !!event.target.closest("[data-ribbon]");
+      const isArrow = event.key === "ArrowRight" || event.key === "ArrowLeft";
+      if (isArrow && inRibbon) return;
+
+      if (event.key === "ArrowRight" || key === "n") {
+        event.preventDefault();
+        if (isLast) setSubmitDialogOpen(true);
+        else nextQuestion();
+        return;
+      }
+
+      if (event.key === "ArrowLeft" || key === "p") {
         event.preventDefault();
         prevQuestion();
         return;
@@ -301,7 +351,28 @@ export function ExamArena({ examId }: ExamArenaProps) {
     session,
     setAnswer,
     setSubmitDialogOpen,
+    toggleFlag,
+    menuOpen,
+    ribbonOpen,
+    submitDialogOpen,
+    timeExpiredModalOpen,
+    abandonDialogOpen,
   ]);
+
+  // Auto-advance: once a new answer is chosen on this question, move on.
+  // Clearing an answer, or arriving on an answered question, does not count.
+  const currentQuestionId = session?.questions[currentIndex]?.id ?? null;
+  const currentAnswer = currentQuestionId !== null ? (questionStates.get(currentQuestionId)?.answer ?? null) : null;
+  const lastSeenAnswer = useRef<{ id: number | null; answer: string | null }>({ id: null, answer: null });
+  useEffect(() => {
+    const prev = lastSeenAnswer.current;
+    lastSeenAnswer.current = { id: currentQuestionId, answer: currentAnswer };
+    if (!autoAdvance || prev.id !== currentQuestionId) return;
+    if (!currentAnswer || currentAnswer === prev.answer) return;
+    if (currentIndex >= (session?.questions.length ?? 0) - 1) return;
+    const t = setTimeout(nextQuestion, 300);
+    return () => clearTimeout(t);
+  }, [autoAdvance, currentAnswer, currentQuestionId, currentIndex, nextQuestion, session?.questions.length]);
 
   useEffect(() => {
     if (resetTimeoutRef.current !== null) {
@@ -470,6 +541,13 @@ export function ExamArena({ examId }: ExamArenaProps) {
     }
   }, [examId, abandonMutation, setAbandonDialogOpen, reset, router]);
 
+  const ghost = useGhostPosition(examId, session?.questions.length ?? 0, isGhostRace);
+  const tints = useMemo(() => {
+    const own = paperColours(subjectRanges.map((r) => r.subject));
+    return paperColourOn ? own : own.map(() => FLAT_COLOUR);
+  }, [subjectRanges, paperColourOn]);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
   if (isLoading) {
     return <ExamLoading />;
   }
@@ -502,8 +580,71 @@ export function ExamArena({ examId }: ExamArenaProps) {
     );
   }
 
+  // ─── Where we are: the paper, its range, and pace in it ───
+  // Without subject ranges (should not happen) the whole sitting is one paper.
+  const ranges =
+    subjectRanges.length > 0
+      ? subjectRanges
+      : [{ subject: currentQuestion.subject, startIndex: 0, endIndex: questions.length - 1, count: questions.length }];
+  const paper = paperOfIndex(ranges, currentIndex);
+  const range = ranges[paper];
+  const tint = tints[paper] ?? FLAT_COLOUR;
+  const posInPaper = currentIndex - range.startIndex;
+  const budgetSeconds = session.timeAllowedSeconds / ranges.length;
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === questions.length - 1;
+  const currentFlagged = !!questionStates.get(currentQuestion.id)?.flagged;
+
+  const placeOf = (index: number) => {
+    const k = paperOfIndex(ranges, index);
+    return `${paperLabel(ranges[k].subject).slice(0, 3)} ${index - ranges[k].startIndex + 1}`;
+  };
+
+  // ─── The rival: a duel opponent or the ghost ───
+  const rival =
+    duelSession && opponent
+      ? {
+          name: opponent.fullName,
+          index: opponentProgress ? opponentProgress.current - 1 : null,
+          finished: opponentFinished,
+          incoming: incomingReaction,
+          onReact: sendReaction as ((key: string) => void) | null,
+        }
+      : isGhostRace && ghost
+        ? { name: "Ghost", index: ghost.question - 1, finished: ghost.finished, incoming: null, onReact: null }
+        : null;
+  const rivalOnRibbon = rival && !rival.finished ? rival.index : null;
+  const rivalProps = rival
+    ? {
+        rivalName: rival.name,
+        rivalIndex: rival.index,
+        rivalFinished: rival.finished,
+        myIndex: currentIndex,
+        placeOf,
+        incoming: rival.incoming,
+        onReact: rival.onReact,
+      }
+    : null;
+
+  const goToPaper = (k: number) => {
+    if (k === paper) return;
+    const r = ranges[k];
+    let at = r.startIndex;
+    for (let i = r.startIndex; i <= r.endIndex; i++) {
+      if (!questionStates.get(questionIds[i])?.answer) {
+        at = i;
+        break;
+      }
+    }
+    goToQuestion(at);
+  };
+  const goNext = () => (isLast ? setSubmitDialogOpen(true) : nextQuestion());
+
   return (
-    <div className="relative min-h-screen bg-[var(--sb-bg)]">
+    <div
+      className={cn(tk.tokens, s.app)}
+      style={{ "--paper": tint, "--paper-s": softColour(tint) } as CSSProperties}
+    >
       <div className="sb-print-watermark" />
 
       <ExamSecurityOverlay
@@ -512,113 +653,126 @@ export function ExamArena({ examId }: ExamArenaProps) {
         mode="exam"
       />
 
-      <ExamHeader
-        displayName={session.displayNameShort}
-        subjects={session.subjects}
-        isCalculatorOpen={isCalculatorOpen}
-        onToggleCalculator={() => setIsCalculatorOpen((value) => !value)}
+      <PaperRail
+        questionIds={questionIds}
+        tints={tints}
+        timeAllowedSeconds={session.timeAllowedSeconds}
+        isOnline={isOnline}
+        rivalPill={rivalProps ? <RivalPill {...rivalProps} variant="pill" /> : null}
+        rivalChip={rivalProps ? <RivalPill {...rivalProps} variant="chip" /> : null}
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen((v) => !v)}
+        onSubmit={() => setSubmitDialogOpen(true)}
+        onGoToPaper={goToPaper}
+        menu={
+          menuOpen ? (
+            <ExamMenu
+              autoAdvance={autoAdvance}
+              onCalculator={() => {
+                setMenuOpen(false);
+                setIsCalculatorOpen((v) => !v);
+              }}
+              onToggleAutoAdvance={() => setAutoAdvanceOverride(!autoAdvance)}
+              onLeave={() => {
+                setMenuOpen(false);
+                setAbandonDialogOpen(true);
+              }}
+              onClose={closeMenu}
+            />
+          ) : null
+        }
       />
 
-      {isCalculatorOpen ? (
-        <ExamCalculator onClose={() => setIsCalculatorOpen(false)} />
-      ) : null}
-
-      <div className="flex">
-        <main
-          className={cn(
-            "min-w-0 flex-1 pt-16 pb-24 md:pb-8 transition-all duration-300 sb-exam-content",
-            navigatorOpen ? "md:mr-[280px]" : "",
-          )}
-        >
-          {duelSession && opponent ? (
-            <DuelRace
-              rivalName={opponent.fullName}
-              myQuestion={currentIndex + 1}
-              rivalQuestion={opponentProgress?.current ?? null}
-              rivalFinished={opponentFinished}
-              total={questions.length}
-              questionSubjects={questions.map((question) => question.subject)}
-              incoming={incomingReaction}
-              onReact={sendReaction}
-            />
-          ) : isGhostRace ? (
-            <GhostLane
-              examId={examId}
-              myQuestion={currentIndex + 1}
-              total={questions.length}
-              questionSubjects={questions.map((question) => question.subject)}
-            />
-          ) : null}
-          <div className="mx-auto max-w-2xl px-4 py-6 md:px-6 sb-protected">
-            <QuestionCard
-              key={currentQuestion.id}
-              question={currentQuestion}
-              questionIndex={currentIndex}
-              totalQuestions={questions.length}
-            />
-
-            <div className="mt-8 flex items-center justify-between">
-              <button
-                onClick={prevQuestion}
-                disabled={currentIndex === 0}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200",
-                  currentIndex === 0
-                    ? "cursor-not-allowed text-white/10"
-                    : "text-white/40 hover:bg-white/[0.04] hover:text-white/60",
-                )}
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                Previous
-              </button>
-
-              <span className="sb-mono text-[11px] font-bold text-white/15">
-                {currentIndex + 1} / {questions.length}
-              </span>
-
-              <button
-                onClick={nextQuestion}
-                disabled={currentIndex === questions.length - 1}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200",
-                  currentIndex === questions.length - 1
-                    ? "cursor-not-allowed text-white/10"
-                    : "text-white/40 hover:bg-white/[0.04] hover:text-white/60",
-                )}
-              >
-                Next
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        </main>
-
-        <aside
-          className={cn(
-            "fixed right-0 top-14 bottom-0 z-30 hidden w-[280px] border-l border-white/[0.06] bg-[var(--sb-bg)] transition-transform duration-300 md:block",
-            navigatorOpen ? "translate-x-0" : "translate-x-full",
-          )}
-        >
-          <QuestionNavigator questionIds={questionIds} />
-        </aside>
-
-        {navigatorOpen ? (
-          <div className="fixed inset-0 z-50 md:hidden">
-            <div
-              className="absolute inset-0 animate-in fade-in bg-black/50 backdrop-blur-sm duration-200"
-              onClick={() => setNavigatorOpen(false)}
-            />
-            <aside className="absolute top-0 right-0 bottom-0 w-[280px] animate-in slide-in-from-right border-l border-white/[0.06] bg-[var(--sb-bg)] shadow-2xl duration-300">
-              <QuestionNavigator questionIds={questionIds} />
-            </aside>
-          </div>
+      <div className={s.middle}>
+        <ExamReading
+          questions={questions}
+          index={currentIndex}
+          paperName={paperLabel(range.subject)}
+          numberInPaper={posInPaper + 1}
+          paperCount={range.count}
+          paperStart={range.startIndex}
+        />
+        {/* One calculator: in the right pane on a laptop; on a phone the
+            pane box collapses and the calculator shows as a bottom sheet. */}
+        {isCalculatorOpen ? (
+          <aside className={cn(s.calcPane, "contents md:block")} aria-label="Calculator">
+            <ExamCalculator docked onClose={() => setIsCalculatorOpen(false)} />
+          </aside>
         ) : null}
       </div>
+
+      <QuestionRibbon
+        range={range}
+        questionIds={questionIds}
+        budgetSeconds={budgetSeconds}
+        rivalIndex={rivalOnRibbon}
+        rivalName={rival ? firstName(rival.name) : null}
+        onGo={goToQuestion}
+        onPrev={prevQuestion}
+        onNext={goNext}
+        isFirst={isFirst}
+        isLast={isLast}
+      />
+
+      <nav className={s.thumb} aria-label="Question navigation">
+        <button type="button" className={s.tb} onClick={prevQuestion} disabled={isFirst}>
+          <ChevronLeft aria-hidden="true" />
+          <span>Back</span>
+        </button>
+        <button type="button" className={s.tb} onClick={() => setRibbonOpen(true)} aria-label="All questions in this paper">
+          <Rows2 aria-hidden="true" />
+          <span className={s.num}>
+            {posInPaper + 1}/{range.count}
+          </span>
+        </button>
+        <button
+          type="button"
+          className={cn(s.tb, currentFlagged && s.tbMarked)}
+          onClick={() => toggleFlag(currentQuestion.id)}
+          aria-pressed={currentFlagged}
+        >
+          <Flag aria-hidden="true" />
+          <span>Mark</span>
+        </button>
+        <button type="button" className={cn(s.tb, s.tbNext)} onClick={goNext}>
+          <span>{isLast ? "Finish" : "Next"}</span>
+          <ChevronRight aria-hidden="true" />
+        </button>
+      </nav>
+
+      {ribbonOpen ? (
+        <div className={s.drawer} onClick={() => setRibbonOpen(false)}>
+          <div className={s.drawerPanel} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Questions in this paper">
+            <div className={s.drawerBar}>
+              <h2>
+                {paperLabel(range.subject)} · {answeredInPaper(range, questionIds, questionStates)} of {range.count} answered
+              </h2>
+              <button type="button" className={s.iconBtn} onClick={() => setRibbonOpen(false)} aria-label="Close">
+                <X aria-hidden="true" />
+              </button>
+            </div>
+            <div className={s.drawerScroll}>
+              <RibbonCells
+                range={range}
+                questionIds={questionIds}
+                budgetSeconds={budgetSeconds}
+                rivalIndex={rivalOnRibbon}
+                rivalName={rival ? firstName(rival.name) : null}
+                onGo={(i) => {
+                  goToQuestion(i);
+                  setRibbonOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <SubmitDialog
         onConfirm={handleSubmit}
         isSubmitting={submitMutation.isPending}
         duelRivalName={duelSession && opponent ? opponentFirstName : null}
+        tints={tints}
       />
       <AbandonDialog
         onConfirm={handleAbandon}

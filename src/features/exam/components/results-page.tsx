@@ -2,23 +2,18 @@
 
 import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Route } from "next";
 import { toast } from "sonner";
 import { useExamDetail } from "@/features/exam/hooks/use-exam-detail";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
 import { useReviewLockout } from "@/features/exam/hooks/use-review-lockout";
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDashboardCriticalData } from "@/features/dashboard/hooks/use-dashboard-data";
-import { ScoreSummary } from "@/features/exam/components/score-summary";
-import { SubjectBreakdown } from "@/features/exam/components/subject-breakdown";
-import { AnswerReview } from "@/features/exam/components/answer-review";
-import { RetakeButton } from "@/features/exam/components/retake-button";
-import { ShareResultButton } from "@/features/duel/share/share-result-button";
+import { ResultsView } from "@/features/exam/components/results-view";
+import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { ReviewLockedPage } from "@/features/exam/components/review-locked-page";
-import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useDuelSession } from "@/features/duel/hooks/use-duel";
 import { DuelOutcome } from "@/features/duel/result/duel-outcome";
 
@@ -35,6 +30,10 @@ export function ResultsPageClient({ examId }: { examId: number }) {
     isError,
     error,
   } = useExamDetail(examId);
+
+  // The board's scale (JAMB 400, UI Post-UTME 100) sets the headline mark,
+  // so wait for it rather than flash the wrong one. Usually already cached.
+  const { isLoading: isProfileLoading } = useExamProfile();
 
   const { data: duelData, isLoading: isDuelLoading } =
     useDuelSession(duelCode || "", !!duelCode);
@@ -158,7 +157,7 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   ]);
 
   // ─── Loading ───
-  if (critical.isLoading || isResultLoading || isDuelLoading) {
+  if (critical.isLoading || isResultLoading || isDuelLoading || isProfileLoading) {
     return (
       <LearnerShell>
         <div className="flex h-[50vh] items-center justify-center">
@@ -229,8 +228,10 @@ export function ResultsPageClient({ examId }: { examId: number }) {
   const isStudySession = result.examType === "STUDY";
 
   // ─── Results view (with active protection for exams, relaxed for study sessions) ───
+  // A full screen of its own, like the exam: the bar carries Dashboard,
+  // Share and Retake, so the learner shell is left out here.
   return (
-    <LearnerShell profile={critical.profile.data}>
+    <>
       {/* Print watermark */}
       <div className="sb-print-watermark" />
 
@@ -243,69 +244,11 @@ export function ResultsPageClient({ examId }: { examId: number }) {
         />
       )}
 
-      <div className="mx-auto w-full max-w-5xl py-6 pb-24 md:py-12 space-y-7 md:space-y-12 sb-exam-content">
-        {/* Restricted phase warning banner */}
-        {!isStudySession && isInLastChance && (
-          <div className="flex items-center gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.04] px-5 py-3 animate-in fade-in slide-in-from-top-4 duration-500 z-10 relative">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-400/10 text-amber-400">
-              🛡️
-            </span>
-            <p className="text-[11px] text-amber-400/70 font-medium leading-relaxed">
-              You're in a{" "}
-              <span className="font-bold text-amber-400">restricted phase</span>
-              . Further screenshot attempts will lock your access to this review
-              with escalating penalties.
-            </p>
-          </div>
-        )}
-
-        {/* Top Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            href="/dashboard"
-            className="-ml-2 text-white/50 hover:text-white"
-          >
-            <>
-              <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-            </>
-          </Button>
-
-          <div className="flex items-center gap-3">
-            {/* Study sessions show answers as you go, so their score isn't shared. */}
-            {!isStudySession && <ShareResultButton examId={examId} />}
-            {isStudySession ? (
-              <Button
-                asChild
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl h-10 px-4"
-                href={"/dashboard/study" as Route}
-              >
-                <>Start New Study Session</>
-              </Button>
-            ) : (
-              <RetakeButton examId={examId} />
-            )}
-          </div>
-        </div>
-
-        {/* Hero: Score & Summary */}
-        <ScoreSummary result={result} />
-
-        {/* Breakdown Row */}
-        <div className="flex flex-col gap-6 items-start lg:flex-row lg:gap-8">
-          {/* Detailed Review */}
-          <div className="w-full lg:flex-1 order-2 lg:order-1 min-w-0">
-            <AnswerReview result={result} />
-          </div>
-
-          {/* Sidebar: Subject breakdown */}
-          <div className="w-full lg:w-[300px] shrink-0 order-1 lg:order-2 lg:sticky lg:top-24">
-            <SubjectBreakdown result={result} />
-          </div>
-        </div>
-      </div>
-    </LearnerShell>
+      <ResultsView
+        result={result}
+        examId={examId}
+        restricted={!isStudySession && isInLastChance}
+      />
+    </>
   );
 }

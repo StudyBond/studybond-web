@@ -20,9 +20,14 @@ import { X, Calculator } from "lucide-react";
 
 type ExamCalculatorProps = {
   onClose: () => void;
+  /**
+   * Docked: on a laptop it fills the exam's right-side pane instead of
+   * floating (it can't be dragged then). On a phone it stays a bottom sheet.
+   */
+  docked?: boolean;
 };
 
-export function ExamCalculator({ onClose }: ExamCalculatorProps) {
+export function ExamCalculator({ onClose, docked = false }: ExamCalculatorProps) {
   const [display, setDisplay] = useState("0");
   const [previousValue, setPreviousValue] = useState<number | null>(null);
   const [operator, setOperator] = useState<string | null>(null);
@@ -46,7 +51,7 @@ export function ExamCalculator({ onClose }: ExamCalculatorProps) {
 
   // ─── Drag handlers ───
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (window.innerWidth < 768) return; // No dragging on mobile
+    if (docked || window.innerWidth < 768) return; // No dragging when docked or on mobile
     setIsDragging(true);
     const rect = calcRef.current?.getBoundingClientRect();
     if (rect) {
@@ -55,7 +60,7 @@ export function ExamCalculator({ onClose }: ExamCalculatorProps) {
         y: e.clientY - rect.top,
       };
     }
-  }, []);
+  }, [docked]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -250,20 +255,24 @@ export function ExamCalculator({ onClose }: ExamCalculatorProps) {
   ];
 
   // ─── Render ───
-  const calcContent = (
+  const calcContent = (asPane: boolean) => (
     <div
-      ref={calcRef}
+      ref={asPane ? undefined : calcRef}
       className={cn(
-        "w-[280px] rounded-2xl border border-white/[0.08] bg-[#0e0e11]/95 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)]",
+        asPane
+          ? "w-full"
+          : "w-[280px] rounded-2xl border border-white/[0.08] bg-[#0e0e11]/95 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)]",
         "overflow-hidden select-none",
       )}
+      role="group"
+      aria-label="Calculator"
     >
       {/* Title bar — draggable */}
       <div
         onMouseDown={handleMouseDown}
         className={cn(
           "flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06]",
-          "md:cursor-grab md:active:cursor-grabbing",
+          !asPane && "md:cursor-grab md:active:cursor-grabbing",
         )}
       >
         <div className="flex items-center gap-2">
@@ -274,6 +283,7 @@ export function ExamCalculator({ onClose }: ExamCalculatorProps) {
         </div>
         <button
           onClick={onClose}
+          aria-label="Close calculator"
           className="flex h-6 w-6 items-center justify-center rounded-md text-white/30 hover:bg-white/[0.06] hover:text-white/60 transition-colors"
         >
           <X className="h-3.5 w-3.5" />
@@ -333,16 +343,21 @@ export function ExamCalculator({ onClose }: ExamCalculatorProps) {
 
   return (
     <>
-      {/* Desktop: floating draggable */}
-      <div
-        className="hidden md:block fixed z-[100]"
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-        }}
-      >
-        {calcContent}
-      </div>
+      {docked ? (
+        /* Desktop: fills the pane it is placed in */
+        <div className="hidden md:block">{calcContent(true)}</div>
+      ) : (
+        /* Desktop: floating draggable */
+        <div
+          className="hidden md:block fixed z-[100]"
+          style={{
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+          }}
+        >
+          {calcContent(false)}
+        </div>
+      )}
 
       {/* Mobile: bottom-sheet overlay */}
       <div className="md:hidden fixed inset-0 z-[100] flex items-end justify-center pointer-events-none">
@@ -351,7 +366,7 @@ export function ExamCalculator({ onClose }: ExamCalculatorProps) {
           onClick={onClose}
         />
         <div className="relative w-full max-w-sm pb-4 px-4 animate-in slide-in-from-bottom duration-300 pointer-events-auto">
-          {calcContent}
+          {calcContent(false)}
         </div>
       </div>
     </>
