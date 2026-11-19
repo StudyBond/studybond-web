@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
 import { ShareSlipArt, type CardFonts } from "../card/share-card";
-import { SHARE_HOST, type ShareCardView } from "../types";
+import { DAILY_START_PATH, dailyPath, SHARE_HOST, type ShareCardView } from "../types";
 import p from "./pages.module.css";
 
 const PAGE_FONTS: CardFonts = { head: "var(--ui-head)", body: "var(--ui-body)" };
@@ -62,6 +62,18 @@ export function ResultCheck({ card }: { card: ShareCardView | null }) {
                 These marks come from our own records, not from a picture. {card.kind === "DUEL" ? "Played" : "Written"} on {longDate(card.playedAt)}.
               </span>
             </div>
+            {card.daily ? (
+              <section className={p.cta}>
+                <h1>Try today’s challenge</h1>
+                <p>Every {card.boardLine} student gets the same question in each subject today. Free, {card.daily.minutes} minutes.</p>
+                <div className={p.btns}>
+                  <Link className={p.btn} href={(card.challengeName ? dailyPath(card.challengeName) : `/signup?next=${encodeURIComponent(DAILY_START_PATH)}`) as Route}>
+                    Take today’s challenge
+                  </Link>
+                  <Link className={p.ghost} href={"/" as Route}>How StudyBond works</Link>
+                </div>
+              </section>
+            ) : (
             <section className={p.cta}>
               <h1>{card.kind === "EXAM" ? "Practise with real past questions" : card.cta}</h1>
               <p>
@@ -78,6 +90,7 @@ export function ResultCheck({ card }: { card: ShareCardView | null }) {
                 <Link className={p.ghost} href={"/" as Route}>How StudyBond works</Link>
               </div>
             </section>
+            )}
             <p className={p.small}>
               Result <b>{card.printedNumber}</b> · {SHARE_HOST}/r/{card.number}
             </p>

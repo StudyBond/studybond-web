@@ -4,7 +4,7 @@ import type { AvatarView } from "@/features/avatar/avatar-look";
 
 import type { ShareCardView } from "../types";
 import { AvatarArt } from "./avatar-art";
-import { DESK, LinkPill, paletteFor, type CardFonts } from "./share-card";
+import { DailyStamp, DESK, LinkPill, paletteFor, type CardFonts } from "./share-card";
 
 /* Link previews, 1200x630 (mockups 11g, 11h and C2): a tilted slip on the
    left, the lockup, a title, a line and the link on the right. Same rules as
@@ -66,7 +66,7 @@ function SlipHead({ u, fonts, look, label, rest }: { u: number; fonts: CardFonts
       </div>
       <div style={row({ marginTop: 4 * u, gap: 4 * u, fontSize: 10.5 * u, color: p.ink2 })}>
         <span style={{ fontWeight: 700 }}>{label}</span>
-        <span>{` · ${rest}`}</span>
+        {rest ? <span>{` · ${rest}`}</span> : null}
       </div>
       <div style={{ height: 1 * u, marginTop: 10 * u, marginLeft: -16 * u, marginRight: -16 * u, background: p.rule }} />
     </div>
@@ -94,7 +94,9 @@ export function ResultPreviewArt({ card, u, fonts, origin, link }: { card: Share
           {card.stamp}
         </div>
       ) : null}
-      <SlipHead u={u} fonts={fonts} look={card.look} label={card.kindLabel} rest={dateless.join(" · ")} />
+      {/* A daily's date is on its stamp, and the board would run into it on this narrow slip. */}
+      {card.daily ? <DailyStamp date={card.daily.stampDate} u={u} p={p} fonts={fonts} small /> : null}
+      <SlipHead u={u} fonts={fonts} look={card.look} label={card.kindLabel} rest={card.daily ? "" : dateless.join(" · ")} />
       {card.duel ? (
         <div style={col()}>
           <div style={row({ alignItems: "center", marginTop: 12 * u })}>

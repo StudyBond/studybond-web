@@ -180,6 +180,50 @@ function Stamp({ text, u, p, fonts, size }: { text: string; u: number; p: Palett
   );
 }
 
+/**
+ * The Daily Challenge's dated stamp. Unlike BEST YET it sits fully on the
+ * slip: off the edge, amber ink vanishes against the desk and would take
+ * the date with it.
+ */
+export function DailyStamp({ date, u, p, fonts, small }: { date: string; u: number; p: Palette; fonts: CardFonts; small: boolean }) {
+  const big = small ? 16 : 19;
+  return (
+    <div
+      style={col({
+        position: "absolute",
+        top: 9 * u,
+        right: 12 * u,
+        alignItems: "center",
+        padding: `${3 * u}px ${10 * u}px ${2 * u}px`,
+        border: `${2.5 * u}px solid ${p.stamp}`,
+        borderRadius: 7 * u,
+        color: p.stamp,
+        fontFamily: fonts.head,
+        fontWeight: 800,
+        letterSpacing: "0.12em",
+        lineHeight: 1.1,
+        transform: "rotate(-11deg)",
+        opacity: 0.9,
+      })}
+    >
+      <span style={{ fontSize: (big - 4) * u }}>DAILY</span>
+      <span style={{ fontSize: (big - 7.5) * u, letterSpacing: "0.08em" }}>{date}</span>
+    </div>
+  );
+}
+
+function RightMark({ right, u, p }: { right: boolean; u: number; p: Palette }) {
+  return right ? (
+    <svg width={14 * u} height={14 * u} viewBox="0 0 24 24" fill="none" stroke={p.ink} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  ) : (
+    <svg width={13 * u} height={13 * u} viewBox="0 0 24 24" fill="none" stroke={p.ink2} strokeWidth={3} strokeLinecap="round">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
 function TableHead({ cells, u, p }: { cells: string[]; u: number; p: Palette }) {
   return (
     <div style={row({ marginTop: 12 * u, paddingBottom: 4 * u, fontSize: 10.5 * u, fontWeight: 700, color: p.ink2 })}>
@@ -227,8 +271,19 @@ function DuelTable({ card, u, p }: { card: ShareCardView; u: number; p: Palette 
   );
 }
 
-function ExamRow({ label, r, marks, u, p, ghost }: { label: string; r: ShareRow | null; marks: boolean[] | null; u: number; p: Palette; ghost?: boolean }) {
+function ExamRow({ label, r, marks, u, p, ghost, daily }: { label: string; r: ShareRow | null; marks: boolean[] | null; u: number; p: Palette; ghost?: boolean; daily?: boolean }) {
   const right = marks ? marks.filter(Boolean).length : null;
+  if (daily && marks) {
+    // One question per subject: a tick strip would be one long bar, so say Right or Missed.
+    const allRight = marks.length > 0 && right === marks.length;
+    return (
+      <div style={row({ alignItems: "center", gap: 8 * u, padding: `${4.5 * u}px 0`, borderTop: `${1 * u}px solid ${p.rule2}`, fontSize: 12.5 * u })}>
+        <span style={{ flex: 1, fontWeight: 600 }}>{label}</span>
+        <RightMark right={allRight} u={u} p={p} />
+        <span style={{ width: 52 * u, textAlign: "right", fontWeight: 700, color: allRight ? p.ink : p.ink2 }}>{allRight ? "Right" : "Missed"}</span>
+      </div>
+    );
+  }
   return (
     <div style={row({ alignItems: "center", gap: 8 * u, padding: `${4.5 * u}px 0`, borderTop: `${1 * u}px solid ${p.rule2}`, fontSize: 12.5 * u })}>
       <span style={{ width: 76 * u, fontWeight: 600 }}>{label}</span>
@@ -332,7 +387,7 @@ function SlipBody({ card, square, u, p, fonts }: { card: ShareCardView; square: 
                 <ExamRow label={`${card.ghost.levelLabel} ghost`} r={exam.rows[0] ?? null} marks={card.ghost.ghostMarks} u={u} p={p} ghost />
               </div>
             ) : (
-              exam.rows.map((r) => <ExamRow key={r.subject} label={r.subject} r={r} marks={r.marks} u={u} p={p} />)
+              exam.rows.map((r) => <ExamRow key={r.subject} label={r.subject} r={r} marks={r.marks} u={u} p={p} daily={Boolean(card.daily)} />)
             )}
           </div>
           <Foot card={card} u={u} p={p} fonts={fonts} />
@@ -368,6 +423,7 @@ export function ShareSlipArt({ card, square, u, fonts, children }: { card: Share
       </div>
       <div style={{ height: 1 * u, marginTop: 12 * u, marginLeft: -18 * u, marginRight: -18 * u, background: p.rule }} />
       {card.stamp ? <Stamp text={card.stamp} u={u} p={p} fonts={fonts} size={square ? 16 : 19} /> : null}
+      {card.daily ? <DailyStamp date={card.daily.stampDate} u={u} p={p} fonts={fonts} small={square} /> : null}
       <SlipBody card={card} square={square} u={u} p={p} fonts={fonts} />
       {children}
     </div>

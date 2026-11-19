@@ -4,7 +4,7 @@ import { cache } from "react";
 
 import { getBackendApiBaseUrl } from "@/lib/env/server";
 
-import type { ChallengeLinkView, ShareCardView } from "./types";
+import type { ChallengeLinkView, DailyLinkView, ShareCardView } from "./types";
 
 /* Public reads, straight from the backend with no login: the result check
    page, the challenge-link landing and the share images. */
@@ -41,6 +41,13 @@ export const fetchChallengeLink = cache(async (name: string) => {
   const clean = cleanChallengeName(name);
   if (!/^[a-z0-9-]{2,30}$/.test(clean)) return null;
   return publicRead<ChallengeLinkView>(`/api/share/challenge-links/${encodeURIComponent(clean)}`);
+});
+
+/** studybond.app/daily/<name>: the link profile and the latest shared Daily Challenge. */
+export const fetchDailyLink = cache(async (name: string) => {
+  const clean = cleanChallengeName(name);
+  if (!/^[a-z0-9-]{2,30}$/.test(clean)) return null;
+  return publicRead<DailyLinkView>(`/api/share/daily-links/${encodeURIComponent(clean)}`);
 });
 
 /** The short board name, as students say it and as the cards print it: "UI Post-UTME". */

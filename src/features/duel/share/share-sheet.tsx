@@ -11,7 +11,7 @@ import { playDuelSound } from "../ui/sfx";
 import { shareResult, updateShareSettings } from "./api";
 import { ResultPreviewArt } from "./card/link-preview";
 import { ShareCardArt, type CardFonts } from "./card/share-card";
-import { SHARE_HOST, type OwnerShare, type ShareSettings, type ShareShape } from "./types";
+import { cardLinkPath, chatLinkPath, SHARE_HOST, type OwnerShare, type ShareSettings, type ShareShape } from "./types";
 import s from "./share.module.css";
 
 /* Share your result (mockup 11a). The preview is the real card drawn in the
@@ -175,8 +175,9 @@ export function ShareSheet({ examId, open, onClose, rivalFirstName }: ShareSheet
   const isDuel = card?.kind === "DUEL";
   const dims = SHAPES.find((x) => x.id === shape)!;
   const origin = typeof window === "undefined" ? "" : window.location.origin;
-  const resultUrl = card ? `${origin}/r/${card.number}` : "";
-  const printedLink = card?.challengeName ? `${SHARE_HOST}/c/${card.challengeName}` : card ? `${SHARE_HOST}/r/${card.number}` : "";
+  // A Daily Challenge sends friends to today's challenge (/daily/<name>); other results to the result page.
+  const chatUrl = card ? `${origin}${chatLinkPath(card)}` : "";
+  const printedLink = card ? `${SHARE_HOST}${cardLinkPath(card)}` : "";
   const rivalLabel = rivalFirstName || card?.duel?.rival?.firstName || "your rival";
 
   function change(next: Partial<ShareSettings>) {
@@ -244,7 +245,7 @@ export function ShareSheet({ examId, open, onClose, rivalFirstName }: ShareSheet
 
   const shareChat = () =>
     run("chat", async () => {
-      const text = `${card!.previewTitle}. Check it: ${resultUrl}`;
+      const text = card!.daily ? `${card!.previewTitle}. Try today’s: ${chatUrl}` : `${card!.previewTitle}. Check it: ${chatUrl}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
     });
 
@@ -257,8 +258,8 @@ export function ShareSheet({ examId, open, onClose, rivalFirstName }: ShareSheet
 
   const copyLink = () =>
     run("copy", async () => {
-      await navigator.clipboard.writeText(resultUrl);
-      toast.success(`Link copied: ${SHARE_HOST}/r/${card!.number}`);
+      await navigator.clipboard.writeText(chatUrl);
+      toast.success(`Link copied: ${SHARE_HOST}${chatLinkPath(card!)}`);
     });
 
   const sheet = (
@@ -277,7 +278,7 @@ export function ShareSheet({ examId, open, onClose, rivalFirstName }: ShareSheet
               <div className={s.prevBox} style={{ width: Math.round(dims.w * dims.scale), height: Math.round(dims.h * dims.scale) }}>
                 <div style={{ width: dims.w, height: dims.h, transform: `scale(${dims.scale})`, transformOrigin: "top left" }}>
                   {shape === "link" ? (
-                    <ResultPreviewArt card={{ ...card, look: settings.look }} u={1} fonts={PAGE_FONTS} origin="" link={`${SHARE_HOST}/r/${card.number}`} />
+                    <ResultPreviewArt card={{ ...card, look: settings.look }} u={1} fonts={PAGE_FONTS} origin="" link={`${SHARE_HOST}${chatLinkPath(card)}`} />
                   ) : (
                     <ShareCardArt card={{ ...card, look: settings.look }} shape={shape} u={1} fonts={PAGE_FONTS} origin="" link={printedLink} />
                   )}
@@ -335,7 +336,7 @@ export function ShareSheet({ examId, open, onClose, rivalFirstName }: ShareSheet
             >
               <span>
                 <b>Show the scores</b>
-                <small>{settings?.showScore === false ? "Only how it went, no numbers" : isDuel ? "Both scores and the subject table" : "Your score and the subject strips"}</small>
+                <small>{settings?.showScore === false ? "Only how it went, no numbers" : isDuel ? "Both scores and the subject table" : card?.daily ? "Your score and right or missed per subject" : "Your score and the subject strips"}</small>
               </span>
               <Switch on={settings?.showScore ?? true} />
             </button>

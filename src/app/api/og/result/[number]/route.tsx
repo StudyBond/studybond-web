@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 import { ShareCardArt } from "@/features/duel/share/card/share-card";
 import { ResultPreviewArt } from "@/features/duel/share/card/link-preview";
 import { fetchShareCard } from "@/features/duel/share/server";
-import { SHARE_HOST } from "@/features/duel/share/types";
+import { cardLinkPath, chatLinkPath, SHARE_HOST } from "@/features/duel/share/types";
 
 import { cardFonts } from "../../_lib/fonts";
 
@@ -26,7 +26,8 @@ export async function GET(request: NextRequest, { params }: Props) {
 
   const { fonts, families } = await cardFonts();
   const origin = request.nextUrl.origin;
-  const link = card.challengeName ? `${SHARE_HOST}/c/${card.challengeName}` : `${SHARE_HOST}/r/${card.number}`;
+  // A Daily Challenge prints /daily/<name>: friends land on today's challenge.
+  const link = `${SHARE_HOST}${cardLinkPath(card)}`;
   const headers = { "cache-control": "public, max-age=60, s-maxage=60" };
 
   if (shape === "status" || shape === "square") {
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest, { params }: Props) {
     );
   }
   return new ImageResponse(
-    <ResultPreviewArt card={card} u={2} fonts={families} origin={origin} link={`${SHARE_HOST}/r/${card.number}`} />,
+    <ResultPreviewArt card={card} u={2} fonts={families} origin={origin} link={`${SHARE_HOST}${chatLinkPath(card)}`} />,
     { width: 1200, height: 630, fonts, headers },
   );
 }
