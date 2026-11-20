@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { submitExam, abandonExam } from "@/lib/api/exams";
 import { offlineStore } from "@/features/exam/stores/offline-store";
 import type { ExamResult, ExamAbandonResult, SubmitExamPayload } from "@/lib/api/types";
-import { toast } from "sonner";
 import type { ApiError } from "@/lib/api/client";
 
 /** Submit exam answers — fires once, idempotency-keyed on the backend. */
@@ -10,6 +9,10 @@ export function useSubmitExamMutation() {
   const queryClient = useQueryClient();
 
   return useMutation<ExamResult | { queued: true; examId: number }, ApiError | Error, { examId: number; payload: SubmitExamPayload }>({
+    // Run even when the browser says it is offline. React Query's default
+    // ("online") holds a mutation back until the connection returns, so the
+    // offline queueing below never ran and the time's-up card spun forever.
+    networkMode: "always",
     mutationFn: async ({ examId, payload }) => {
       // If we are definitely offline, just queue it immediately
       if (typeof window !== "undefined" && !window.navigator.onLine) {
@@ -35,7 +38,7 @@ export function useSubmitExamMutation() {
       offlineStore.clearAnswerProgress(variables.examId).catch(() => {});
 
       if ("queued" in data) {
-         toast.success("Network unstable. Your answers are saved securely and will submit upon reconnection.", { duration: 6000 });
+         // The exam screen shows a "saved, waiting for a connection" card.
          // We do not invalidate queries here because the backend state has not changed yet.
          return;
       }
@@ -59,6 +62,8 @@ export function useAbandonExamMutation() {
   const queryClient = useQueryClient();
 
   return useMutation<ExamAbandonResult, ApiError, number>({
+    // Offline, fail at once ("try again") instead of waiting silently.
+    networkMode: "always",
     mutationFn: (examId) => abandonExam(examId),
     onSuccess: (_data, examId) => {
       // Clean up all offline state for abandoned exam

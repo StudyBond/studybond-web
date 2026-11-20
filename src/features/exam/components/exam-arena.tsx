@@ -43,7 +43,8 @@ import {
   useAbandonExamMutation,
 } from "@/features/exam/hooks/use-exam-mutations";
 import { useExamStore } from "@/features/exam/stores/exam-store";
-import type { ExamQuestion } from "@/lib/api/types";
+import { holdQueuedSubmit } from "@/features/exam/hooks/use-offline-sync";
+import type { ExamQuestion, SubmitExamPayload } from "@/lib/api/types";
 import { getUserProfile } from "@/lib/api/users";
 import { offlineStore } from "@/features/exam/stores/offline-store";
 import { useDuelSession } from "@/features/duel/hooks/use-duel";
@@ -111,12 +112,18 @@ export function ExamArena({ examId }: ExamArenaProps) {
   const setSubmitDialogOpen = useExamStore((s) => s.setSubmitDialogOpen);
   const setAbandonDialogOpen = useExamStore((s) => s.setAbandonDialogOpen);
   const setTimeExpiredModalOpen = useExamStore((s) => s.setTimeExpiredModalOpen);
+  const setTimerRunning = useExamStore((s) => s.setTimerRunning);
   const submitDialogOpen = useExamStore((s) => s.submitDialogOpen);
   const timeExpiredModalOpen = useExamStore((s) => s.timeExpiredModalOpen);
   const abandonDialogOpen = useExamStore((s) => s.abandonDialogOpen);
 
   const submitMutation = useSubmitExamMutation();
   const abandonMutation = useAbandonExamMutation();
+
+  // The paper was submitted (or time ran out) while offline: the answers are
+  // saved on this device and the card waits for a connection, then sends
+  // them and opens the results. `error` is set if the server refuses them.
+  const [saved, setSaved] = useState<{ reason: "timeup" | "manual"; error: string | null } | null>(null);
 
   const prevIndexRef = useRef<number | null>(null);
   const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -281,7 +288,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
       // Shortcuts with a modifier belong to the browser (Ctrl+F, Ctrl+P ...).
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       // While a menu, the ribbon drawer or a dialog is open, keys belong to it.
-      if (menuOpen || ribbonOpen || submitDialogOpen || timeExpiredModalOpen || abandonDialogOpen) return;
+      if (menuOpen || ribbonOpen || submitDialogOpen || timeExpiredModalOpen || abandonDialogOpen || saved) return;
 
       const key = event.key.toLowerCase();
       const isLast = currentIndex === (session?.questions.length ?? 0) - 1;
@@ -359,6 +366,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
     submitDialogOpen,
     timeExpiredModalOpen,
     abandonDialogOpen,
+    saved,
   ]);
 
   // Auto-advance: once a new answer is chosen on this question, move on.
@@ -412,69 +420,56 @@ export function ExamArena({ examId }: ExamArenaProps) {
       storeExamId === examId &&
       !submitDialogOpen &&
       !timeExpiredModalOpen &&
-      !submitMutation.isPending,
+      !submitMutation.isPending &&
+      !saved,
   });
 
-  const handleSubmit = useCallback(async () => {
-    if (!session) return;
+  /** Sends the paper, then opens what comes next. Throws if the server refuses it. */
+  const sendPaper = useCallback(async (answers: SubmitExamPayload["answers"]) => {
+    const result = await submitMutation.mutateAsync({
+      examId,
+      payload: { answers },
+    });
 
-    const currentQuestion = session.questions[currentIndex];
-    if (currentQuestion) {
-      recordTimeSpent(currentQuestion.id);
+    if ("queued" in result) {
+      // Offline: the answers are saved on this device. Stay on this page
+      // (the dashboard can't load without a connection) and show the
+      // "saved" card, which sends the paper once the connection is back.
+      // The exam is kept as it is, so nothing restarts behind the card.
+      setSubmitDialogOpen(false);
+      setTimerRunning(false);
+      setSaved(
+        (prev) =>
+          prev ?? { reason: useExamStore.getState().timeExpiredModalOpen ? "timeup" : "manual", error: null },
+      );
+      return;
     }
 
-    const answers = buildSubmitPayload();
+    // Sent. A "saved" card stays up until the results page opens.
+    setSubmitDialogOpen(false);
+    setTimeExpiredModalOpen(false);
+    reset();
 
-    try {
-      const result = await submitMutation.mutateAsync({
-        examId,
-        payload: { answers },
-      });
+    // Clean up IDB answer progress after successful submission
+    offlineStore.clearAnswerProgress(examId).catch(() => {});
 
-      setSubmitDialogOpen(false);
-      setTimeExpiredModalOpen(false);
-      reset();
+    let bookmarkParams = "";
+    if (result && "autoBookmarkResult" in result && result.autoBookmarkResult) {
+      const { savedCount, attemptedCount, limitReached } = result.autoBookmarkResult;
+      bookmarkParams = `bmSaved=${savedCount}&bmAttempted=${attemptedCount}&bmLimit=${limitReached ? "1" : "0"}`;
+    }
 
-      // Clean up IDB answer progress after successful submission
-      offlineStore.clearAnswerProgress(examId).catch(() => {});
+    if (duelSession && duelCode) {
+      const refreshedSession = await refetchDuelSession().catch(() => null);
+      const latestSession = refreshedSession?.data?.session ?? duelSession;
+      const latestOpponent = latestSession.participants.find(
+        (participant) =>
+          typeof myUserId === "number" && participant.userId !== myUserId,
+      );
 
-      if ("queued" in result) {
-        router.push("/dashboard");
-        return;
-      }
-
-      let bookmarkParams = "";
-      if (result && "autoBookmarkResult" in result && result.autoBookmarkResult) {
-        const { savedCount, attemptedCount, limitReached } = result.autoBookmarkResult;
-        bookmarkParams = `bmSaved=${savedCount}&bmAttempted=${attemptedCount}&bmLimit=${limitReached ? "1" : "0"}`;
-      }
-
-      if (duelSession && duelCode) {
-        const refreshedSession = await refetchDuelSession().catch(() => null);
-        const latestSession = refreshedSession?.data?.session ?? duelSession;
-        const latestOpponent = latestSession.participants.find(
-          (participant) =>
-            typeof myUserId === "number" && participant.userId !== myUserId,
-        );
-
-        if (latestSession.status === "COMPLETED") {
-          const params = new URLSearchParams();
-          params.set("duel", duelCode);
-          if (bookmarkParams) {
-            params.set("bmSaved", result.autoBookmarkResult!.savedCount.toString());
-            params.set("bmAttempted", result.autoBookmarkResult!.attemptedCount.toString());
-            params.set("bmLimit", result.autoBookmarkResult!.limitReached ? "1" : "0");
-          }
-          router.push(`/exams/${examId}/results?${params.toString()}`);
-          return;
-        }
-
-        if (latestOpponent?.participantState === "FINISHED") {
-          markOpponentFinished();
-        }
-
-        // The marking screen waits for the rival, then marks both papers.
-        const params = new URLSearchParams({ duel: duelCode });
+      if (latestSession.status === "COMPLETED") {
+        const params = new URLSearchParams();
+        params.set("duel", duelCode);
         if (bookmarkParams) {
           params.set("bmSaved", result.autoBookmarkResult!.savedCount.toString());
           params.set("bmAttempted", result.autoBookmarkResult!.attemptedCount.toString());
@@ -484,15 +479,56 @@ export function ExamArena({ examId }: ExamArenaProps) {
         return;
       }
 
-      if (isGhostRace) {
-        router.push(`/dashboard/duel/ghost/${examId}` as Route);
-        return;
+      if (latestOpponent?.participantState === "FINISHED") {
+        markOpponentFinished();
       }
 
-      const redirectUrl = bookmarkParams
-        ? `/exams/${examId}/results?${bookmarkParams}`
-        : `/exams/${examId}/results`;
-      router.push(redirectUrl as any);
+      // The marking screen waits for the rival, then marks both papers.
+      const params = new URLSearchParams({ duel: duelCode });
+      if (bookmarkParams) {
+        params.set("bmSaved", result.autoBookmarkResult!.savedCount.toString());
+        params.set("bmAttempted", result.autoBookmarkResult!.attemptedCount.toString());
+        params.set("bmLimit", result.autoBookmarkResult!.limitReached ? "1" : "0");
+      }
+      router.push(`/exams/${examId}/results?${params.toString()}`);
+      return;
+    }
+
+    if (isGhostRace) {
+      router.push(`/dashboard/duel/ghost/${examId}` as Route);
+      return;
+    }
+
+    const redirectUrl = bookmarkParams
+      ? `/exams/${examId}/results?${bookmarkParams}`
+      : `/exams/${examId}/results`;
+    router.push(redirectUrl as any);
+  }, [
+    submitMutation,
+    examId,
+    setSubmitDialogOpen,
+    setTimerRunning,
+    setTimeExpiredModalOpen,
+    reset,
+    router,
+    duelSession,
+    duelCode,
+    refetchDuelSession,
+    myUserId,
+    markOpponentFinished,
+    isGhostRace,
+  ]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!session) return;
+
+    const currentQuestion = session.questions[currentIndex];
+    if (currentQuestion) {
+      recordTimeSpent(currentQuestion.id);
+    }
+
+    try {
+      await sendPaper(buildSubmitPayload());
     } catch (error) {
       const message =
         error instanceof Error && error.message
@@ -502,29 +538,66 @@ export function ExamArena({ examId }: ExamArenaProps) {
       toast.error(message);
       dismissViolation({ showToast: false });
     }
-  }, [
-    session,
-    currentIndex,
-    recordTimeSpent,
-    buildSubmitPayload,
-    submitMutation,
-    examId,
-    setSubmitDialogOpen,
-    setTimeExpiredModalOpen,
-    reset,
-    router,
-    dismissViolation,
-    duelSession,
-    duelCode,
-    refetchDuelSession,
-    myUserId,
-    markOpponentFinished,
-    isGhostRace,
-  ]);
+  }, [session, currentIndex, recordTimeSpent, buildSubmitPayload, sendPaper, dismissViolation]);
 
   useEffect(() => {
     autoSubmitRef.current = handleSubmit;
   }, [handleSubmit]);
+
+  // ─── Saved offline: send the paper once the connection is back ───
+  const isSaved = saved !== null;
+  const savedError = saved?.error ?? null;
+  const retrying = useRef(false);
+  const sendSaved = useCallback(async () => {
+    if (retrying.current) return;
+    retrying.current = true;
+    try {
+      // The saved copy, so time spent waiting offline is not added to it.
+      const answers = (await offlineStore.getQueuedSubmit(examId).catch(() => null)) ?? buildSubmitPayload();
+      await sendPaper(answers);
+    } catch (error) {
+      const status =
+        typeof error === "object" && error !== null && typeof (error as { status?: unknown }).status === "number"
+          ? (error as { status: number }).status
+          : 0;
+      // The server refused it for good (time long gone, exam closed): stop
+      // and say so. Anything else (server busy) is tried again shortly.
+      if (status >= 400 && status < 500 && status !== 429) {
+        offlineStore.clearQueuedSubmit(examId).catch(() => {});
+        // The server's 400 text is generic, so name the usual case plainly.
+        const payload = (error as { payload?: { code?: string; error?: { code?: string } } }).payload;
+        const code = payload?.error?.code ?? payload?.code;
+        const message =
+          code === "EXAM_EXPIRED"
+            ? "Too much time passed after the clock ran out, so this paper can't be marked."
+            : "This exam is closed, so the paper can't be sent.";
+        setSaved((s) => (s ? { ...s, error: message } : s));
+      }
+    } finally {
+      retrying.current = false;
+    }
+  }, [examId, buildSubmitPayload, sendPaper]);
+  const sendSavedRef = useRef(sendSaved);
+  useEffect(() => {
+    sendSavedRef.current = sendSaved;
+  }, [sendSaved]);
+
+  // Keep the background sender off this paper while this page sends it.
+  useEffect(() => {
+    if (!isSaved) return;
+    return holdQueuedSubmit(examId);
+  }, [isSaved, examId]);
+
+  // Online again: send now, then every 15s until it goes through.
+  useEffect(() => {
+    if (!isSaved || savedError || !isOnline) return;
+    const first = window.setTimeout(() => void sendSavedRef.current(), 600);
+    const again = window.setInterval(() => void sendSavedRef.current(), 15_000);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(again);
+    };
+  }, [isSaved, savedError, isOnline]);
 
   const handleAbandon = useCallback(async () => {
     try {
@@ -780,7 +853,12 @@ export function ExamArena({ examId }: ExamArenaProps) {
         onConfirm={handleAbandon}
         isAbandoning={abandonMutation.isPending}
       />
-      <TimeExpiredModal onAutoSubmit={handleSubmit} />
+      <TimeExpiredModal
+        onAutoSubmit={handleSubmit}
+        saved={saved}
+        isOnline={isOnline}
+        onLeave={() => router.push("/dashboard")}
+      />
 
     </div>
   );

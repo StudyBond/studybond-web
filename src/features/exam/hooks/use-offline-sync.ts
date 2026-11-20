@@ -23,6 +23,21 @@ const MAX_BACKOFF_MS = 60_000;
 const PERIODIC_DRAIN_INTERVAL_MS = 30_000;
 
 /**
+ * Papers the open exam screen is sending itself (its "saved, waiting for a
+ * connection" card). The drain leaves them alone, so the same paper is never
+ * sent twice at once and the screen can go straight to the results.
+ */
+const heldByExamScreen = new Set<number>();
+
+/** Keep the drain off this paper until the returned release is called. */
+export function holdQueuedSubmit(examId: number): () => void {
+  heldByExamScreen.add(examId);
+  return () => {
+    heldByExamScreen.delete(examId);
+  };
+}
+
+/**
  * Hook that automatically drains queued offline exam submissions
  * when the browser regains network connectivity.
  *
@@ -51,7 +66,7 @@ export function useOfflineSync() {
 
     let queuedIds: number[];
     try {
-      queuedIds = await offlineStore.getAllQueuedSubmitIds();
+      queuedIds = (await offlineStore.getAllQueuedSubmitIds()).filter((id) => !heldByExamScreen.has(id));
     } catch {
       return; // IDB unavailable — nothing to drain
     }
@@ -70,6 +85,8 @@ export function useOfflineSync() {
     );
 
     for (const examId of queuedIds) {
+      // The exam screen may have taken this one over while we were busy.
+      if (heldByExamScreen.has(examId)) continue;
       const answers = await offlineStore.getQueuedSubmit(examId);
       if (!answers || answers.length === 0) {
         // Corrupted or empty entry — clear it
