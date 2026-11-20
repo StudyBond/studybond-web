@@ -33,7 +33,8 @@ import s from "@/features/exam/components/exam-shell.module.css";
 import tk from "@/features/exam/components/exam-tokens.module.css";
 import { SubmitDialog } from "@/features/exam/components/submit-dialog";
 import { AbandonDialog } from "@/features/exam/components/abandon-dialog";
-import { TimeExpiredModal } from "@/features/exam/components/time-expired-modal";
+import { TimeExpiredModal, type SavedPaper } from "@/features/exam/components/time-expired-modal";
+import { offlineSendDeadline } from "@/features/exam/lib/offline-window";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { ExamCalculator } from "@/features/exam/components/exam-calculator";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
@@ -123,7 +124,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   // The paper was submitted (or time ran out) while offline: the answers are
   // saved on this device and the card waits for a connection, then sends
   // them and opens the results. `error` is set if the server refuses them.
-  const [saved, setSaved] = useState<{ reason: "timeup" | "manual"; error: string | null } | null>(null);
+  const [saved, setSaved] = useState<SavedPaper | null>(null);
 
   const prevIndexRef = useRef<number | null>(null);
   const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -438,10 +439,16 @@ export function ExamArena({ examId }: ExamArenaProps) {
       // The exam is kept as it is, so nothing restarts behind the card.
       setSubmitDialogOpen(false);
       setTimerRunning(false);
-      setSaved(
-        (prev) =>
-          prev ?? { reason: useExamStore.getState().timeExpiredModalOpen ? "timeup" : "manual", error: null },
-      );
+      setSaved((prev) => {
+        if (prev) return prev;
+        const st = useExamStore.getState();
+        return {
+          reason: st.timeExpiredModalOpen ? "timeup" : "manual",
+          error: null,
+          // When the server stops taking it: the clock's end plus the window.
+          deadline: offlineSendDeadline(st.remainingSeconds, !!duelCode),
+        };
+      });
       return;
     }
 
