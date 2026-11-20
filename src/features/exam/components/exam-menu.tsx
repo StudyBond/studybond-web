@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, Calculator, LogOut } from "lucide-react";
+import { ALargeSmall, ArrowRight, Calculator, LogOut } from "lucide-react";
 
+import { TextSizePicker } from "@/features/exam/components/text-size-picker";
 import { cn } from "@/lib/utils/cn";
 
 import s from "./exam-shell.module.css";
@@ -17,8 +18,10 @@ type ExamMenuProps = {
 
 /**
  * The exam's ... menu. Only what is needed mid-paper: Calculator,
- * Auto-advance (this sitting only; the default lives in Settings), Leave.
- * Preferences such as paper colour belong in Settings, not here.
+ * Auto-advance (this sitting only; the default lives in Settings), Text size,
+ * Leave. Preferences such as paper colour belong in Settings, not here.
+ * Text size is the exception: a student who can't read the question needs it
+ * now, not after the exam. It saves to the account, same as in Settings.
  */
 export function ExamMenu({ autoAdvance, onCalculator, onToggleAutoAdvance, onLeave, onClose }: ExamMenuProps) {
   const first = useRef<HTMLButtonElement>(null);
@@ -57,6 +60,11 @@ export function ExamMenu({ autoAdvance, onCalculator, onToggleAutoAdvance, onLea
           </span>
           <i className={cn(s.switch, autoAdvance && s.switchOn)} aria-hidden="true" />
         </button>
+        <div className={s.menuRow}>
+          <ALargeSmall aria-hidden="true" />
+          <span>Text size</span>
+          <TextSizePicker />
+        </div>
         <hr />
         <div className={s.menuKeys}>
           <kbd className={s.kbd}>A</kbd>–<kbd className={s.kbd}>E</kbd> choose · <kbd className={s.kbd}>N</kbd> next ·{" "}

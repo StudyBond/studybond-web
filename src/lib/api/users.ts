@@ -81,10 +81,14 @@ export async function getAchievements() {
   return response.data;
 }
 
-/** Paper colour and the auto-advance default, saved on the account. */
+/** How big the reading text is in the exam, the review and Study Mode. */
+export type TextSize = "normal" | "large" | "larger";
+
+/** Paper colour, the auto-advance default and text size, saved on the account. */
 export type ExamPreferences = {
   paperColour: boolean;
   autoAdvance: boolean;
+  textSize: TextSize;
 };
 
 export async function getExamPreferences() {

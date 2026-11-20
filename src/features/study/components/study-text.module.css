@@ -1,0 +1,11 @@
+/* Study Mode reading sizes. --ts is the student's text size (1, 1.15 or 1.3),
+   set inline on the question card from the exam preferences. MathMarkdown
+   brings Tailwind prose sizes (prose-sm is 14px); these replace them, so
+   the text matches the exam review and grows with the setting. */
+
+.card { --ts: 1; }
+.q :global(.prose) { font-size: calc(17px * var(--ts)); }
+.opt :global(.prose) { font-size: calc(16px * var(--ts)); }
+.passage :global(.prose) { font-size: calc(15.5px * var(--ts)); }
+.exp :global(.prose) { font-size: calc(16px * var(--ts)); }
+.note { font-size: calc(13px * var(--ts)); }

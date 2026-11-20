@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 import type { OptionKey } from "@/features/study/stores/study-store";
 import { MathMarkdown } from "@/components/ui/math-markdown";
 import { displayImageUrl } from "@/lib/utils/image-url";
+import st from "./study-text.module.css";
 
 type StudyOptionGridProps = {
   question: any;
@@ -116,6 +117,7 @@ export function StudyOptionGrid({
               {text ? (
                 <div className={cn(
                   "text-xs sm:text-sm leading-relaxed transition-colors duration-200 sb-protected",
+                  st.opt,
                   textClass
                 )}>
                   <MathMarkdown content={text} variant="option" />

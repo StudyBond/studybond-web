@@ -1,7 +1,9 @@
 "use client";
 
+import { TextSizePicker } from "@/features/exam/components/text-size-picker";
 import { useExamPrefs, useSyncExamPrefs } from "@/features/exam/stores/exam-prefs-store";
 import { FLAT_COLOUR } from "@/features/exam/lib/papers";
+import { textScale } from "@/features/exam/lib/text-size";
 import { cn } from "@/lib/utils/cn";
 
 const PAPERS = [
@@ -57,6 +59,7 @@ export function ExamTab() {
   const autoAdvance = useExamPrefs((p) => p.autoAdvance);
   const setPaperColour = useExamPrefs((p) => p.setPaperColour);
   const setAutoAdvance = useExamPrefs((p) => p.setAutoAdvance);
+  const textSize = useExamPrefs((p) => p.textSize);
 
   return (
     <div className="space-y-6">
@@ -92,6 +95,25 @@ export function ExamTab() {
         >
           <Switch on={autoAdvance} onChange={setAutoAdvance} label="Auto-advance" />
         </Row>
+
+        <div className="px-5 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-white">Text size</h3>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-white/45">
+                Makes the questions, options and explanations bigger in exams, the review and Study Mode. You can also
+                change it from the exam&apos;s ... menu.
+              </p>
+            </div>
+            <TextSizePicker />
+          </div>
+          <p
+            className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 leading-relaxed text-white/80"
+            style={{ fontSize: `${16 * textScale(textSize)}px` }}
+          >
+            This is how big questions and explanations will look.
+          </p>
+        </div>
       </div>
 
       <p className="text-[12px] text-white/30">Saved to your account, so your other devices use it too.</p>

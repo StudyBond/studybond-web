@@ -7,7 +7,11 @@ import { SharedStimulus } from "@/features/exam/components/shared-stimulus";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Eye, ArrowRight, ArrowLeft, Crown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { CSSProperties } from "react";
 import { displayImageUrl } from "@/lib/utils/image-url";
+import { useExamPrefs, useSyncExamPrefs } from "@/features/exam/stores/exam-prefs-store";
+import { textScale } from "@/features/exam/lib/text-size";
+import st from "./study-text.module.css";
 
 type StudyQuestionCardProps = {
   question: any;
@@ -26,6 +30,9 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
   const prevQuestion = useStudyStore((s) => s.prevQuestion);
   const currentIndex = useStudyStore((s) => s.currentIndex);
   const isPremiumSession = useStudyStore((s) => s.isPremiumSession);
+  // Text size is set in Settings > Exam (or the exam menu) and covers Study Mode too.
+  useSyncExamPrefs();
+  const textSize = useExamPrefs((p) => p.textSize);
 
   const selectedAnswer = state?.selectedAnswer ?? null;
   const phase = state?.phase ?? "attempt";
@@ -38,18 +45,22 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${st.card}`} style={{ "--ts": textScale(textSize) } as CSSProperties}>
       {/* Shared diagram or passage */}
-      <SharedStimulus
-        text={question.parentQuestionText}
-        imageUrl={question.parentQuestionImageUrl}
-      />
+      {question.parentQuestionText || question.parentQuestionImageUrl ? (
+        <div className={st.passage}>
+          <SharedStimulus
+            text={question.parentQuestionText}
+            imageUrl={question.parentQuestionImageUrl}
+          />
+        </div>
+      ) : null}
 
       {/* Main question card */}
       <div className="rounded-2xl border border-white/[0.06] bg-[var(--sb-bg-surface-1)] p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
         <div>
           {/* Question Text */}
-          <h2 className="text-sm sm:text-base md:text-lg font-medium leading-relaxed text-white/90 sb-protected">
+          <h2 className={`text-sm sm:text-base md:text-lg font-medium leading-relaxed text-white/90 sb-protected ${st.q}`}>
             <MathMarkdown content={question.questionText} variant="question" />
           </h2>
 
@@ -164,7 +175,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
               <h3 className="text-sm font-bold text-emerald-400">Explanation</h3>
             </div>
 
-            <div className="text-sm leading-relaxed text-white/70">
+            <div className={`text-sm leading-relaxed text-white/70 ${st.exp}`}>
               <MathMarkdown content={question.explanation.text} />
             </div>
 
@@ -182,7 +193,7 @@ export function StudyQuestionCard({ question, questionIndex, totalQuestions, onE
                 <p className="text-[10px] font-bold uppercase tracking-wider text-white/30 mb-1">
                   Additional Notes
                 </p>
-                <p className="text-xs text-white/50 leading-relaxed">
+                <p className={`text-xs text-white/50 leading-relaxed ${st.note}`}>
                   {question.explanation.additionalNotes}
                 </p>
               </div>

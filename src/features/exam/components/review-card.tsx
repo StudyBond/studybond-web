@@ -23,6 +23,25 @@ const VERDICT = { r: "Correct", w: "Wrong", b: "No answer" } as const;
 const SWIPE_MIN = 60;
 const SWIPE_RATIO = 1.6;
 
+/**
+ * True when the finger landed on something that scrolls sideways (a wide
+ * table, a long sum), or outside the card itself (the zoomed picture and the
+ * report form are portals, so their touches still bubble here). Dragging
+ * there must scroll or pan, never change the question. Same when the page is
+ * pinch-zoomed: a sideways drag then moves along the line being read.
+ */
+function swipeBlocked(target: EventTarget | null, card: HTMLElement): boolean {
+  if ((window.visualViewport?.scale ?? 1) > 1.01) return true;
+  if (!(target instanceof Element) || !card.contains(target)) return true;
+  for (let el: Element | null = target; el && el !== card; el = el.parentElement) {
+    if (el.scrollWidth > el.clientWidth + 1) {
+      const ox = getComputedStyle(el).overflowX;
+      if (ox === "auto" || ox === "scroll") return true;
+    }
+  }
+  return false;
+}
+
 type ReviewCardProps = {
   q: QuestionWithAnswer;
   paperName: string;
@@ -38,6 +57,8 @@ type ReviewCardProps = {
   onNext: () => void;
   /** Phone only: swipe left/right on the card to move. */
   swipe: boolean;
+  /** Called after a swipe moved the review (not after a button press). */
+  onSwiped?: () => void;
   /** Tells the page a dialog is open, so arrow keys leave the review alone. */
   onBusyChange: (busy: boolean) => void;
 };
@@ -59,7 +80,7 @@ function Pic({ src, alt, className, onZoom }: { src: string; alt: string; classN
 
 /** One question, reviewed: verdict, the question, the options marked, the explanation. */
 export const ReviewCard = forwardRef<HTMLElement, ReviewCardProps>(function ReviewCard(
-  { q, paperName, numberInPaper, tint, groupLabel, dirClass, filterWord, onPrev, onNext, swipe, onBusyChange },
+  { q, paperName, numberInPaper, tint, groupLabel, dirClass, filterWord, onPrev, onNext, swipe, onSwiped, onBusyChange },
   ref,
 ) {
   const [zoom, setZoom] = useState<string | null>(null);
@@ -74,9 +95,11 @@ export const ReviewCard = forwardRef<HTMLElement, ReviewCardProps>(function Revi
     return () => onBusyChange(false);
   }, [zoom, reportOpen, onBusyChange]);
 
-  const onTouchStart = (e: TouchEvent) => {
+  const onTouchStart = (e: TouchEvent<HTMLElement>) => {
     const t = e.touches[0];
-    touch.current = t ? { x: t.clientX, y: t.clientY } : null;
+    // A second finger means a pinch, not a swipe.
+    const ok = t && e.touches.length === 1 && !zoom && !reportOpen && !swipeBlocked(e.target, e.currentTarget);
+    touch.current = ok ? { x: t.clientX, y: t.clientY } : null;
   };
   const onTouchEnd = (e: TouchEvent) => {
     const start = touch.current;
@@ -88,6 +111,7 @@ export const ReviewCard = forwardRef<HTMLElement, ReviewCardProps>(function Revi
     if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) < SWIPE_RATIO * Math.abs(dy)) return;
     if (dx < 0) onNext();
     else onPrev();
+    onSwiped?.();
   };
 
   const tagFor = (key: string) => {
@@ -197,7 +221,6 @@ export const ReviewCard = forwardRef<HTMLElement, ReviewCardProps>(function Revi
           <kbd className={s.kbd}>N</kbd>
         </button>
       </div>
-      {swipe ? <p className={s.swipeHint}>Swipe left or right to move between questions</p> : null}
 
       <ReportQuestionModal
         questionId={q.id}

@@ -5,7 +5,10 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { getExamPreferences, updateExamPreferences, type ExamPreferences } from "@/lib/api/users";
+import { getExamPreferences, updateExamPreferences, type ExamPreferences, type TextSize } from "@/lib/api/users";
+
+const TEXT_SIZES: readonly TextSize[] = ["normal", "large", "larger"];
+const isTextSize = (v: unknown): v is TextSize => TEXT_SIZES.includes(v as TextSize);
 
 /**
  * The student's exam preferences, set at /dashboard/settings (Exam tab).
@@ -18,13 +21,15 @@ import { getExamPreferences, updateExamPreferences, type ExamPreferences } from 
  * silently undone by an older account copy.
  *
  * Auto-advance here is only the default. The exam's ... menu can flip it for
- * one sitting without touching this value.
+ * one sitting without touching this value. Text size is the same setting
+ * everywhere: changing it from the exam menu or the review saves it too.
  */
 type ExamPrefsState = ExamPreferences & {
   /** Changes made on this device that the account doesn't have yet. */
   unsynced: Partial<ExamPreferences>;
   setPaperColour: (on: boolean) => void;
   setAutoAdvance: (on: boolean) => void;
+  setTextSize: (size: TextSize) => void;
   /** Brings this device and the account into line (see useSyncExamPrefs). */
   syncWithAccount: () => Promise<ExamPreferences>;
 };
@@ -70,6 +75,7 @@ export const useExamPrefs = create<ExamPrefsState>()(
       return {
         paperColour: true,
         autoAdvance: false,
+        textSize: "normal",
         unsynced: {},
         setPaperColour: (on) => {
           set({ paperColour: on });
@@ -78,6 +84,11 @@ export const useExamPrefs = create<ExamPrefsState>()(
         setAutoAdvance: (on) => {
           set({ autoAdvance: on });
           void send({ autoAdvance: on });
+        },
+        setTextSize: (size) => {
+          if (size === get().textSize) return;
+          set({ textSize: size });
+          void send({ textSize: size });
         },
         syncWithAccount: async () => {
           const waiting = get().unsynced;
@@ -93,7 +104,14 @@ export const useExamPrefs = create<ExamPrefsState>()(
             set({ unsynced: rest });
           }
           // A change made while this was loading is newer; keep it.
-          if (inFlight === 0) set({ paperColour: prefs.paperColour, autoAdvance: prefs.autoAdvance });
+          if (inFlight === 0) {
+            set({
+              paperColour: prefs.paperColour,
+              autoAdvance: prefs.autoAdvance,
+              // An older server doesn't send it; keep this device's choice.
+              ...(isTextSize(prefs.textSize) ? { textSize: prefs.textSize } : {}),
+            });
+          }
           return prefs;
         },
       };
@@ -102,7 +120,12 @@ export const useExamPrefs = create<ExamPrefsState>()(
       name: "sb-exam-prefs",
       version: 1,
       storage: createJSONStorage(deviceStorage),
-      partialize: (s) => ({ paperColour: s.paperColour, autoAdvance: s.autoAdvance, unsynced: s.unsynced }),
+      partialize: (s) => ({
+        paperColour: s.paperColour,
+        autoAdvance: s.autoAdvance,
+        textSize: s.textSize,
+        unsynced: s.unsynced,
+      }),
     },
   ),
 );

@@ -12,15 +12,18 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { ArrowLeft, RotateCcw, Share2, X } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, MoveHorizontal, RotateCcw, Share2, X } from "lucide-react";
 
 import { ShareSheet } from "@/features/duel/share/share-sheet";
 import { ReviewCard } from "@/features/exam/components/review-card";
 import { useRetake } from "@/features/exam/components/retake-button";
+import { TextSizeButton } from "@/features/exam/components/text-size-picker";
 import { useExamPrefs, useSyncExamPrefs } from "@/features/exam/stores/exam-prefs-store";
 import { FLAT_COLOUR, paperColours, paperLabel } from "@/features/exam/lib/papers";
 import { sharedGroup } from "@/features/exam/lib/options";
 import { STATUS_WORD, computeMarks, formatDuration, statusOf, type Status } from "@/features/exam/lib/results";
+import { noteSwipeHintShown, noteSwiped, shouldShowSwipeHint } from "@/features/exam/lib/swipe-hint";
+import { textScale } from "@/features/exam/lib/text-size";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import type { ExamResult } from "@/lib/api/types";
 import { cn } from "@/lib/utils/cn";
@@ -65,6 +68,7 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
   const { data: profile } = useExamProfile();
   useSyncExamPrefs();
   const paperColourOn = useExamPrefs((p) => p.paperColour);
+  const textSize = useExamPrefs((p) => p.textSize);
   const isPhone = useIsPhone();
   const { retake, isLoading: retaking } = useRetake(examId);
   const [shareOpen, setShareOpen] = useState(false);
@@ -116,8 +120,36 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
     [matches, paperOf, questions.length],
   );
 
-  const select = (i: number) =>
+  // ─── The swipe hint (phone): "in" shows it, "out" fades it, null is gone ───
+  const [tip, setTip] = useState<"in" | "out" | null>(null);
+  const tipTimers = useRef<number[]>([]);
+  const clearTip = useCallback(() => {
+    tipTimers.current.forEach((t) => window.clearTimeout(t));
+    tipTimers.current = [];
+    setTip(null);
+  }, []);
+  useEffect(() => () => tipTimers.current.forEach((t) => window.clearTimeout(t)), []);
+  const onSwiped = useCallback(() => {
+    noteSwiped();
+    clearTip();
+  }, [clearTip]);
+
+  const select = (i: number) => {
     setView((v) => ({ ...v, idx: i, paper: paperOf[i] ?? 0, drawer: isPhone, dir: "" }));
+    if (isPhone && !view.drawer && shouldShowSwipeHint()) {
+      noteSwipeHintShown();
+      clearTip();
+      setTip("in");
+      tipTimers.current = [
+        window.setTimeout(() => setTip("out"), 4600),
+        window.setTimeout(() => setTip(null), 4900),
+      ];
+    }
+  };
+  const closeDrawer = () => {
+    clearTip();
+    setView((v) => ({ ...v, drawer: false }));
+  };
 
   const setFilter = (f: Filter) =>
     setView((v) => {
@@ -230,6 +262,7 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
         onPrev={() => step(-1)}
         onNext={() => step(1)}
         swipe={inDrawer}
+        onSwiped={onSwiped}
         onBusyChange={setBusy}
       />
     ) : (
@@ -237,13 +270,14 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
     );
 
   return (
-    <div className={cn(tk.tokens, s.page)}>
+    <div className={cn(tk.tokens, s.page)} style={{ "--ts": textScale(textSize) } as CSSProperties}>
       <header className={s.bar}>
         <Link href="/dashboard" className={s.back}>
           <ArrowLeft aria-hidden="true" />
           <span>Dashboard</span>
         </Link>
         <span className={s.spacer} />
+        <TextSizeButton buttonClassName={s.iconBtn} />
         {!isStudy ? (
           <button type="button" className={cn(s.btn, s.btnGhost)} onClick={() => setShareOpen(true)} aria-label="Share result">
             <Share2 aria-hidden="true" />
@@ -416,7 +450,7 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
       </div>
 
       {view.drawer && isPhone ? (
-        <div className={s.drawer} onClick={() => setView((v) => ({ ...v, drawer: false }))}>
+        <div className={s.drawer} onClick={closeDrawer}>
           <div
             className={s.drawerPanel}
             role="dialog"
@@ -428,18 +462,38 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
               <h2>
                 {paperLabel(paper.subject)} {positionIn(idx)}
               </h2>
-              <button
-                type="button"
-                className={s.iconBtn}
-                onClick={() => setView((v) => ({ ...v, drawer: false }))}
-                aria-label="Close"
-              >
+              <TextSizeButton buttonClassName={s.iconBtn} />
+              <span className={s.drawerStep}>
+                <button
+                  type="button"
+                  className={s.iconBtn}
+                  onClick={() => step(-1)}
+                  aria-label={`Previous${filterWord} question`}
+                >
+                  <ChevronLeft aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className={s.iconBtn}
+                  onClick={() => step(1)}
+                  aria-label={`Next${filterWord} question`}
+                >
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              </span>
+              <button type="button" className={s.iconBtn} onClick={closeDrawer} aria-label="Close">
                 <X aria-hidden="true" />
               </button>
             </div>
             <div className={s.drawerScroll} ref={drawerScrollRef}>
-              {card(true)}
+              <div className={tip ? s.nudge : undefined}>{card(true)}</div>
             </div>
+            {tip ? (
+              <p className={cn(s.swipeTip, tip === "out" && s.swipeTipOut)} role="status">
+                <MoveHorizontal aria-hidden="true" />
+                Swipe to move between questions
+              </p>
+            ) : null}
           </div>
         </div>
       ) : null}

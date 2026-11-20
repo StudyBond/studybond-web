@@ -26,6 +26,7 @@ import {
   paperOfIndex,
   softColour,
 } from "@/features/exam/lib/papers";
+import { textScale } from "@/features/exam/lib/text-size";
 import { useOfflineStatus } from "@/providers/offline-sync-provider";
 import { firstName } from "@/features/duel/ui/parts";
 import s from "@/features/exam/components/exam-shell.module.css";
@@ -69,6 +70,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   useSyncExamPrefs();
   const paperColourOn = useExamPrefs((p) => p.paperColour);
   const autoAdvanceDefault = useExamPrefs((p) => p.autoAdvance);
+  const textSize = useExamPrefs((p) => p.textSize);
   const [autoAdvanceOverride, setAutoAdvanceOverride] = useState<boolean | null>(null);
   const autoAdvance = autoAdvanceOverride ?? autoAdvanceDefault;
 
@@ -643,7 +645,7 @@ export function ExamArena({ examId }: ExamArenaProps) {
   return (
     <div
       className={cn(tk.tokens, s.app)}
-      style={{ "--paper": tint, "--paper-s": softColour(tint) } as CSSProperties}
+      style={{ "--paper": tint, "--paper-s": softColour(tint), "--ts": textScale(textSize) } as CSSProperties}
     >
       <div className="sb-print-watermark" />
 

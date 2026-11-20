@@ -16,6 +16,7 @@
   font-size: 15px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  --ts: 1;
 }
 .page * { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.16) transparent; }
 .page *::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -131,10 +132,12 @@
 .inPrev { animation: inL 0.16s var(--ease); }
 @keyframes inR { from { opacity: 0; transform: translateX(12px); } }
 @keyframes inL { from { opacity: 0; transform: translateX(-12px); } }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 9px; margin-bottom: 11px; font-size: 12.5px; color: var(--t3); }
+/* --ts is the student's text size (1, 1.15 or 1.3), set inline on .page. It
+   scales the reading text and its labels; buttons and bars keep their size. */
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 9px; margin-bottom: 11px; font-size: calc(12.5px * var(--ts)); color: var(--t3); }
 .metaPaper { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 600; }
 .metaPaper .dot { width: 6px; height: 6px; }
-.verdict { padding: 2px 8px; border-radius: 6px; font-size: 12.5px; font-weight: 600; }
+.verdict { padding: 2px 8px; border-radius: 6px; font-size: inherit; font-weight: 600; }
 .verdict.r { color: var(--good); background: var(--good-s); }
 .verdict.w { color: var(--bad); background: var(--bad-s); }
 .verdict.b { color: var(--t2); background: rgba(255, 255, 255, 0.05); }
@@ -144,7 +147,7 @@
   font-size: inherit; line-height: inherit; color: inherit; font-weight: inherit; max-width: none;
 }
 .qtext, .optText, .md, .whyText, .passageBody { overflow-wrap: anywhere; }
-.qtext { font-family: var(--f-read); font-size: 18px; font-weight: 500; line-height: 1.5; color: var(--text); text-wrap: pretty; }
+.qtext { font-family: var(--f-read); font-size: calc(18px * var(--ts)); font-weight: 500; line-height: 1.5; color: var(--text); text-wrap: pretty; }
 .qimg { display: block; max-width: 100%; max-height: 220px; margin-top: 12px; border-radius: 10px; border: 1px solid var(--line); object-fit: contain; cursor: zoom-in; }
 
 .passage { margin: 0 0 13px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, 0.02); overflow: hidden; }
@@ -152,15 +155,15 @@
 .passage > summary::-webkit-details-marker { display: none; }
 .passage > summary::before { content: "▸"; color: var(--t3); font-size: 10px; }
 .passage[open] > summary::before { content: "▾"; }
-.passageBody { padding: 0 13px 12px; font-family: var(--f-read); font-size: 15px; line-height: 1.7; color: var(--t2); }
+.passageBody { padding: 0 13px 12px; font-family: var(--f-read); font-size: calc(16px * var(--ts)); line-height: 1.7; color: var(--t2); }
 .passageBody img { max-width: 100%; max-height: 260px; object-fit: contain; border-radius: 8px; cursor: zoom-in; margin-top: 10px; }
 
 .opts { display: grid; gap: 4px; margin-top: 15px; }
 .opt { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 13px; border: 1px solid transparent; border-radius: 10px; }
 .optKey { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: rgba(255, 255, 255, 0.06); color: var(--t3); font-size: 12.5px; font-weight: 600; }
-.optText { font-family: var(--f-read); font-size: 16px; line-height: 1.45; color: var(--t2); }
+.optText { font-family: var(--f-read); font-size: calc(16px * var(--ts)); line-height: 1.45; color: var(--t2); }
 .optText img { display: block; max-height: 110px; max-width: 100%; margin-top: 4px; border-radius: 6px; object-fit: contain; cursor: zoom-in; }
-.tag { font-size: 12px; font-weight: 600; text-align: right; }
+.tag { font-size: calc(12.5px * var(--ts)); font-weight: 600; text-align: right; }
 .key { border-color: rgba(74, 222, 128, 0.3); background: var(--good-s); }
 .key .optKey { background: var(--good); color: #0a0a0a; }
 .key .optText { color: var(--text); }
@@ -174,16 +177,16 @@
 .why { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
 .whyLine { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 11px; align-items: start; margin: 0 0 14px; padding: 11px 13px; border-radius: 10px; background: var(--amber-s); border: 1px solid var(--amber-l); }
 .whyKey { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--amber); color: var(--amber-fg); font-size: 13px; font-weight: 700; }
-.whyText { font-family: var(--f-read); font-size: 14.5px; line-height: 1.55; color: var(--text); }
+.whyText { font-family: var(--f-read); font-size: calc(15.5px * var(--ts)); line-height: 1.55; color: var(--text); }
 .whyText :global(p) { margin: 0; }
-.why h3 { margin: 0 0 10px; font-size: 12.5px; font-weight: 600; color: var(--t3); }
-.none { margin: 0; font-size: 13.5px; color: var(--t3); }
+.why h3 { margin: 0 0 10px; font-size: calc(12.5px * var(--ts)); font-weight: 600; color: var(--t3); }
+.none { margin: 0; font-size: calc(14px * var(--ts)); color: var(--t3); }
 
-.md { font-family: var(--f-read); font-size: 15px; line-height: 1.65; color: var(--t2); }
+.md { font-family: var(--f-read); font-size: calc(16px * var(--ts)); line-height: 1.65; color: var(--t2); }
 .md :global(p) { margin: 0 0 11px; }
 .md :global(ul), .md :global(ol) { margin: 0 0 11px; padding-left: 20px; list-style-position: outside; }
 .md :global(li) { margin: 4px 0; color: inherit; }
-.md :global(h1), .md :global(h2), .md :global(h3), .md :global(h4) { font-family: var(--f-ui); font-size: 13.5px; color: var(--text); margin: 15px 0 6px; }
+.md :global(h1), .md :global(h2), .md :global(h3), .md :global(h4) { font-family: var(--f-ui); font-size: 0.875em; color: var(--text); margin: 15px 0 6px; }
 .md :global(strong) { font-weight: 700; color: var(--text); }
 .md :global(em) { font-style: italic; color: inherit; }
 /* A quote keeps the left rail and italics, dimmer than the prose, so it
@@ -205,12 +208,12 @@
 .md :global(.katex) { color: var(--text); }
 /* An option letter named in the explanation ({{D}}), in the paper's colour. */
 .okey {
-  display: inline-grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px;
+  display: inline-grid; place-items: center; min-width: 1.48em; height: 1.48em; padding: 0 0.35em;
   border-radius: 5px; background: var(--paper-s); color: var(--paper);
-  font-family: var(--f-ui); font-size: 11.5px; font-weight: 700; font-style: normal;
+  font-family: var(--f-ui); font-size: 0.75em; font-weight: 700; font-style: normal;
   line-height: 1; vertical-align: 1px;
 }
-.md :global(table) { display: block; overflow-x: auto; border-collapse: collapse; font-size: 14px; margin: 0 0 11px; }
+.md :global(table) { display: block; overflow-x: auto; border-collapse: collapse; font-size: 0.9375em; margin: 0 0 11px; }
 .md :global(th), .md :global(td) { border: 1px solid var(--line2); padding: 5px 9px; text-align: left; }
 .md img { max-width: 100%; border-radius: 8px; }
 
@@ -222,7 +225,7 @@
   font-variant-numeric: tabular-nums;
 }
 .stepFree { padding-left: 0; }
-.stepH { margin: 0 0 7px; font-family: var(--f-ui); font-size: 13.5px; font-weight: 600; color: var(--text); }
+.stepH { margin: 0 0 7px; font-family: var(--f-ui); font-size: calc(14px * var(--ts)); font-weight: 600; color: var(--text); }
 .stepH :global(p) { margin: 0; }
 .stepFree .stepH { color: var(--amber-t); }
 .step > div:last-child :global(p:last-child) { margin-bottom: 0; }
@@ -231,18 +234,44 @@
 /* A note's sentence, after the working: same text as the working, no box. */
 .remark { margin-top: 12px; }
 
-.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 7px 12px; margin-top: 14px; font-size: 12px; color: var(--t3); }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 7px 12px; margin-top: 14px; font-size: calc(12.5px * var(--ts)); color: var(--t3); }
 .foot .num { color: var(--t2); }
 .nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 15px; }
-.swipeHint { display: none; }
 .empty { padding: 28px 12px; text-align: center; font-size: 13.5px; color: var(--t3); }
 
 /* ── Phone drawer for one question ── */
 .drawer { position: fixed; inset: 0; z-index: 55; display: grid; align-items: end; background: var(--scrim); animation: fade 0.15s ease; }
-.drawerPanel { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: 92%; min-height: 0; background: var(--bg); border-top: 1px solid var(--line2); border-radius: 18px 18px 0 0; animation: rise 0.2s var(--ease); overflow: hidden; }
-.drawerBar { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px; }
-.drawerBar h2 { margin: 0 auto 0 0; font-size: 14px; font-weight: 600; }
+.drawerPanel { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: 92%; min-height: 0; background: var(--bg); border-top: 1px solid var(--line2); border-radius: 18px 18px 0 0; animation: rise 0.2s var(--ease); overflow: hidden; }
+.drawerBar { display: flex; align-items: center; gap: 4px; padding: 10px 10px 6px 16px; }
+.drawerBar h2 { min-width: 0; margin: 0 auto 0 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Previous / next, always in sight: on a phone the buttons under the card
+   sit below the whole explanation. */
+.drawerStep { display: inline-flex; gap: 2px; margin: 0 4px; padding: 2px; border-radius: 11px; background: var(--s2); }
+.drawerStep .iconBtn { width: 38px; height: 34px; color: var(--text); }
+.drawerStep .iconBtn svg { width: 20px; height: 20px; }
 .drawerScroll { overflow: auto; min-height: 0; overscroll-behavior: contain; }
+
+/* The first few times a question opens on a phone: the card slides a little
+   to show it moves sideways, and a label says so. Gone once they swipe. */
+.nudge { animation: nudge 1.15s var(--ease) 0.45s both; }
+@keyframes nudge {
+  0%, 100% { transform: none; }
+  28% { transform: translateX(-38px); }
+  52% { transform: translateX(3px); }
+  68% { transform: translateX(-12px); }
+  84% { transform: none; }
+}
+.swipeTip {
+  position: absolute; left: 50%; bottom: 18px; z-index: 2; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 15px;
+  border-radius: 999px; background: var(--s3); border: 1px solid var(--line2); box-shadow: var(--lift);
+  font-size: 13.5px; font-weight: 500; color: var(--text); white-space: nowrap; pointer-events: none;
+  animation: tipIn 0.22s var(--ease) 0.3s both;
+}
+.swipeTip svg { width: 16px; height: 16px; color: var(--t2); flex: none; }
+.swipeTipOut { animation: tipOut 0.25s ease both; }
+@keyframes tipIn { from { opacity: 0; transform: translate(-50%, 8px); } }
+@keyframes tipOut { to { opacity: 0; transform: translate(-50%, 8px); } }
 .drawer .card { border: 0; border-radius: 0; padding: 2px 16px 22px; background: none; }
 
 @container (max-width: 1023px) {
@@ -262,7 +291,11 @@
   .grid { max-height: none; grid-template-columns: repeat(8, 1fr); }
   .dock { display: none; }
   .kbd { display: none; }
-  .swipeHint { display: block; margin: 11px 0 0; text-align: center; font-size: 11.5px; color: var(--t3); }
+  /* Phone reading sizes: the explanation is the long part, so it gets the most. */
+  .meta, .foot { font-size: calc(13px * var(--ts)); }
+  .tag, .why h3 { font-size: calc(13px * var(--ts)); }
+  .whyText { font-size: calc(16px * var(--ts)); }
+  .md { font-size: calc(16.5px * var(--ts)); }
   .opt { grid-template-columns: 26px minmax(0, 1fr); }
   .tag { grid-column: 2; text-align: left; }
 }
