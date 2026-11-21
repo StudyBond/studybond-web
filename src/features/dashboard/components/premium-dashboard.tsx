@@ -6,6 +6,7 @@ import { AnalyticsPanel } from "@/features/dashboard/components/analytics-panel"
 import { CollaborationCard } from "@/features/dashboard/components/collaboration-card";
 import { CommandBar } from "@/features/dashboard/components/command-bar";
 import { ExamCountdown } from "@/features/dashboard/components/exam-countdown";
+import { WordDayCard } from "@/features/words/components/word-day-card";
 import { ExamHistoryPanel } from "@/features/dashboard/components/exam-history-panel";
 import { RankPanel } from "@/features/dashboard/components/rank-panel";
 import { StatTile } from "@/features/dashboard/components/stat-tile";
@@ -199,6 +200,9 @@ export function PremiumDashboard({
       <section className="sb-enter mt-6">
         <ExamCountdown />
       </section>
+
+      {/* ── Word, idiom and phrasal verb of the day (hidden until the day has a card) ── */}
+      <WordDayCard className="sb-enter mt-6" />
 
       {/* ── Study Mode Entry Card ── */}
       {stats.institution?.studyModeEnabled && (

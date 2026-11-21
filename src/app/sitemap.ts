@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { fetchWordSitemap } from "@/features/words/server";
+
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://studybond.app";
 
 const subjects = ["english", "mathematics", "chemistry", "physics", "biology"] as const;
@@ -16,7 +18,7 @@ const blogSlugs = [
   "ui-engineering-post-utme",
 ] as const;
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -67,5 +69,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...subjectPages, ...yearPages, ...blogPages];
+  // Word of the day: the page, and one page per card that has had its day.
+  // Nothing is listed until the first card is shown.
+  const words = await fetchWordSitemap();
+  const wordPages: MetadataRoute.Sitemap = words && words.cards.length
+    ? [
+        { url: `${appUrl}/word-of-the-day`, lastModified: new Date(`${words.cards[0].lastShown}T00:00:00+01:00`), changeFrequency: "daily" as const, priority: 0.8 },
+        ...words.cards.map((card) => ({
+          url: `${appUrl}/word-of-the-day/${card.slug}`,
+          lastModified: new Date(`${card.lastShown}T00:00:00+01:00`),
+          changeFrequency: "monthly" as const,
+          priority: 0.6,
+        })),
+      ]
+    : [];
+
+  return [...staticPages, ...subjectPages, ...yearPages, ...blogPages, ...wordPages];
 }

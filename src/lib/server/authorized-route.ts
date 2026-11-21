@@ -36,7 +36,9 @@ export async function forwardAuthorizedRoute(
     | "study"
     | "institutions"
     | "courses"
-    | "admin",
+    | "admin"
+    | "word-of-the-day"
+    | "word-book",
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
 ) {
   const { slug } = await context.params;

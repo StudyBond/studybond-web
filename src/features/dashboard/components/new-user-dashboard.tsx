@@ -20,6 +20,7 @@ import {
 import type { Route } from "next";
 import { useState } from "react";
 import { ExamCountdown } from "@/features/dashboard/components/exam-countdown";
+import { WordDayCard } from "@/features/words/components/word-day-card";
 
 type NewUserDashboardProps = {
   profile: UserProfile;
@@ -154,6 +155,9 @@ export function NewUserDashboard({
       <section className="sb-enter mt-6">
         <ExamCountdown />
       </section>
+
+      {/* ── Word, idiom and phrasal verb of the day (hidden until the day has a card) ── */}
+      <WordDayCard className="sb-enter mt-6" />
 
       {/* ── How It Works — Journey Steps ── */}
       <section className="sb-enter mt-5 sm:mt-8 sb-stagger-1">
