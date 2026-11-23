@@ -60,10 +60,13 @@
 }
 
 /* ── The paper rail ── */
-.rail { display: flex; align-items: stretch; gap: 6px; height: 60px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+/* Tabs float inside the band (7px clear of the top edge) with an outline all
+   round. Touching the top with a coloured top line made the current paper
+   look like one of the browser's own tabs. */
+.rail { display: flex; align-items: stretch; gap: 6px; height: 64px; padding: 7px 12px; border-bottom: 1px solid var(--line); }
 .tab { flex: 1; min-width: 0; display: grid; align-content: center; gap: 5px; padding: 0 11px; border-radius: 10px; transition: background-color 0.15s; }
 .tab:hover { background: var(--s1); }
-.app .tab[aria-current="true"] { background: var(--s2); box-shadow: inset 0 2px 0 var(--tint); }
+.app .tab[aria-current="true"] { background: var(--s2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 45%, transparent); }
 .tabTop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .tabName { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tab[aria-current="true"] .tabName { color: var(--text); font-weight: 600; }
@@ -171,7 +174,7 @@
 .app .drawerScroll .cellCurrent { height: 30px; }
 
 @container (max-width: 1023px) {
-  .calcPane { position: fixed; right: 0; top: 60px; bottom: 66px; z-index: 30; box-shadow: var(--lift); }
+  .calcPane { position: fixed; right: 0; top: 64px; bottom: 66px; z-index: 30; box-shadow: var(--lift); }
 }
 
 @container (max-width: 560px) {
