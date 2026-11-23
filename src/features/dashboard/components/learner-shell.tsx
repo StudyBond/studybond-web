@@ -20,14 +20,10 @@ import { useState } from "react";
 
 import { LogoLockup } from "@/components/ui/logo";
 import { PageTransition } from "@/components/ui/page-transition";
-import {
-  WhatsAppChannelPrompt,
-  useWhatsAppChannelState,
-} from "@/components/ui/whatsapp-channel-prompt";
-import { WhatsAppChannelMobilePill } from "@/components/ui/whatsapp-channel-pill";
 import { Avatar } from "@/features/avatar/components/avatar";
 import { useMyAvatar } from "@/features/avatar/hooks/use-my-avatar";
 import { BoardSheet } from "@/features/home/board-sheet";
+import { ChannelPrompt } from "@/features/home/channel-sheet";
 import { boardLabel, shortName } from "@/features/home/format";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
@@ -120,7 +116,6 @@ export function LearnerShell({
   useNotificationsRealtime();
 
   const pathname = usePathname();
-  const waChannel = useWhatsAppChannelState();
   const avatar = useMyAvatar();
   const examProfile = useExamProfile();
   const [boardsOpen, setBoardsOpen] = useState(false);
@@ -219,10 +214,8 @@ export function LearnerShell({
         </div>
       </main>
 
-      {waChannel.shouldShowPrompt && (
-        <WhatsAppChannelPrompt onJoined={waChannel.markJoined} onDismiss={waChannel.markDismissed} />
-      )}
-      {waChannel.shouldShowPill && <WhatsAppChannelMobilePill onClick={waChannel.resetDismissed} />}
+      {/* The board's WhatsApp channel, asked once per board (links set in admin). */}
+      <ChannelPrompt />
 
       {boardsOpen ? (
         <BoardSheet currentCode={examProfile.data?.institution.code ?? null} onClose={() => setBoardsOpen(false)} />

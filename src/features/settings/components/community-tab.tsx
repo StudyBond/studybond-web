@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 import type { Route } from "next";
@@ -14,11 +14,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 
-const WHATSAPP_CHANNEL_URL =
-  "https://whatsapp.com/channel/0029Vb7slPoGpLHLS3JENm0g";
-const PREMIUM_WHATSAPP_GROUP_URL =
-  "https://chat.whatsapp.com/HGHGmxBYOtzDwzOyrb6GVx?s=sh&p=a&ilr=1";
-const LS_JOINED_KEY = "sb-whatsapp-channel-joined";
+import { hasJoinedChannel, setJoinedChannel, useCommunity } from "@/features/home/community";
 
 /* ─── WhatsApp Icon ─── */
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -40,21 +36,21 @@ type CommunityTabProps = {
 };
 
 export function CommunityTab({ isPremium }: CommunityTabProps) {
-  const [hasJoinedChannel, setHasJoinedChannel] = useState(false);
+  /* Links come from the board the student is on (set in admin). The group
+     link only arrives for premium students on this board. */
+  const community = useCommunity();
+  const boardCode = community.data?.boardCode ?? null;
+  const WHATSAPP_CHANNEL_URL = community.data?.channelUrl ?? null;
+  const PREMIUM_WHATSAPP_GROUP_URL = community.data?.groupUrl ?? null;
+  const [joinedOverride, setJoinedOverride] = useState<boolean | null>(null);
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
-
-  useEffect(() => {
-    setHasJoinedChannel(localStorage.getItem(LS_JOINED_KEY) === "true");
-  }, []);
+  const hasJoinedChannelNow = joinedOverride ?? (boardCode && typeof window !== "undefined" ? hasJoinedChannel(boardCode) : false);
 
   function handleToggleChannelJoined() {
-    const next = !hasJoinedChannel;
-    if (next) {
-      localStorage.setItem(LS_JOINED_KEY, "true");
-    } else {
-      localStorage.removeItem(LS_JOINED_KEY);
-    }
-    setHasJoinedChannel(next);
+    if (!boardCode) return;
+    const next = !hasJoinedChannelNow;
+    setJoinedChannel(boardCode, next);
+    setJoinedOverride(next);
   }
 
   return (
@@ -85,7 +81,7 @@ export function CommunityTab({ isPremium }: CommunityTabProps) {
                 <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--sb-whatsapp)]/60 bg-[var(--sb-whatsapp)]/[0.08] px-1.5 py-0.5 rounded-md">
                   Channel
                 </span>
-                {hasJoinedChannel && (
+                {hasJoinedChannelNow && (
                   <span className="flex items-center gap-1 text-[9px] font-semibold text-[var(--sb-whatsapp)]">
                     <Check className="h-3 w-3" />
                     Joined
@@ -102,13 +98,14 @@ export function CommunityTab({ isPremium }: CommunityTabProps) {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Join button */}
             <a
-              href={WHATSAPP_CHANNEL_URL}
+              href={WHATSAPP_CHANNEL_URL ?? undefined}
+              aria-disabled={!WHATSAPP_CHANNEL_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--sb-whatsapp)]/10 px-4 py-2.5 text-[12px] font-semibold text-[var(--sb-whatsapp)] transition-all duration-200 hover:bg-[var(--sb-whatsapp)]/15 hover:shadow-[0_0_12px_var(--sb-whatsapp-glow)]"
             >
               <WhatsAppIcon className="h-3.5 w-3.5" />
-              {hasJoinedChannel ? "Open Channel" : "Join Channel"}
+              {hasJoinedChannelNow ? "Open Channel" : "Join Channel"}
               <ExternalLink className="h-3 w-3 opacity-50" />
             </a>
 
@@ -118,19 +115,19 @@ export function CommunityTab({ isPremium }: CommunityTabProps) {
                 onClick={handleToggleChannelJoined}
                 className={cn(
                   "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all duration-200 cursor-pointer",
-                  hasJoinedChannel
+                  hasJoinedChannelNow
                     ? "bg-[var(--sb-whatsapp)] border-[var(--sb-whatsapp)] shadow-[0_0_8px_var(--sb-whatsapp-glow)]"
                     : "border-white/15 bg-white/[0.03] group-hover:border-white/25"
                 )}
               >
-                {hasJoinedChannel && (
+                {hasJoinedChannelNow && (
                   <Check className="h-3 w-3 text-white" />
                 )}
               </button>
               <span
                 className={cn(
                   "text-[11px] transition-colors select-none",
-                  hasJoinedChannel
+                  hasJoinedChannelNow
                     ? "text-[var(--sb-whatsapp)]/70 font-medium"
                     : "text-white/25 group-hover:text-white/40"
                 )}
@@ -214,7 +211,7 @@ export function CommunityTab({ isPremium }: CommunityTabProps) {
               </div>
 
               {/* Premium users: direct join */}
-              {isPremium && (
+              {isPremium && PREMIUM_WHATSAPP_GROUP_URL && (
                 <a
                   href={PREMIUM_WHATSAPP_GROUP_URL}
                   target="_blank"
