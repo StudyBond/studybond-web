@@ -60,6 +60,8 @@ export function ExamTab() {
   const setPaperColour = useExamPrefs((p) => p.setPaperColour);
   const setAutoAdvance = useExamPrefs((p) => p.setAutoAdvance);
   const textSize = useExamPrefs((p) => p.textSize);
+  const waecGrades = useExamPrefs((p) => p.waecGrades ?? true);
+  const setWaecGrades = useExamPrefs((p) => p.setWaecGrades);
 
   return (
     <div className="space-y-6">
@@ -94,6 +96,17 @@ export function ExamTab() {
           body="Go to the next question as soon as you choose an answer. You can also switch this for one exam from its ... menu."
         >
           <Switch on={autoAdvance} onChange={setAutoAdvance} label="Auto-advance" />
+        </Row>
+
+        <Row
+          title="Show WAEC grades"
+          body={
+            waecGrades
+              ? "Your report card on Home shows a grade from A1 to F9 next to each subject's average, like a school report."
+              : "Off: your report card on Home shows percentages only."
+          }
+        >
+          <Switch on={waecGrades} onChange={setWaecGrades} label="Show WAEC grades" />
         </Row>
 
         <div className="px-5 py-4">

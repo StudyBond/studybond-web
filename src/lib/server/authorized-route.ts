@@ -38,7 +38,8 @@ export async function forwardAuthorizedRoute(
     | "courses"
     | "admin"
     | "word-of-the-day"
-    | "word-book",
+    | "word-book"
+    | "dashboard",
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
 ) {
   const { slug } = await context.params;

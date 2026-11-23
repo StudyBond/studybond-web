@@ -88,6 +88,8 @@ export type TextSize = "normal" | "large" | "larger";
 export type ExamPreferences = {
   paperColour: boolean;
   autoAdvance: boolean;
+  /** Home's report card shows WAEC grades (A1 to F9). Off = percent only. Missing on older servers. */
+  waecGrades?: boolean;
   textSize: TextSize;
 };
 

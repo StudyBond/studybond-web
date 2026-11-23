@@ -30,6 +30,7 @@ type ExamPrefsState = ExamPreferences & {
   setPaperColour: (on: boolean) => void;
   setAutoAdvance: (on: boolean) => void;
   setTextSize: (size: TextSize) => void;
+  setWaecGrades: (on: boolean) => void;
   /** Brings this device and the account into line (see useSyncExamPrefs). */
   syncWithAccount: () => Promise<ExamPreferences>;
 };
@@ -76,6 +77,7 @@ export const useExamPrefs = create<ExamPrefsState>()(
         paperColour: true,
         autoAdvance: false,
         textSize: "normal",
+        waecGrades: true,
         unsynced: {},
         setPaperColour: (on) => {
           set({ paperColour: on });
@@ -84,6 +86,10 @@ export const useExamPrefs = create<ExamPrefsState>()(
         setAutoAdvance: (on) => {
           set({ autoAdvance: on });
           void send({ autoAdvance: on });
+        },
+        setWaecGrades: (on) => {
+          set({ waecGrades: on });
+          void send({ waecGrades: on });
         },
         setTextSize: (size) => {
           if (size === get().textSize) return;
@@ -110,6 +116,7 @@ export const useExamPrefs = create<ExamPrefsState>()(
               autoAdvance: prefs.autoAdvance,
               // An older server doesn't send it; keep this device's choice.
               ...(isTextSize(prefs.textSize) ? { textSize: prefs.textSize } : {}),
+              ...(typeof prefs.waecGrades === "boolean" ? { waecGrades: prefs.waecGrades } : {}),
             });
           }
           return prefs;
@@ -124,6 +131,7 @@ export const useExamPrefs = create<ExamPrefsState>()(
         paperColour: s.paperColour,
         autoAdvance: s.autoAdvance,
         textSize: s.textSize,
+        waecGrades: s.waecGrades,
         unsynced: s.unsynced,
       }),
     },

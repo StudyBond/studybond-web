@@ -32,7 +32,9 @@ import {
   Swords,
   PanelLeftClose,
   PanelLeftOpen,
-  GraduationCap
+  GraduationCap,
+  ListOrdered,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -85,14 +87,23 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-/** Bottom tab items — the most important for mobile */
+/** The phone tab bar (dashboard canvas 16a): Home / Practice / Duel / Board / Me.
+ *  Settings and the study vault are reached from Me. */
 const bottomTabs: NavItemConfig[] = [
   { label: "Home", href: "/dashboard", icon: Home },
   { label: "Practice", href: "/dashboard/practice", icon: BookOpen },
-  { label: "Vault", href: "/dashboard/bookmarks", icon: Bookmark },
-  { label: "Leaderboard", href: "/dashboard/leaderboard", icon: Trophy },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "Duel", href: "/dashboard/duel", icon: Swords },
+  { label: "Board", href: "/dashboard/leaderboard", icon: ListOrdered },
+  { label: "Me", href: "/dashboard/me", icon: User },
 ];
+
+/* Me also covers the pages it opens. */
+function isTabActive(pathname: string, href: string) {
+  if (href === "/dashboard/me") {
+    return ["/dashboard/me", "/dashboard/settings", "/dashboard/streak"].some((h) => isRouteActive(pathname, h));
+  }
+  return isRouteActive(pathname, href);
+}
 
 /* ─── Nav Item Component ─── */
 
@@ -177,6 +188,9 @@ type LearnerShellProps = {
   isPremium?: boolean;
   subscriptionData?: SubscriptionStatus;
   profile?: UserProfile;
+  /** Replaces the phone top strip (logo and bell). Home passes its own:
+   *  board switcher, streak count and avatar. */
+  mobileTopBar?: React.ReactNode;
 };
 
 export function LearnerShell({
@@ -184,6 +198,7 @@ export function LearnerShell({
   isPremium = false,
   subscriptionData,
   profile,
+  mobileTopBar,
 }: Readonly<LearnerShellProps>) {
   useNotificationsRealtime();
 
@@ -311,14 +326,24 @@ export function LearnerShell({
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]">
-                <UserAvatar avatarId={avatarId} size="sm" isPremium={isPremium} showRing />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-white/70 truncate">{firstName}</p>
-                  <p className="text-[10px] text-white/20 truncate">
-                    {isPremium ? "Elite Member" : "Explorer"}
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 rounded-xl px-1 py-1">
+                {/* Name box: opens settings (canvas 16e). */}
+                <Link
+                  href={"/dashboard/settings" as Route}
+                  aria-label="Your profile and settings"
+                  className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/[0.04]"
+                >
+                  <UserAvatar avatarId={avatarId} size="sm" isPremium={isPremium} showRing />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-white/70 truncate">{firstName}</p>
+                    <p className={cn("text-[11px] truncate", isPremium ? "text-[#f5c890]" : "text-white/40")}>
+                      {isPremium
+                        ? daysRemaining !== undefined ? `Premium · ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} left` : "Premium"
+                        : "Free plan"}
+                    </p>
+                  </div>
+                  <Settings className="h-4 w-4 shrink-0 text-white/35 transition-colors group-hover:text-white/80" aria-hidden="true" />
+                </Link>
                 <button
                   onClick={handleLogout}
                   disabled={logout.isPending}
@@ -384,15 +409,19 @@ export function LearnerShell({
         {/* Gradient fade background — not a solid bar */}
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--sb-bg)] via-[var(--sb-bg)]/95 to-transparent" />
 
-        <div className="relative flex h-12 items-center justify-between px-4">
-          {/* Left: Logo + tier */}
-          <div className="flex items-center">
-            <LogoLockup size="xs" />
-          </div>
+        {mobileTopBar ? (
+          <div className="relative flex h-14 items-center px-3.5">{mobileTopBar}</div>
+        ) : (
+          <div className="relative flex h-12 items-center justify-between px-4">
+            {/* Left: Logo + tier */}
+            <div className="flex items-center">
+              <LogoLockup size="xs" />
+            </div>
 
-          {/* Right: Notification Bell */}
-          <NotificationBell mobile />
-        </div>
+            {/* Right: Notification Bell (renders only while notificationsUiEnabled is on) */}
+            <NotificationBell mobile />
+          </div>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════ */}
@@ -406,38 +435,18 @@ export function LearnerShell({
         <div className="relative flex items-center justify-around px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {bottomTabs.map((item) => {
             const Icon = item.icon;
-            const active = isRouteActive(pathname, item.href);
+            const active = isTabActive(pathname, item.href);
 
             const content = (
               <div
                 className={cn(
-                  "relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all duration-300",
-                  active
-                    ? "text-white"
-                    : "text-white/20",
+                  "flex min-w-[56px] flex-col items-center gap-1 px-2 py-1 transition-colors duration-200",
+                  active ? "text-[#f5c890]" : "text-[#848486]",
                   item.coming && "opacity-15 pointer-events-none",
                 )}
               >
-                {/* Active background pill */}
-                {active ? (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-[var(--sb-accent)]/15 to-transparent" />
-                ) : null}
-
-                <Icon className={cn(
-                  "h-[20px] w-[20px] relative z-10 transition-all duration-300",
-                  active && "text-[var(--sb-accent)] drop-shadow-[0_0_6px_var(--sb-accent-glow)]",
-                )} />
-                <span className={cn(
-                  "text-[9px] font-semibold relative z-10 transition-all duration-300",
-                  active && "text-[var(--sb-accent-text)]",
-                )}>
-                  {item.label}
-                </span>
-
-                {/* Active dot indicator */}
-                {active ? (
-                  <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] rounded-full bg-[var(--sb-accent)] shadow-[0_0_8px_var(--sb-accent-glow)]" />
-                ) : null}
+                <Icon className="h-[21px] w-[21px]" strokeWidth={1.9} aria-hidden="true" />
+                <span className="text-[11px] font-bold">{item.label}</span>
               </div>
             );
 
@@ -446,7 +455,7 @@ export function LearnerShell({
             }
 
             return (
-              <Link key={item.label} href={item.href as Route}>
+              <Link key={item.label} href={item.href as Route} aria-current={isTabActive(pathname, item.href) ? "page" : undefined}>
                 {content}
               </Link>
             );
@@ -458,7 +467,7 @@ export function LearnerShell({
       {/* ═════ MAIN CONTENT ══════════════════════════ */}
       {/* ══════════════════════════════════════════════ */}
       <main className="flex-1 min-w-0 w-full transition-[margin] duration-300 ease-in-out md:ml-[var(--sb-sidebar-width)]">
-        <div className="mx-auto max-w-5xl px-4 sm:px-5 pt-14 pb-24 md:pt-[calc(var(--sb-topbar-height)+1.5rem)] md:pb-8">
+        <div className={cn("mx-auto max-w-5xl px-4 sm:px-5 pb-24 md:pt-[calc(var(--sb-topbar-height)+1.5rem)] md:pb-8", mobileTopBar ? "pt-[60px]" : "pt-14")}>
           <PageTransition key={pathname}>
             {children}
           </PageTransition>
