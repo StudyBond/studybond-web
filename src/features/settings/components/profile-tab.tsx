@@ -1,62 +1,52 @@
 "use client";
 
-import { useState } from "react";
-import { cn } from "@/lib/utils/cn";
-import { useUpdateProfile } from "@/features/settings/hooks/use-settings";
-import { CourseCombobox } from "@/components/ui/course-combobox";
+import type { Route } from "next";
 import Link from "next/link";
+import { useState } from "react";
+
+import { CourseCombobox } from "@/components/ui/course-combobox";
 import { Avatar } from "@/features/avatar/components/avatar";
-import {
-  DepartmentPicker,
-  departmentLabel,
-} from "@/features/institution/components/department-picker";
+import { DEPARTMENTS } from "@/features/institution/components/department-picker";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
-import {
-  BookOpen,
-  User,
-  GraduationCap,
-  Target,
-  Mail,
-  Check,
-  Loader2,
-} from "lucide-react";
+import { useUpdateProfile } from "@/features/settings/hooks/use-settings";
 import type { Department, UserProfile } from "@/lib/api/types";
+import { cn } from "@/lib/utils/cn";
+
+import { errorText, Switch } from "./settings-ui";
+import s from "./settings.module.css";
 
 type ProfileTabProps = {
   profile: UserProfile;
   isPremium: boolean;
 };
 
-export function ProfileTab({ profile }: ProfileTabProps) {
+/** Profile: avatar, name, course, department (boards that ask), target score, emails. */
+export function ProfileTab({ profile, isPremium }: ProfileTabProps) {
   const updateProfile = useUpdateProfile();
   const examProfile = useExamProfile();
 
   /* Each board's exam has its own scale: UI Post-UTME 100, JAMB 400. */
   const scoreMax = examProfile.data?.targetScoreMax ?? 100;
   const suggestedScore = Math.round(scoreMax * 0.8);
-  const showDepartment =
-    Boolean(examProfile.data?.signupAsksDepartment) || Boolean(profile.department);
+  const showDepartment = Boolean(examProfile.data?.signupAsksDepartment) || Boolean(profile.department);
 
   const [fullName, setFullName] = useState(profile.fullName);
-  const [aspiringCourse, setAspiringCourse] = useState(
-    profile.aspiringCourse ?? "",
-  );
-  /* Null until the student sets one; the suggestion is only shown. */
-  const [targetScore, setTargetScore] = useState<number | null>(
-    profile.targetScore ?? null,
-  );
-  const [department, setDepartment] = useState<Department | undefined>(
-    profile.department ?? undefined,
-  );
-  const [emailUnsubscribed, setEmailUnsubscribed] = useState(
-    profile.emailUnsubscribed,
-  );
-
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [aspiringCourse, setAspiringCourse] = useState(profile.aspiringCourse ?? "");
+  /* Null until the student sets one; the suggestion only places the slider. */
+  const [targetScore, setTargetScore] = useState<number | null>(profile.targetScore ?? null);
+  const [department, setDepartment] = useState<Department | undefined>(profile.department ?? undefined);
+  const [emailUnsubscribed, setEmailUnsubscribed] = useState(profile.emailUnsubscribed);
+  const [saved, setSaved] = useState(false);
 
   const targetScoreChanged = targetScore !== (profile.targetScore ?? null);
   const departmentChanged = department !== (profile.department ?? undefined);
+  const nameEmpty = !fullName.trim();
+  const hasChanges =
+    fullName !== profile.fullName ||
+    aspiringCourse !== (profile.aspiringCourse ?? "") ||
+    targetScoreChanged ||
+    departmentChanged ||
+    emailUnsubscribed !== profile.emailUnsubscribed;
 
   async function handleSave() {
     try {
@@ -68,285 +58,132 @@ export function ProfileTab({ profile }: ProfileTabProps) {
         department: departmentChanged ? department : undefined,
         emailUnsubscribed,
       });
-      setSaveSuccess(true);
-      setEditingField(null);
-      setTimeout(() => setSaveSuccess(false), 2000);
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2500);
     } catch {
-      // Error handled via mutation state
+      /* Shown under the button from the mutation state. */
     }
   }
 
-  const hasChanges =
-    fullName !== profile.fullName ||
-    (aspiringCourse || "") !== (profile.aspiringCourse || "") ||
-    targetScoreChanged ||
-    departmentChanged ||
-    emailUnsubscribed !== profile.emailUnsubscribed;
+  const customAvatar = Boolean(profile.avatar && !profile.avatar.isDefault);
 
   return (
-    <div className="space-y-6">
-      {/* Avatar Section */}
-      <div className="flex flex-col items-center gap-3 pb-6 border-b border-white/[0.04]">
-        <Link
-          href="/dashboard/settings/avatar"
-          className="group grid justify-items-center gap-3 rounded-2xl p-2 focus-visible:outline-2 focus-visible:outline-[#e09040]"
-        >
-          <Avatar look={profile.avatar ?? null} size={96} label="Your avatar" />
-          <span className="min-h-9 rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-white/80 ring-1 ring-inset ring-white/[0.08] transition group-hover:bg-white/[0.08]">
-            {profile.avatar && !profile.avatar.isDefault ? "Change your avatar" : "Make your avatar"}
-          </span>
-        </Link>
-      </div>
+    <>
+      <section className={s.who} aria-label="You">
+        <span className={cn(s.ring, !isPremium && s.ringFree)}>
+          <Avatar look={profile.avatar ?? null} size={64} label="Your avatar" />
+        </span>
+        <div>
+          <span className={s.whoName}>{profile.fullName}</span>
+          <span className={s.whoSub}>{profile.email}</span>
+          <Link href={"/dashboard/settings/avatar" as Route} className={s.chip}>
+            {customAvatar ? "Change avatar" : "Make your avatar"}
+          </Link>
+        </div>
+      </section>
 
-      {/* Profile Fields */}
-      <div className="space-y-3">
-        {/* Full Name */}
-        <FieldCard
-          icon={<User className="h-4 w-4" />}
-          label="Full Name"
-          editing={editingField === "fullName"}
-          onEdit={() => setEditingField("fullName")}
-          onClose={() => setEditingField(null)}
-        >
-          {editingField === "fullName" ? (
-            <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              autoFocus
-              className="w-full bg-transparent text-sm text-white font-medium outline-none placeholder:text-white/20"
-              placeholder="Your full name"
-            />
-          ) : (
-            <span className="text-sm text-white/80 font-medium">
-              {fullName}
-            </span>
-          )}
-        </FieldCard>
+      <h2 className={s.gh}>Your details</h2>
+      <div className={s.list}>
+        <div className={s.item}>
+          <label className={s.label} htmlFor="profile-name">Full name</label>
+          <input
+            id="profile-name"
+            className={s.input}
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+            autoComplete="name"
+            maxLength={100}
+            placeholder="Your full name"
+          />
+          {nameEmpty ? <small className={s.fieldErr}>Your name can&rsquo;t be empty.</small> : null}
+        </div>
 
-        {/* Aspiring Course */}
-        <FieldCard
-          icon={<GraduationCap className="h-4 w-4" />}
-          label="Aspiring Course"
-          editing={editingField === "aspiringCourse"}
-          onEdit={() => setEditingField("aspiringCourse")}
-          onClose={() => setEditingField(null)}
-        >
-          {editingField === "aspiringCourse" ? (
-            <CourseCombobox
-              value={aspiringCourse}
-              onChange={setAspiringCourse}
-              autoFocus
-              className="w-full bg-transparent text-sm text-white font-medium outline-none placeholder:text-white/20"
-              placeholder="e.g. Medicine & Surgery"
-            />
-          ) : (
-            <span
-              className={cn(
-                "text-sm font-medium",
-                aspiringCourse ? "text-white/80" : "text-white/25 italic",
-              )}
-            >
-              {aspiringCourse || "Not set"}
-            </span>
-          )}
-        </FieldCard>
+        <div className={s.item}>
+          <label className={s.label} htmlFor="profile-course">Course you want to study</label>
+          <CourseCombobox
+            id="profile-course"
+            value={aspiringCourse}
+            onChange={setAspiringCourse}
+            className={s.input}
+            placeholder="e.g. Medicine and Surgery"
+          />
+        </div>
 
-        {/* Department, for boards like JAMB that ask for it */}
         {showDepartment ? (
-          <FieldCard
-            icon={<BookOpen className="h-4 w-4" />}
-            label="Department"
-            editing={editingField === "department"}
-            onEdit={() => setEditingField("department")}
-            onClose={() => setEditingField(null)}
-          >
-            {editingField === "department" ? (
-              <DepartmentPicker
-                value={department}
-                onChange={(value) => {
-                  setDepartment(value);
-                  setEditingField(null);
-                }}
-              />
-            ) : (
-              <span
-                className={cn(
-                  "text-sm font-medium",
-                  department ? "text-white/80" : "text-white/25 italic",
-                )}
-              >
-                {departmentLabel(department) ?? "Not set"}
-              </span>
-            )}
-          </FieldCard>
+          <div className={s.item}>
+            <span className={s.label} id="profile-department">Department</span>
+            <div className={s.seg} role="radiogroup" aria-labelledby="profile-department">
+              {DEPARTMENTS.map((option) => {
+                const on = department === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    className={cn(s.segBtn, on && s.segOn)}
+                    onClick={() => setDepartment(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         ) : null}
 
-        {/* Target Score */}
-        <FieldCard
-          icon={<Target className="h-4 w-4" />}
-          label="Target Score"
-          editing={editingField === "targetScore"}
-          onEdit={() => {
-            setEditingField("targetScore");
-            if (targetScore === null) setTargetScore(suggestedScore);
-          }}
-          onClose={() => setEditingField(null)}
-        >
-          {editingField === "targetScore" ? (
-            <div className="flex items-center gap-2 sm:gap-3 w-full">
-              <input
-                type="range"
-                min={Math.round(scoreMax / 2)}
-                max={scoreMax}
-                step={scoreMax / 20}
-                value={targetScore ?? suggestedScore}
-                onChange={(e) => setTargetScore(Number(e.target.value))}
-                className="flex-1 min-w-0 h-1.5 rounded-full appearance-none bg-white/[0.08] accent-[var(--sb-accent)] cursor-pointer"
-              />
-              <span className="text-[11px] sm:text-sm font-bold text-[var(--sb-accent)] min-w-[32px] sm:min-w-[40px] text-right">
-                {targetScore ?? suggestedScore}
-              </span>
-            </div>
-          ) : (
-            <span className="text-sm text-white/80 font-medium">
-              {targetScore ?? suggestedScore}/{scoreMax}
-            </span>
-          )}
-        </FieldCard>
-
-        {/* Email Preferences */}
-        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.015] p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-white/30">
-              <Mail className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-white/30">
-                Email Updates
-              </p>
-              <p className="text-[11px] sm:text-sm text-white/60 mt-0.5 leading-tight">
-                {emailUnsubscribed
-                  ? "You won't receive promotional emails"
-                  : "Receive study tips & updates"}
-              </p>
-            </div>
-            {/* Toggle */}
-            <button
-              onClick={() => setEmailUnsubscribed(!emailUnsubscribed)}
-              className={cn(
-                "relative h-7 w-12 rounded-full transition-all duration-300 shrink-0",
-                emailUnsubscribed
-                  ? "bg-white/[0.08]"
-                  : "bg-[var(--sb-accent)] shadow-[0_0_12px_var(--sb-accent-glow)]",
-              )}
-            >
-              <div
-                className={cn(
-                  "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-all duration-300",
-                  emailUnsubscribed ? "left-0.5" : "left-[calc(100%-1.625rem)]",
-                )}
-              />
-            </button>
+        <div className={s.item}>
+          <label className={s.label} htmlFor="profile-target">Target score</label>
+          <div className={s.range}>
+            <input
+              id="profile-target"
+              type="range"
+              min={Math.round(scoreMax / 2)}
+              max={scoreMax}
+              step={scoreMax / 20}
+              value={targetScore ?? suggestedScore}
+              onChange={(event) => setTargetScore(Number(event.target.value))}
+            />
+            <output htmlFor="profile-target">
+              {targetScore === null ? <small>Not set</small> : <>{targetScore}<small>/{scoreMax}</small></>}
+            </output>
           </div>
+          {targetScore === null ? <small className={s.help}>Move the slider to set it, out of {scoreMax}.</small> : null}
         </div>
       </div>
 
-      {/* Save Button */}
-      {hasChanges && (
-        <div className="pt-2 animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <button
-            onClick={handleSave}
-            disabled={updateProfile.isPending}
-            className={cn(
-              "w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white transition-all duration-300",
-              saveSuccess
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400/20"
-                : "bg-gradient-to-r from-[var(--sb-accent)] via-[#a06520] to-[#7a4a14] shadow-[0_4px_24px_var(--sb-accent-glow)] hover:shadow-[0_4px_32px_var(--sb-accent-glow)] hover:scale-[1.01]",
-              updateProfile.isPending && "opacity-70 cursor-not-allowed",
-            )}
-          >
-            {updateProfile.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : saveSuccess ? (
-              <>
-                <Check className="h-4 w-4" />
-                Saved!
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </button>
+      <h2 className={s.gh}>Email</h2>
+      <div className={s.list}>
+        <div className={cn(s.item, s.itemRow)}>
+          <span className={s.itemT}>
+            <b>Reminders and tips by email</b>
+            <small>
+              {emailUnsubscribed
+                ? "Off. You still get your sign-in codes by email."
+                : "Streak reminders, study tips and news from StudyBond."}
+            </small>
+          </span>
+          <Switch
+            on={!emailUnsubscribed}
+            onChange={(on) => setEmailUnsubscribed(!on)}
+            label="Reminders and tips by email"
+          />
         </div>
-      )}
+      </div>
 
-      {updateProfile.isError && (
-        <p className="text-xs text-red-400 text-center">
-          {updateProfile.error instanceof Error
-            ? updateProfile.error.message
-            : "Failed to save."}
-        </p>
-      )}
-
-    </div>
-  );
-}
-
-/* ─── Field Card Component ─── */
-
-function FieldCard({
-  icon,
-  label,
-  editing,
-  onEdit,
-  onClose,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  editing: boolean;
-  onEdit: () => void;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      onClick={!editing ? onEdit : undefined}
-      className={cn(
-        "group rounded-2xl border p-4 transition-all duration-300 cursor-pointer",
-        editing
-          ? "border-[var(--sb-accent)]/30 bg-[var(--sb-accent)]/[0.03] ring-1 ring-[var(--sb-accent)]/20"
-          : "border-white/[0.04] bg-white/[0.015] hover:bg-white/[0.03] hover:border-white/[0.08]",
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-300",
-            editing
-              ? "bg-[var(--sb-accent)]/10 text-[var(--sb-accent)]"
-              : "bg-white/[0.04] text-white/30",
-          )}
+      <div className={s.actions}>
+        <button
+          type="button"
+          className={s.btn}
+          onClick={handleSave}
+          disabled={!hasChanges || nameEmpty || updateProfile.isPending}
         >
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-white/30 mb-1">
-            {label}
-          </p>
-          {children}
-        </div>
-        {editing && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="text-[10px] font-bold uppercase tracking-wider text-[var(--sb-accent)] hover:text-[var(--sb-accent-hover)] transition-colors px-2 py-1 rounded-lg hover:bg-[var(--sb-accent)]/10"
-          >
-            Done
-          </button>
-        )}
+          {updateProfile.isPending ? "Saving…" : saved && !hasChanges ? "Saved" : "Save changes"}
+        </button>
+        {updateProfile.isError ? (
+          <p className={s.err} role="alert">{errorText(updateProfile.error, "Couldn't save. Check your internet and try again.")}</p>
+        ) : null}
       </div>
-    </div>
+    </>
   );
 }

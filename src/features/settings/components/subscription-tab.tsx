@@ -1,308 +1,205 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils/cn";
-import {
-  Crown,
-  Check,
-  X as XIcon,
-  Zap,
-  BookOpen,
-  Target,
-  Users,
-  Sparkles,
-  ChevronRight,
-  Shield,
-} from "lucide-react";
-import type { SubscriptionStatus } from "@/lib/api/types";
+
+import { getDashboardHome, homeKeys } from "@/features/home/api";
+import { boardLabel, dayMonth, lagosKey, priceLine, thousands } from "@/features/home/format";
 import { resumePaystackTransaction } from "@/lib/payments/paystack-inline";
+import { cn } from "@/lib/utils/cn";
 
-import { useInitiateSubscription, useVerifySubscription } from "../hooks/use-subscription";
+import {
+  PAYMENT_SUPPORT_EMAIL,
+  useInitiateSubscription,
+  useRefreshPremium,
+  useVerifySubscription,
+} from "../hooks/use-subscription";
+import { Loading } from "./settings-ui";
+import s from "./settings.module.css";
 
-type SubscriptionTabProps = {
-  isPremium: boolean;
-  subscriptionData?: SubscriptionStatus;
-};
-
-const PAYMENT_SUPPORT_EMAIL = "studybondapp@gmail.com";
-
-const PREMIUM_PERKS = [
-  { icon: BookOpen, label: "Unlimited Practice Exams", free: false, premium: true },
-  { icon: Target, label: "Subject-specific Real Exams", free: false, premium: true },
-  { icon: Zap, label: "Mixed Mode Exams", free: false, premium: true },
-  { icon: Users, label: "1v1 Competitive Duels", free: false, premium: true },
-  { icon: Sparkles, label: "AI-Powered Explanations", free: "0/day", premium: "5/day" },
-  { icon: Shield, label: "Bookmarks Slots", free: "20 max", premium: "50 max" },
+/* What premium opens, in the words of the premium card on Home. */
+const PREMIUM_GIVES = [
+  "Unlimited papers on every subject",
+  "The whole question bank",
+  "Duels on full papers",
+  "Your full report card",
 ];
 
-export function SubscriptionTab({ isPremium, subscriptionData }: SubscriptionTabProps) {
-  const sub = subscriptionData?.currentSubscription;
-  const queryClient = useQueryClient();
-  const initiateMutation = useInitiateSubscription();
-  const verifyMutation = useVerifySubscription();
-  const [checkoutPhase, setCheckoutPhase] = useState<"idle" | "loading" | "checkout" | "verifying">("idle");
+const Tick = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+);
 
-  const isCheckoutBusy = initiateMutation.isPending || verifyMutation.isPending || checkoutPhase !== "idle";
+/** "15 March", with the year when it isn't this year. */
+function endDate(iso: string): string {
+  const key = lagosKey(iso);
+  const thisYear = lagosKey(new Date().toISOString()).slice(0, 4);
+  return key.slice(0, 4) === thisYear ? dayMonth(key) : `${dayMonth(key)} ${key.slice(0, 4)}`;
+}
 
-  const refreshPremiumState = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["settings", "subscription-status"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "subscription-status"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "profile"] }),
-      queryClient.invalidateQueries({ queryKey: ["dashboard", "stats"] }),
-      queryClient.invalidateQueries({ queryKey: ["auth", "me"] }),
-    ]);
-  };
+type Phase = "idle" | "loading" | "checkout" | "verifying";
 
-  const checkoutLabel = () => {
-    if (initiateMutation.isPending) return "Preparing Checkout...";
-    if (checkoutPhase === "loading") return "Opening Secure Checkout...";
-    if (checkoutPhase === "checkout") return "Complete Payment...";
-    if (checkoutPhase === "verifying" || verifyMutation.isPending) return "Confirming Payment...";
-    return "Upgrade to Elite";
-  };
+/** Plan: premium on this board, days left, renew; or the free plan and going premium. */
+export function SubscriptionTab() {
+  const home = useQuery({ queryKey: homeKeys.home, queryFn: getDashboardHome, staleTime: 30_000, retry: 1 });
+  const initiate = useInitiateSubscription();
+  const verify = useVerifySubscription();
+  const refreshPremium = useRefreshPremium();
+  const [phase, setPhase] = useState<Phase>("idle");
+  const busy = initiate.isPending || verify.isPending || phase !== "idle";
 
-  const handleUpgrade = () => {
-    if (isCheckoutBusy) return;
+  function busyLabel(idle: string): string {
+    if (initiate.isPending) return "Getting checkout ready…";
+    if (phase === "loading") return "Opening checkout…";
+    if (phase === "checkout") return "Finish paying in the checkout";
+    if (phase === "verifying" || verify.isPending) return "Checking your payment…";
+    return idle;
+  }
 
-    initiateMutation.mutate(
+  function startCheckout() {
+    if (busy) return;
+    initiate.mutate(
       { autoRenew: false },
       {
         onSuccess: async (data) => {
-          setCheckoutPhase("loading");
-
+          setPhase("loading");
           try {
             await resumePaystackTransaction(data.accessCode, {
-              onLoad: () => {
-                setCheckoutPhase("checkout");
-              },
+              onLoad: () => setPhase("checkout"),
               onSuccess: (transaction) => {
-                const reference = transaction.reference || data.reference;
-                setCheckoutPhase("verifying");
-
-                verifyMutation.mutate(
-                  { reference },
+                setPhase("verifying");
+                verify.mutate(
+                  { reference: transaction.reference || data.reference },
                   {
                     onSuccess: async (result) => {
-                      await refreshPremiumState();
-
+                      await refreshPremium();
                       if (result.activated) {
-                        toast.success("Premium Activated!", {
-                          description: result.message,
-                        });
+                        toast.success("Premium is on", { description: result.message });
                       } else if (result.paymentStatus === "SUCCESS") {
-                        // Paid, but held: a plan is still running on another
-                        // exam. The team refunds it or sets the plan up by hand.
+                        /* Paid, but held: a plan is still running on another
+                           exam. The team refunds it or sets the plan up by hand. */
                         toast.warning("Payment received", {
                           description: `${result.message} Questions? Email ${PAYMENT_SUPPORT_EMAIL}.`,
                           duration: 20000,
                         });
                       } else {
-                        toast.error("Payment Not Successful", {
-                          description: `${result.message} If money left your account, contact ${PAYMENT_SUPPORT_EMAIL}.`,
+                        toast.error("The payment didn't go through", {
+                          description: `${result.message} If money left your account, email ${PAYMENT_SUPPORT_EMAIL}.`,
                         });
                       }
-
-                      setCheckoutPhase("idle");
+                      setPhase("idle");
                     },
-                    onError: () => {
-                      setCheckoutPhase("idle");
-                    },
+                    onError: () => setPhase("idle"),
                   },
                 );
               },
               onCancel: () => {
-                setCheckoutPhase("idle");
-                toast.info("Checkout closed", {
-                  description: "No payment was completed.",
-                });
+                setPhase("idle");
+                toast.info("Checkout closed", { description: "You didn't pay anything." });
               },
               onError: (error) => {
-                setCheckoutPhase("idle");
-            toast.error("Checkout could not load", {
-              description: error.message || `Please try again or contact ${PAYMENT_SUPPORT_EMAIL}.`,
+                setPhase("idle");
+                toast.error("Checkout couldn't load", {
+                  description: error.message || `Try again, or email ${PAYMENT_SUPPORT_EMAIL}.`,
+                });
+              },
             });
-          },
-        });
           } catch {
-            setCheckoutPhase("idle");
-            toast.error("Embedded checkout unavailable", {
-              description: "Opening Paystack's secure checkout page instead.",
-            });
+            setPhase("idle");
+            toast("Opening Paystack's checkout page instead");
             window.location.href = data.checkoutUrl;
           }
         },
-      }
+      },
     );
-  };
+  }
 
+  if (!home.data) {
+    return <Loading text={home.isError ? "We couldn't load your plan. Check your internet and try again." : undefined} />;
+  }
+
+  const { plan, board } = home.data;
+  const boardName = boardLabel(board);
+  const price = priceLine(plan.priceNaira, plan.durationMonths);
+  const months = `${plan.durationMonths} month${plan.durationMonths === 1 ? "" : "s"}`;
+
+  const payNote = (
+    <>
+      <p className={s.note}>Paystack&rsquo;s checkout opens right here.</p>
+      <p className={s.note} style={{ marginTop: 4 }}>
+        Payment problem? Email <a href={`mailto:${PAYMENT_SUPPORT_EMAIL}?subject=StudyBond%20payment`}>{PAYMENT_SUPPORT_EMAIL}</a>.
+      </p>
+    </>
+  );
+
+  const gives = (
+    <ul className={cn(s.list, s.gets)}>
+      {PREMIUM_GIVES.map((line) => (
+        <li key={line}><Tick />{line}</li>
+      ))}
+    </ul>
+  );
+
+  if (plan.isPremium) {
+    const days = plan.daysLeft ?? 0;
+    return (
+      <>
+        <section className={cn(s.plan, plan.endingSoon ? s.planWarn : s.planOn)}>
+          <div className={s.planTop}>
+            <b>Premium</b>
+            <span className={cn(s.pill, plan.endingSoon ? s.pillWarn : s.pillOn)}>{boardName}</span>
+          </div>
+          <div className={s.days}>
+            <b>{days}</b>
+            <span>day{days === 1 ? "" : "s"} left</span>
+          </div>
+          {plan.endsAt ? <p className={s.planSub}>Ends on {endDate(plan.endsAt)}. Premium covers {boardName} only.</p> : null}
+        </section>
+
+        {plan.endingSoon ? (
+          <div className={s.actions}>
+            <button type="button" className={s.btn} onClick={startCheckout} disabled={busy}>
+              {busyLabel(`Renew · ${price}`)}
+            </button>
+            <p className={s.note}>Renewing adds {months} to your end date, so you lose no days.</p>
+            {payNote}
+          </div>
+        ) : null}
+
+        <h2 className={s.gh}>What you have</h2>
+        {gives}
+      </>
+    );
+  }
+
+  const endedOn = plan.endedAt ? endDate(plan.endedAt) : null;
   return (
-    <div className="space-y-6">
-      {/* Current Plan Card */}
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl border p-6",
-          isPremium
-            ? "border-[var(--sb-gold)]/20 bg-gradient-to-br from-[var(--sb-gold)]/[0.04] to-transparent"
-            : "border-white/[0.04] bg-white/[0.015]",
-        )}
-      >
-        {/* Premium ambient glow */}
-        {isPremium && (
-          <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-[var(--sb-gold)]/[0.06] blur-3xl" />
-        )}
-
-        <div className="relative flex flex-col sm:flex-row items-start gap-4">
-          <div
-            className={cn(
-              "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl",
-              isPremium
-                ? "bg-gradient-to-br from-[var(--sb-gold)] to-[#8b4f1a] shadow-[0_0_20px_var(--sb-gold-glow)] text-white"
-                : "bg-white/[0.04] text-white/30",
-            )}
-          >
-            <Crown className="h-6 w-6" />
-          </div>
-          <div className="flex-1 w-full min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-base font-bold text-white">
-                {isPremium ? "Elite Plan" : "Explorer Plan"}
-              </h3>
-              <span
-                className={cn(
-                  "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
-                  isPremium
-                    ? "bg-[var(--sb-gold)]/15 text-[var(--sb-gold)]"
-                    : "bg-white/[0.06] text-white/30",
-                )}
-              >
-                {isPremium ? "Active" : "Free"}
-              </span>
-            </div>
-
-            {isPremium && sub ? (
-              <div className="mt-2 space-y-1">
-                <p className="text-xs text-white/40">
-                  {sub.daysRemaining > 0
-                    ? `${sub.daysRemaining} day${sub.daysRemaining === 1 ? "" : "s"} remaining`
-                    : "Expired"}
-                </p>
-                {/* Expiry bar */}
-                <div className="h-1.5 w-full max-w-[200px] rounded-full bg-white/[0.06] overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-1000",
-                      sub.daysRemaining > 10
-                        ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
-                        : sub.daysRemaining > 3
-                          ? "bg-gradient-to-r from-amber-400 to-orange-400"
-                          : "bg-gradient-to-r from-red-400 to-red-500",
-                    )}
-                    style={{
-                      width: `${Math.min(100, Math.max(2, (sub.daysRemaining / 30) * 100))}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-white/30 mt-1">Upgrade to unlock the full StudyBond experience</p>
-            )}
-          </div>
+    <>
+      <section className={s.plan}>
+        <div className={s.planTop}>
+          <b>Free plan</b>
+          <span className={cn(s.pill, s.pillDim)}>{boardName}</span>
         </div>
+        <p className={s.planSub}>
+          {endedOn
+            ? `Your premium ended on ${endedOn}. Your report card, streak, saved questions and duel record are all still here.`
+            : plan.freeSubjectsLeft !== null
+              ? `${plan.freeSubjectsLeft} of ${plan.freeSubjectsTotal} free subjects left. Today's challenge is free every day.`
+              : "Today's challenge is free every day."}
+        </p>
+      </section>
+
+      <h2 className={s.gh}>Premium for {boardName} · {price}</h2>
+      {gives}
+
+      <div className={s.actions}>
+        <button type="button" className={s.btn} onClick={startCheckout} disabled={busy}>
+          {busyLabel(`${endedOn ? "Renew premium" : "Go premium"} · ₦${thousands(plan.priceNaira)}`)}
+        </button>
+        {payNote}
       </div>
-
-      {/* Perks Comparison */}
-      <div className="space-y-3">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-white/30 ml-1">
-          Feature Comparison
-        </h4>
-        <div className="space-y-2">
-          {PREMIUM_PERKS.map((perk) => {
-            const Icon = perk.icon;
-            return (
-              <div
-                key={perk.label}
-                className="flex items-center gap-2 sm:gap-3 rounded-xl border border-white/[0.03] bg-white/[0.01] px-2 sm:px-4 py-2.5 sm:py-3 transition-colors hover:bg-white/[0.02]"
-              >
-                <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-white/30">
-                  <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </div>
-                <span className="flex-1 text-[11px] sm:text-sm text-white/60 leading-tight">{perk.label}</span>
-                {/* Free column */}
-                <div className="w-12 sm:w-16 flex justify-center shrink-0">
-                  {typeof perk.free === "string" ? (
-                    <span className="text-[9px] sm:text-[10px] font-semibold text-white/25 text-center leading-none">{perk.free}</span>
-                  ) : perk.free ? (
-                    <Check className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-400/50" />
-                  ) : (
-                    <XIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-white/10" />
-                  )}
-                </div>
-                {/* Premium column */}
-                <div className="w-12 sm:w-16 flex justify-center shrink-0">
-                  {typeof perk.premium === "string" ? (
-                    <span className="text-[9px] sm:text-[10px] font-bold text-[var(--sb-gold)] text-center leading-none">{perk.premium}</span>
-                  ) : perk.premium ? (
-                    <Check className="h-3 w-3 sm:h-4 sm:w-4 text-[var(--sb-gold)]" />
-                  ) : (
-                    <XIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-white/10" />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {/* Column headers */}
-        <div className="flex justify-end gap-2 sm:gap-3 pr-2 sm:pr-4 -mt-1">
-          <span className="w-12 sm:w-16 text-center text-[7px] sm:text-[8px] font-bold uppercase tracking-wider text-white/15">Free</span>
-          <span className="w-12 sm:w-16 text-center text-[7px] sm:text-[8px] font-bold uppercase tracking-wider text-[var(--sb-gold)]/40">Elite</span>
-        </div>
-      </div>
-
-      {/* Upgrade CTA */}
-      {!isPremium && (
-        <div className="pt-2">
-          <button
-            onClick={handleUpgrade}
-            disabled={isCheckoutBusy}
-            className={cn(
-              "group relative flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-sm font-bold text-white overflow-hidden transition-all duration-300",
-              "bg-gradient-to-r from-[var(--sb-gold)] via-[var(--sb-accent)] to-[#8b4f1a]",
-              "shadow-[0_4px_24px_var(--sb-gold-glow)] hover:shadow-[0_6px_32px_var(--sb-gold-glow)] hover:scale-[1.01] disabled:opacity-70 disabled:pointer-events-none",
-            )}
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            {isCheckoutBusy ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            ) : (
-              <Crown className="h-4 w-4 relative z-10" />
-            )}
-            <span className="relative z-10">
-              {checkoutLabel()}
-            </span>
-            {!isCheckoutBusy && (
-              <ChevronRight className="h-4 w-4 relative z-10 group-hover:translate-x-0.5 transition-transform" />
-            )}
-          </button>
-          <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-white/30">
-            <Shield className="h-3.5 w-3.5 text-[var(--sb-gold)]/70" />
-            <span>Secure Paystack checkout opens inside StudyBond.</span>
-          </div>
-          <p className="mt-2 text-center text-[11px] leading-relaxed text-white/25">
-            Payment issue? Contact{" "}
-            <a
-              href={`mailto:${PAYMENT_SUPPORT_EMAIL}?subject=StudyBond%20payment%20support`}
-              className="font-semibold text-[var(--sb-gold)]/80 transition-colors hover:text-[var(--sb-gold)]"
-            >
-              {PAYMENT_SUPPORT_EMAIL}
-            </a>
-            .
-          </p>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

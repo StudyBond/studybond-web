@@ -10,6 +10,7 @@ import { Avatar } from "@/features/avatar/components/avatar";
 import { useMyAvatar } from "@/features/avatar/hooks/use-my-avatar";
 import { useLogoutMutation } from "@/features/auth/hooks/use-auth-mutations";
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
+import { notificationsUiEnabled } from "@/features/notifications/notifications.config";
 import { getUserProfile } from "@/lib/api/users";
 import { cn } from "@/lib/utils/cn";
 
@@ -25,6 +26,8 @@ const PersonIcon = () => <Icon d={<><circle cx="12" cy="8" r="4" /><path d="M4 2
 const ShieldIcon = () => <Icon d={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />} />;
 const SlidersIcon = () => <Icon d={<><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></>} />;
 const ChatIcon = () => <Icon d={<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />} />;
+const BellIcon = () => <Icon d={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>} />;
+const KeyIcon = () => <Icon d={<><circle cx="7.5" cy="15.5" r="4.5" /><path d="m10.7 12.3 9.8-9.8M17 6l3 3M14.5 8.5l2 2" /></>} />;
 
 function Row({ href, icon, title, sub, pill }: { href: string; icon: ReactNode; title: string; sub: string; pill?: ReactNode }) {
   return (
@@ -38,9 +41,9 @@ function Row({ href, icon, title, sub, pill }: { href: string; icon: ReactNode; 
 }
 
 /**
- * Me (canvas 16i): the phone tab that replaces Settings. Each row opens the
- * existing settings tab or page; nothing here is rebuilt. "Invite friends"
- * waits for the referral feature.
+ * Me (canvas 16i): the phone tab that replaces Settings, and where the
+ * laptop name box goes. Each row opens one settings page (back to Me) or
+ * the vault. "Invite friends" waits for the referral feature.
  */
 export function MePage() {
   const router = useRouter();
@@ -52,6 +55,7 @@ export function MePage() {
   const d = home.data;
   const plan = d?.plan;
   const premium = plan?.isPremium ?? p?.isPremium ?? false;
+  const isAdmin = p?.role === "ADMIN" || p?.role === "SUPERADMIN";
 
   const aim = p?.aspiringCourse
     ? `Wants ${p.aspiringCourse}${d ? ` · ${boardLabel(d.board)}` : ""}`
@@ -134,6 +138,9 @@ export function MePage() {
             sub={d && d.vault.saved > 0 ? `${d.vault.saved} saved question${d.vault.saved === 1 ? "" : "s"}` : "Questions you save to practise later"}
           />
           <Row href="/dashboard/settings?tab=exam" icon={<SlidersIcon />} title="Exam settings" sub="Paper colour, auto-advance, text size, grades" />
+          {notificationsUiEnabled ? (
+            <Row href="/dashboard/settings?tab=notifications" icon={<BellIcon />} title="Notifications" sub="What StudyBond tells you about" />
+          ) : null}
         </section>
 
         <h2 className={s.gh}>Friends</h2>
@@ -145,6 +152,15 @@ export function MePage() {
             sub={premium ? "WhatsApp channel and the premium group" : "WhatsApp channel · the group is for premium"}
           />
         </section>
+
+        {isAdmin ? (
+          <>
+            <h2 className={s.gh}>Admin</h2>
+            <section className={s.list}>
+              <Row href="/dashboard/settings?tab=admin" icon={<KeyIcon />} title="Admin controls" sub="Study mode for this board. Only admins see this." />
+            </section>
+          </>
+        ) : null}
 
         <button type="button" className={s.out} onClick={signOut} disabled={logout.isPending}>Sign out</button>
         <Link href={"/dashboard/settings?tab=danger" as Route} className={s.del}>Delete account</Link>

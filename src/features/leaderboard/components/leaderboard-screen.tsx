@@ -533,7 +533,7 @@ function GroupPrompt({ departmentBoard }: { departmentBoard: boolean }) {
           : "Admission is by course. Add yours to your profile and this tab ranks you against the students chasing the same seat."}
       </p>
       <Link
-        href={"/dashboard/settings" as Route}
+        href={"/dashboard/settings?tab=profile" as Route}
         className={cn(styles.btn, styles.btnLine, "mt-3 px-3.5")}
       >
         {departmentBoard ? "Add my department" : "Add my course"}

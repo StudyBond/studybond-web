@@ -272,7 +272,7 @@ export function BookmarkExamLauncher({
       <PremiumUpsellSheet
         open={upsellOpen}
         bookmarkCount={bookmarkCount}
-        onUpgrade={() => router.push("/dashboard/settings")}
+        onUpgrade={() => router.push("/dashboard/settings?tab=subscription")}
         onDismiss={() => setUpsellOpen(false)}
       />
     </>

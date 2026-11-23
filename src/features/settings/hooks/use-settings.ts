@@ -26,6 +26,9 @@ export function useUpdateProfile() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["user-profile"] });
       qc.invalidateQueries({ queryKey: ["auth-me"] });
+      /* Me, the sidebar name box and Home read the profile under these. */
+      qc.invalidateQueries({ queryKey: ["dashboard", "profile"] });
+      qc.invalidateQueries({ queryKey: ["home", "dashboard"] });
     },
   });
 }

@@ -70,13 +70,13 @@ const bottomTabs: NavItem[] = [
 ];
 
 /* Phone top bar title for pages outside the redesign (user, 2026-11-23:
-   a plain page title, no logo strip). Longest prefix wins. */
+   a plain page title, no logo strip). Longest prefix wins. Settings pages
+   pass their own bar (back to Me + the section name). */
 const PAGE_TITLES: Array<[string, string]> = [
   ["/dashboard/settings/avatar", "Your avatar"],
   ["/dashboard/practice", "Practice"],
   ["/dashboard/duel", "Duel"],
   ["/dashboard/leaderboard", "Leaderboard"],
-  ["/dashboard/settings", "Settings"],
   ["/dashboard/history", "Past papers"],
   ["/dashboard/study", "Study mode"],
   ["/dashboard/bookmarks", "Study vault"],
@@ -170,7 +170,7 @@ export function LearnerShell({
             <SideLink key={item.href} item={item} active={isActive(pathname, item)} count={item.href === "/dashboard/duel" ? waiting : 0} />
           ))}
         </nav>
-        <Link href={"/dashboard/settings" as Route} className={s.me} aria-label="Your profile and settings">
+        <Link href={"/dashboard/me" as Route} className={s.me} aria-label="Me: your profile and settings">
           <span className={cn(s.ring, !isPremium && s.ringFree)}>
             <Avatar look={avatar.data?.avatar ?? null} size={34} />
           </span>
@@ -182,7 +182,7 @@ export function LearnerShell({
         </Link>
       </aside>
 
-      {/* Phone top strip: the page's own bar, or the logo */}
+      {/* Phone top strip: the page's own bar, or a plain page title */}
       <div className={s.strip}>
         {mobileTopBar ? (
           <div className="flex h-14 items-center px-3.5">{mobileTopBar}</div>

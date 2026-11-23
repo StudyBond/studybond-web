@@ -1,50 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import { cn } from "@/lib/utils/cn";
-import { useSecurityOverview, useChangePassword } from "@/features/settings/hooks/use-settings";
-import { useLogoutMutation } from "@/features/auth/hooks/use-auth-mutations";
+import { useQueryClient } from "@tanstack/react-query";
+import { Globe, Monitor, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  Shield,
-  Lock,
-  Eye,
-  EyeOff,
-  Smartphone,
-  Monitor,
-  Globe,
-  Check,
-  Loader2,
-  AlertCircle,
-  Fingerprint,
-  LogOut,
-} from "lucide-react";
+import { useState } from "react";
 
-export function SecurityTab({ isPremium = false }: { isPremium?: boolean }) {
-  const { data: security, isLoading, isError } = useSecurityOverview();
+import { useLogoutMutation } from "@/features/auth/hooks/use-auth-mutations";
+import { useChangePassword, useSecurityOverview } from "@/features/settings/hooks/use-settings";
+import type { ActiveSession } from "@/lib/api/types";
+import { cn } from "@/lib/utils/cn";
+
+import { errorText, Loading, PasswordInput } from "./settings-ui";
+import s from "./settings.module.css";
+
+const STRENGTH_COLOURS = ["", "#f87171", "#d4a121", "#4ade80", "#4ade80"];
+
+/** Security: change password, the devices signed in, sign out. */
+export function SecurityTab() {
+  const qc = useQueryClient();
+  const security = useSecurityOverview();
   const changePassword = useChangePassword();
   const logout = useLogoutMutation();
   const router = useRouter();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-
-  // Password strength calculation
+  const [changed, setChanged] = useState(false);
   const strength = calculateStrength(newPassword);
 
   async function handleChangePassword() {
-    if (!currentPassword || !newPassword) return;
+    if (!currentPassword || newPassword.length < 8) return;
     try {
       await changePassword.mutateAsync({ currentPassword, newPassword });
-      setPasswordSuccess(true);
+      setChanged(true);
       setCurrentPassword("");
       setNewPassword("");
-      setTimeout(() => setPasswordSuccess(false), 3000);
+      window.setTimeout(() => setChanged(false), 4000);
+      void qc.invalidateQueries({ queryKey: ["security-overview"] });
     } catch {
-      // handled via mutation error state
+      /* Shown under the button from the mutation state. */
     }
   }
 
@@ -53,212 +47,99 @@ export function SecurityTab({ isPremium = false }: { isPremium?: boolean }) {
     router.push("/login");
   }
 
+  const sessions = security.data?.activeSessions ?? [];
+
   return (
-    <div className="space-y-8">
-      {/* ── Password Change Section ── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--sb-accent)]/10 text-[var(--sb-accent)]">
-            <Lock className="h-4 w-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-white">Change Password</h3>
-            <p className="text-[10px] text-white/30">Other active sessions will be signed out</p>
-          </div>
+    <>
+      <h2 className={cn(s.gh, s.ghFirst)}>Change password</h2>
+      <div className={s.list}>
+        <div className={s.item}>
+          <label className={s.label} htmlFor="password-current">Current password</label>
+          <PasswordInput
+            id="password-current"
+            value={currentPassword}
+            onChange={(value) => { setCurrentPassword(value); setChanged(false); }}
+            autoComplete="current-password"
+            disabled={changePassword.isPending}
+          />
         </div>
-
-        <div className="space-y-3">
-          {/* Current Password */}
-          <div className="relative">
-            <input
-              type={showCurrent ? "text" : "password"}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Current password"
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 pr-12 text-sm text-white placeholder:text-white/20 outline-none transition-all focus:border-[var(--sb-accent)]/40 focus:ring-1 focus:ring-[var(--sb-accent)]/20 focus:bg-white/[0.03]"
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
-            >
-              {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-
-          {/* New Password */}
-          <div className="relative">
-            <input
-              type={showNew ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password (min 8 characters)"
-              className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 pr-12 text-sm text-white placeholder:text-white/20 outline-none transition-all focus:border-[var(--sb-accent)]/40 focus:ring-1 focus:ring-[var(--sb-accent)]/20 focus:bg-white/[0.03]"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNew(!showNew)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
-            >
-              {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-
-          {/* Strength Meter */}
-          {newPassword.length > 0 && (
-            <div className="space-y-2 animate-in slide-in-from-top-2 fade-in duration-200">
-              <div className="flex gap-1.5">
+        <div className={s.item}>
+          <label className={s.label} htmlFor="password-new">New password</label>
+          <PasswordInput
+            id="password-new"
+            value={newPassword}
+            onChange={(value) => { setNewPassword(value); setChanged(false); }}
+            autoComplete="new-password"
+            placeholder="At least 8 characters"
+            disabled={changePassword.isPending}
+          />
+          {newPassword ? (
+            <>
+              <div className={s.meter} aria-hidden="true">
                 {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "h-1 flex-1 rounded-full transition-all duration-500",
-                      i < strength.level
-                        ? strength.level <= 1 ? "bg-red-400" : strength.level <= 2 ? "bg-amber-400" : strength.level <= 3 ? "bg-emerald-400" : "bg-emerald-400"
-                        : "bg-white/[0.06]",
-                    )}
-                  />
+                  <i key={i} style={i < strength.level ? { background: STRENGTH_COLOURS[strength.level] } : undefined} />
                 ))}
               </div>
-              <p className={cn(
-                "text-[10px] font-semibold",
-                strength.level <= 1 ? "text-red-400/80" : strength.level <= 2 ? "text-amber-400/80" : "text-emerald-400/80",
-              )}>
-                {strength.label}
-              </p>
-            </div>
-          )}
-
-          {/* Submit */}
-          <button
-            onClick={handleChangePassword}
-            disabled={!currentPassword || newPassword.length < 8 || changePassword.isPending}
-            className={cn(
-              "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300",
-              passwordSuccess
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-400/20"
-                : "bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed",
-            )}
-          >
-            {changePassword.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : passwordSuccess ? (
-              <>
-                <Check className="h-4 w-4" />
-                Password Updated!
-              </>
-            ) : (
-              "Update Password"
-            )}
-          </button>
-
-          {changePassword.isError && (
-            <div className="flex items-center gap-2 text-xs text-red-400/80 bg-red-400/[0.05] rounded-lg p-2.5">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              {changePassword.error instanceof Error ? changePassword.error.message : "Password change failed."}
-            </div>
-          )}
+              <span className={s.meterLabel} style={{ color: STRENGTH_COLOURS[strength.level] || "var(--ui-ink-3)" }}>
+                {newPassword.length < 8 ? `${8 - newPassword.length} more character${8 - newPassword.length === 1 ? "" : "s"}` : strength.label}
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
+      <div className={s.actions}>
+        <button
+          type="button"
+          className={s.btn}
+          onClick={handleChangePassword}
+          disabled={!currentPassword || newPassword.length < 8 || changePassword.isPending}
+        >
+          {changePassword.isPending ? "Changing…" : "Change password"}
+        </button>
+        {changed ? (
+          <p className={s.note} role="status" style={{ color: "#86efac" }}>Password changed. Your other devices have been signed out.</p>
+        ) : changePassword.isError ? (
+          <p className={s.err} role="alert">{errorText(changePassword.error, "Couldn't change your password. Try again.")}</p>
+        ) : (
+          <p className={s.note}>Changing it signs you out on your other devices.</p>
+        )}
+      </div>
 
-      {/* ── Active Sessions (Premium only) ── */}
-      {isPremium && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-              <Fingerprint className="h-4 w-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white">Active Sessions</h3>
-              <p className="text-[10px] text-white/30">Devices currently signed into your account</p>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-white/20" />
-            </div>
-          ) : isError ? (
-            <div className="rounded-xl border border-red-400/10 bg-red-400/[0.03] p-4 text-center text-xs text-red-400/70">
-              Failed to load sessions.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {security?.activeSessions.map((session) => {
-                const DeviceIcon = getDeviceIcon(session.userAgent);
-                return (
-                  <div
-                    key={session.sessionId}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-2xl border p-4 transition-all duration-300",
-                      session.isCurrent
-                        ? "border-emerald-400/15 bg-emerald-400/[0.03]"
-                        : "border-white/[0.04] bg-white/[0.015] hover:bg-white/[0.025]",
-                    )}
-                  >
-                    <div className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
-                      session.isCurrent ? "bg-emerald-400/10 text-emerald-400" : "bg-white/[0.04] text-white/30",
-                    )}>
-                      <DeviceIcon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-white/80 truncate">
-                          {session.deviceName || parseUserAgent(session.userAgent)}
-                        </p>
-                        {session.isCurrent && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold uppercase tracking-wider text-emerald-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            This Device
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-white/25 mt-0.5">
-                        {session.lastLoginAt ? `Last active ${formatTimeAgo(session.lastLoginAt)}` : "Active now"}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+      <h2 className={s.gh}>Signed in on</h2>
+      {security.isLoading ? (
+        <Loading />
+      ) : security.isError ? (
+        <Loading text="We couldn't load your devices. Check your internet and try again." />
+      ) : (
+        <div className={s.list}>
+          {sessions.map((session) => (
+            <DeviceRow key={session.sessionId} session={session} />
+          ))}
         </div>
       )}
 
-      {/* ── Logout Section ── */}
-      <div className="space-y-4 pt-6 border-t border-white/[0.04]">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-400/10 text-red-400">
-            <LogOut className="h-4 w-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-red-400/80">Sign Out</h3>
-            <p className="text-[10px] text-white/30">End your session on this device</p>
-          </div>
-        </div>
+      <button type="button" className={s.out} onClick={handleLogout} disabled={logout.isPending}>
+        {logout.isPending ? "Signing out…" : "Sign out"}
+      </button>
+    </>
+  );
+}
 
-        <button
-          onClick={handleLogout}
-          disabled={logout.isPending}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300",
-            "border border-red-400/20 bg-red-400/[0.05] text-red-400/80 hover:bg-red-400/[0.10] hover:text-red-400 hover:border-red-400/30 disabled:opacity-40 disabled:cursor-not-allowed",
-          )}
-        >
-          {logout.isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Signing out...
-            </>
-          ) : (
-            <>
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </>
-          )}
-        </button>
-      </div>
+function DeviceRow({ session }: { session: ActiveSession }) {
+  return (
+    <div className={s.dev}>
+      <span className={s.ic}><DeviceIcon ua={session.userAgent} /></span>
+      <span className={s.itemT}>
+        <b>{session.deviceName || browserName(session.userAgent)}</b>
+        <small>
+          {session.isCurrent
+            ? "You're using this one"
+            : session.lastLoginAt
+              ? `Last signed in ${timeAgo(session.lastLoginAt)}`
+              : `Signed in ${timeAgo(session.createdAt)}`}
+        </small>
+      </span>
+      {session.isCurrent ? <span className={cn(s.pill, s.pillOk)}>This device</span> : <span />}
     </div>
   );
 }
@@ -278,29 +159,29 @@ function calculateStrength(password: string) {
   return { level, label: labels[level] || "" };
 }
 
-function getDeviceIcon(ua: string | null) {
-  if (!ua) return Globe;
+function DeviceIcon({ ua }: { ua: string | null }) {
+  if (!ua) return <Globe aria-hidden="true" />;
   const lower = ua.toLowerCase();
-  if (lower.includes("mobile") || lower.includes("android") || lower.includes("iphone")) return Smartphone;
-  return Monitor;
+  if (lower.includes("mobile") || lower.includes("android") || lower.includes("iphone")) return <Smartphone aria-hidden="true" />;
+  return <Monitor aria-hidden="true" />;
 }
 
-function parseUserAgent(ua: string | null): string {
-  if (!ua) return "Unknown Device";
-  if (ua.includes("Chrome")) return "Chrome Browser";
-  if (ua.includes("Safari")) return "Safari Browser";
-  if (ua.includes("Firefox")) return "Firefox Browser";
-  if (ua.includes("Edge")) return "Edge Browser";
-  return "Web Browser";
+function browserName(ua: string | null): string {
+  if (!ua) return "A browser";
+  if (ua.includes("Edg/")) return "Edge";
+  if (ua.includes("Chrome")) return "Chrome";
+  if (ua.includes("Firefox")) return "Firefox";
+  if (ua.includes("Safari")) return "Safari";
+  return "A browser";
 }
 
-function formatTimeAgo(dateInput: string): string {
-  const seconds = Math.floor((Date.now() - new Date(dateInput).getTime()) / 1000);
+function timeAgo(iso: string): string {
+  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${days} day${days === 1 ? "" : "s"} ago`;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Route } from "next";
 import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -144,8 +145,8 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
     <div className={cn("sb-ui", styles.root, styles.layout, "relative mx-auto flex min-h-[calc(100dvh-64px)] w-full max-w-[480px] flex-col")}>
       <header className={cn(styles.header, "flex h-14 flex-none items-center gap-1 border-b border-[var(--rule)] pl-1 pr-2.5")}>
         <Link
-          href="/dashboard/settings"
-          aria-label="Back to profile"
+          href={"/dashboard/me" as Route}
+          aria-label="Back to Me"
           className="grid h-11 w-11 place-items-center rounded-[10px] text-[var(--ink-2)] hover:bg-[var(--sheet)] hover:text-[var(--ink)]"
         >
           <ChevronLeft className="h-5 w-5" />

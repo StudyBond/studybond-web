@@ -6,6 +6,8 @@ import { FLAT_COLOUR } from "@/features/exam/lib/papers";
 import { textScale } from "@/features/exam/lib/text-size";
 import { cn } from "@/lib/utils/cn";
 
+import s from "./settings.module.css";
+
 const PAPERS = [
   { name: "English", colour: "#fb7185" },
   { name: "Biology", colour: "#4ade80" },
@@ -64,13 +66,10 @@ export function ExamTab() {
   const setWaecGrades = useExamPrefs((p) => p.setWaecGrades);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="mb-1 text-lg font-bold text-white">Exam</h2>
-        <p className="text-[13px] text-white/30">How the exam screen looks and moves</p>
-      </div>
+    <>
+      <p className={s.lead}>How the exam screen looks and moves.</p>
 
-      <div className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+      <div className={cn(s.list, "divide-y divide-white/[0.08]")}>
         <Row
           title="Paper colour"
           body={
@@ -129,7 +128,7 @@ export function ExamTab() {
         </div>
       </div>
 
-      <p className="text-[12px] text-white/30">Saved to your account, so your other devices use it too.</p>
-    </div>
+      <p className={s.note}>Saved to your account, so your other devices use it too.</p>
+    </>
   );
 }
