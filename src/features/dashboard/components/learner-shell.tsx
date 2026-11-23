@@ -73,6 +73,26 @@ const bottomTabs: NavItem[] = [
   { label: "Me", href: "/dashboard/me", icon: User, match: ["/dashboard/me", "/dashboard/settings", "/dashboard/streak"] },
 ];
 
+/* Phone top bar title for pages outside the redesign (user, 2026-11-23:
+   a plain page title, no logo strip). Longest prefix wins. */
+const PAGE_TITLES: Array<[string, string]> = [
+  ["/dashboard/settings/avatar", "Your avatar"],
+  ["/dashboard/practice", "Practice"],
+  ["/dashboard/duel", "Duel"],
+  ["/dashboard/leaderboard", "Leaderboard"],
+  ["/dashboard/settings", "Settings"],
+  ["/dashboard/history", "Past papers"],
+  ["/dashboard/study", "Study mode"],
+  ["/dashboard/bookmarks", "Study vault"],
+  ["/dashboard/word-book", "Word book"],
+  ["/dashboard/notifications", "Notifications"],
+];
+
+function pageTitle(pathname: string): string {
+  const hit = PAGE_TITLES.find(([prefix]) => isRouteActive(pathname, prefix));
+  return hit ? hit[1] : "StudyBond";
+}
+
 function isActive(pathname: string, item: NavItem) {
   return (item.match ?? [item.href]).some((href) => isRouteActive(pathname, href));
 }
@@ -172,8 +192,8 @@ export function LearnerShell({
         {mobileTopBar ? (
           <div className="flex h-14 items-center px-3.5">{mobileTopBar}</div>
         ) : (
-          <div className="flex h-12 items-center justify-between px-4">
-            <LogoLockup size="xs" />
+          <div className={cn("sb-ui", s.titleBar)}>
+            <h1>{pageTitle(pathname)}</h1>
             <NotificationBell mobile />
           </div>
         )}
@@ -194,7 +214,7 @@ export function LearnerShell({
       </nav>
 
       <main className="min-w-0 w-full md:pl-[232px]">
-        <div className={cn("mx-auto max-w-5xl px-4 pb-24 sm:px-5 md:px-8 md:pb-10 md:pt-7", mobileTopBar ? "pt-[60px]" : "pt-14")}>
+        <div className="mx-auto max-w-5xl px-4 pb-24 pt-[60px] sm:px-5 md:px-8 md:pb-10 md:pt-7">
           <PageTransition key={pathname}>{children}</PageTransition>
         </div>
       </main>
