@@ -1,0 +1,81 @@
+/* The app shell from the dashboard canvas (16e laptop sidebar, 16a phone
+   tab bar). Class names follow DashboardLaptop.dc.html. */
+
+.side {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  gap: 18px;
+  width: 232px;
+  padding: 18px 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0b0d;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+@media (min-width: 768px) {
+  .side { display: flex; }
+}
+.logoRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px; }
+.board {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; height: 40px; padding: 0 10px 0 12px;
+  border: 0; border-radius: 10px; background: #131316; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: #fafafa; font: 700 13.5px/1 var(--ui-body); text-align: left; cursor: pointer;
+}
+.board:hover { background: #1c1c21; }
+.board svg { width: 15px; height: 15px; flex: none; color: #848486; }
+.board span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grp { display: grid; gap: 2px; }
+.grp > small { padding: 0 10px 6px; font: 700 11.5px/1.2 var(--ui-body); color: #848486; }
+.nav {
+  display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 10px;
+  border-radius: 10px; color: #a1a1aa; font: 600 14px/1 var(--ui-body); text-decoration: none;
+}
+.nav:hover { background: #131316; color: #fafafa; }
+.nav svg { width: 18px; height: 18px; flex: none; }
+.navOn { background: rgba(224, 144, 64, 0.1); color: #f5c890; }
+.navOn:hover { background: rgba(224, 144, 64, 0.14); color: #f5c890; }
+.ct {
+  margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  background: #3b82f6; color: #fff; font: 800 11px/20px var(--ui-num); text-align: center;
+}
+.me {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 18px; gap: 10px; align-items: center;
+  margin-top: auto; padding: 10px; border-radius: 12px; background: #131316; color: #fafafa; text-decoration: none;
+}
+.me:hover { background: #1c1c21; }
+.ring { display: inline-flex; border-radius: 50%; padding: 2px; box-shadow: 0 0 0 1.5px rgba(224, 144, 64, 0.7); }
+.ringFree { box-shadow: none; padding: 0; }
+.meText { display: grid; min-width: 0; }
+.meText b { font: 700 14px/1.3 var(--ui-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl { font: 500 12px/1.3 var(--ui-body); color: #f5c890; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plFree { color: #848486; }
+.gear { width: 18px; height: 18px; color: #848486; }
+.me:hover .gear { color: #fafafa; }
+
+/* Phone */
+.strip { position: fixed; inset: 0 0 auto 0; z-index: 40; background: #09090b; }
+@media (min-width: 768px) {
+  .strip { display: none; }
+}
+.tabs {
+  position: fixed; inset: auto 0 0 0; z-index: 40;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 9, 11, 0.96);
+}
+@media (min-width: 768px) {
+  .tabs { display: none; }
+}
+.tab {
+  display: grid; justify-items: center; align-content: center; gap: 4px;
+  color: #848486; font: 700 11px/1 var(--ui-body); text-decoration: none;
+}
+.tab svg { width: 21px; height: 21px; }
+.tabOn { color: #f5c890; }

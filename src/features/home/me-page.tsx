@@ -14,7 +14,7 @@ import { getUserProfile } from "@/lib/api/users";
 import { cn } from "@/lib/utils/cn";
 
 import { getDashboardHome, homeKeys } from "./api";
-import { nextFreezeDay } from "./format";
+import { boardLabel, nextFreezeDay } from "./format";
 import { BookmarkIcon, CardIcon, ChevronRight } from "./icons";
 import s from "./me.module.css";
 
@@ -54,15 +54,15 @@ export function MePage() {
   const premium = plan?.isPremium ?? p?.isPremium ?? false;
 
   const aim = p?.aspiringCourse
-    ? `Wants ${p.aspiringCourse}${d ? ` · ${d.board.name}` : ""}`
+    ? `Wants ${p.aspiringCourse}${d ? ` · ${boardLabel(d.board)}` : ""}`
     : p?.department
-      ? `${p.department.charAt(0)}${p.department.slice(1).toLowerCase()} · ${d?.board.name ?? ""}`
-      : d?.board.name ?? "";
+      ? `${p.department.charAt(0)}${p.department.slice(1).toLowerCase()}${d ? ` · ${boardLabel(d.board)}` : ""}`
+      : d ? boardLabel(d.board) : "";
 
   const planSub = !plan
     ? "Your plan on this board"
     : plan.isPremium
-      ? `Premium on ${d!.board.name} · ${plan.daysLeft ?? 0} day${plan.daysLeft === 1 ? "" : "s"} left`
+      ? `Premium on ${boardLabel(d!.board)} · ${plan.daysLeft ?? 0} day${plan.daysLeft === 1 ? "" : "s"} left`
       : plan.freeSubjectsLeft
         ? `Free · ${plan.freeSubjectsLeft} of ${plan.freeSubjectsTotal} free subjects left`
         : "Free plan";
@@ -82,7 +82,11 @@ export function MePage() {
   }
 
   return (
-    <LearnerShell isPremium={premium} profile={p}>
+    <LearnerShell
+      isPremium={premium}
+      profile={p}
+      mobileTopBar={<div className={cn("sb-ui", s.bar)}><h1>Me</h1></div>}
+    >
       <div className={cn("sb-ui", s.wrap)}>
         <h1 className={s.title}>Me</h1>
 

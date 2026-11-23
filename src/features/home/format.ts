@@ -115,3 +115,16 @@ export function nextFreezeDay(count: number): number {
   if (count < 7) return 7;
   return 7 + Math.ceil((count + 1 - 7) / 14) * 14;
 }
+
+/** "UI Post-UTME", "JAMB UTME": short enough for the phone's top bar. */
+export function boardLabel(board: { code: string; examName: string }): string {
+  const exam = board.examName.trim();
+  return exam && !exam.toUpperCase().startsWith(board.code.toUpperCase()) ? `${board.code} ${exam}` : exam || board.code;
+}
+
+/** "Adaeze O." */
+export function shortName(fullName: string | null | undefined): string {
+  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0];
+}

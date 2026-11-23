@@ -69,13 +69,25 @@ export function StreakPage() {
       : `Day ${nextFreezeDay(streak.count)} earns your ${streak.count < 7 ? "first" : "next"} one`;
 
   return (
-    <LearnerShell isPremium={d?.plan.isPremium ?? false} profile={profile.data}>
+    <LearnerShell
+      isPremium={d?.plan.isPremium ?? false}
+      profile={profile.data}
+      mobileTopBar={
+        <div className={cn("sb-ui", s.bar, s.barSmall)}>
+          <Link href={"/dashboard" as Route} className={s.barBack} aria-label="Back to Home"><ChevronLeft /></Link>
+          <h1>Your streak</h1>
+        </div>
+      }
+    >
       <div className={cn("sb-ui", h.root, s.wrap)}>
         <Link href={"/dashboard" as Route} className={s.back}><ChevronLeft />Home</Link>
         <h1 className={s.title}>Your streak</h1>
 
         {!d ? (
-          <p className={s.state}>{home.isError ? "We couldn't load your streak. Check your connection and try again." : "Loading your streak..."}</p>
+          <p className={s.state}>
+            {home.isError ? "We couldn't load your streak. Check your connection." : "Loading your streak..."}
+            {home.isError ? <> <button type="button" className={h.try} onClick={() => void home.refetch()}>Try again</button></> : null}
+          </p>
         ) : (
           <>
             <section className={s.hero} aria-label="Streak now">

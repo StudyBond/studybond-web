@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils/cn";
 import type { DashboardHome, RecentPaper, SubjectRef } from "./api";
 import { BoardSheet } from "./board-sheet";
 import {
-  dayGap, dayList, dayMonth, daysHours, greeting, hoursMinutes, lagosKey, lagosTime, monthName,
+  boardLabel, dayGap, dayList, dayMonth, daysHours, greeting, hoursMinutes, lagosKey, lagosTime, monthName,
   nextFreezeDay, ordinal, paperTitle, priceLine, shortDate, thousands, weekday, whenLine,
 } from "./format";
 import { caveat } from "./home-fonts";
@@ -102,7 +102,7 @@ export function HomePage() {
       data={data}
       look={look}
       onBoards={() => setBoardsOpen(true)}
-      boardName={data?.board.name ?? examProfile.data?.institution.name ?? "Your board"}
+      boardName={data ? boardLabel(data.board) : examProfile.data ? boardLabel({ code: examProfile.data.institution.code, examName: examProfile.data.trackName ?? "" }) : "Your board"}
     />
   );
 
@@ -111,6 +111,7 @@ export function HomePage() {
       isPremium={data?.plan.isPremium ?? false}
       profile={profile.data}
       mobileTopBar={topBar}
+      planText={data ? planLine(data) : undefined}
     >
       <div className={cn("sb-ui", s.root, caveat.variable)}>
         <div className={s.page}>
@@ -239,13 +240,7 @@ function Loaded({ data, offline, savedAt, skewMs, race, duel, firstPaper }: {
   else helloLine = <>{sp}<span className={s.posWide}>{position ? `, ${position}` : ""}</span>.</>;
 
   /* Plan chip */
-  const planText = plan.isPremium
-    ? `Premium · ${plan.daysLeft ?? 0} day${plan.daysLeft === 1 ? "" : "s"} left`
-    : premiumEndedRecently && plan.endedAt
-      ? dayGap(lagosKey(plan.endedAt), today) <= 1 ? "Premium ended yesterday" : `Premium ended on ${shortDate(lagosKey(plan.endedAt))}`
-      : plan.freeSubjectsLeft !== null && plan.freeSubjectsLeft > 0
-        ? `${plan.freeSubjectsLeft} of ${plan.freeSubjectsTotal} free subjects left`
-        : "Free plan";
+  const planText = planLine(data);
   const planCls = plan.isPremium ? (plan.endingSoon ? s.planWarn : "") : s.planFree;
 
   return (
@@ -316,7 +311,7 @@ function Loaded({ data, offline, savedAt, skewMs, race, duel, firstPaper }: {
           </div>
 
           <div className={s.o11}>
-            <RecentPapers papers={data.recentPapers} today={today} />
+            <RecentPapers papers={data.recentPapers} today={today} subjects={[...data.report.subjects, ...data.challenge.subjects, ...data.report.emptySubjects]} />
           </div>
         </div>
 
@@ -375,6 +370,20 @@ function Loaded({ data, offline, savedAt, skewMs, race, duel, firstPaper }: {
       </div>
     </>
   );
+}
+
+/** "Premium · 112 days left", "Premium ended yesterday", "2 of 4 free subjects left" */
+function planLine(data: DashboardHome): string {
+  const { plan } = data;
+  const today = data.clock.date;
+  const endedRecently = !plan.isPremium && plan.endedAt !== null && dayGap(lagosKey(plan.endedAt), today) <= 7;
+  if (plan.isPremium) return `Premium · ${plan.daysLeft ?? 0} day${plan.daysLeft === 1 ? "" : "s"} left`;
+  if (endedRecently && plan.endedAt) {
+    return dayGap(lagosKey(plan.endedAt), today) <= 1 ? "Premium ended yesterday" : `Premium ended on ${shortDate(lagosKey(plan.endedAt))}`;
+  }
+  return plan.freeSubjectsLeft !== null && plan.freeSubjectsLeft > 0
+    ? `${plan.freeSubjectsLeft} of ${plan.freeSubjectsTotal} free subjects left`
+    : "Free plan";
 }
 
 /* ── Laptop week strip (Mon to Sun) ── */
@@ -578,7 +587,7 @@ function ReportCard({ data, position }: { data: DashboardHome; position: string 
                     <small>{has ? (r.papers === 1 ? "1 paper" : `Last ${r.papers} papers`) : "No papers yet"}</small>
                   </span>
                   <span className={s.bars} aria-hidden="true">
-                    {r.lastFive.map((v, i) => <i key={i} className={i === r.lastFive.length - 1 ? "last" : ""} style={{ height: `${Math.max(12, v)}%` }} />)}
+                    {r.lastFive.map((v, i) => <i key={i} className={i === r.lastFive.length - 1 ? s.barLast : ""} style={{ height: `${Math.max(12, v)}%` }} />)}
                   </span>
                   <span className={s.avg}>{has ? `${r.average}%` : "—"}</span>
                   <span className={cn(s.grade, gradeClass(r.grade))}>{has ? (waec ? r.grade : `${r.average}`) : "—"}</span>
@@ -628,7 +637,7 @@ function Race({ race, now }: { race: LeaderboardBoard | null; now: number }) {
   let note: ReactNode = null;
   if (me.rank && above && me.entry) {
     const gap = above.points - me.points;
-    note = <>{gap} SP behind {above.displayName}.{below ? ` ${below.displayName} is ${me.points - below.points} SP behind you.` : ""}</>;
+    note = <>{gap} SP behind {endSentence(above.displayName)}{below ? ` ${below.displayName} is ${me.points - below.points} SP behind you.` : ""}</>;
   } else if (me.rank === 1) {
     note = <>You&rsquo;re top of this week&rsquo;s board.{below ? ` ${below.displayName} is ${me.points - below.points} SP behind you.` : ""}</>;
   }
@@ -658,6 +667,11 @@ function Race({ race, now }: { race: LeaderboardBoard | null; now: number }) {
       </section>
     </>
   );
+}
+
+/** "Amaka E." already ends the sentence; "Amaka" needs a full stop. */
+function endSentence(name: string) {
+  return name.endsWith(".") ? name : `${name}.`;
 }
 
 /* ── Rematch ── */
@@ -746,12 +760,12 @@ function Ticks({ marks }: { marks: string }) {
     });
   return (
     <span className={s.ticks} style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }} aria-hidden="true">
-      {cells.map((v, i) => <i key={i} className={v >= 1 ? "c" : ""} style={v > 0 && v < 1 ? { background: `rgba(193, 122, 40, ${0.25 + v * 0.75})` } : undefined} />)}
+      {cells.map((v, i) => <i key={i} className={v >= 1 ? s.tickOn : ""} style={v > 0 && v < 1 ? { background: `rgba(193, 122, 40, ${0.25 + v * 0.75})` } : undefined} />)}
     </span>
   );
 }
 
-function RecentPapers({ papers, today }: { papers: RecentPaper[]; today: string }) {
+function RecentPapers({ papers, today, subjects }: { papers: RecentPaper[]; today: string; subjects: SubjectRef[] }) {
   return (
     <>
       <div className={s.h}><h3>Recent papers</h3><Link href={"/dashboard/history" as Route} className={s.hLink}>See all</Link></div>
@@ -763,7 +777,7 @@ function RecentPapers({ papers, today }: { papers: RecentPaper[]; today: string 
           const sub = duel && duel.opponentScore !== null ? `${duel.myScore}–${duel.opponentScore}` : `${p.score}/${p.total}`;
           return (
             <Link key={p.examId} href={`/exams/${p.examId}/results` as Route} className={s.pp}>
-              {duel ? <span className={s.duelIc}><SwordsIcon /></span> : <PaperIcon subjects={p.subjects} />}
+              {duel ? <span className={s.duelIc}><SwordsIcon /></span> : <PaperIcon names={p.subjects} known={subjects} />}
               <span className={s.ppT}>
                 <b>{paperTitle(p)}</b>
                 <Ticks marks={p.marks} />
@@ -779,9 +793,12 @@ function RecentPapers({ papers, today }: { papers: RecentPaper[]; today: string 
   );
 }
 
-function PaperIcon({ subjects }: { subjects: string[] }) {
-  const code = subjects.length === 1 ? subjects[0].slice(0, 3).toUpperCase() : `${subjects.length}`;
-  return <span className={s.duelIc} style={{ background: "rgba(255,255,255,0.06)", color: "var(--ink-2)", fontSize: 11, fontWeight: 800 }}>{code}</span>;
+/** One subject: its icon. A full paper: the count of subjects, on a plain tile. */
+function PaperIcon({ names, known }: { names: string[]; known: SubjectRef[] }) {
+  const match = names.length === 1 ? known.find((k) => k.name.toLowerCase() === names[0].toLowerCase()) : undefined;
+  if (match) return <Subj subject={match} size={30} />;
+  const label = names.length === 1 ? names[0].slice(0, 3).toUpperCase() : `${names.length}`;
+  return <span className={cn(s.subj, s.num)} style={{ width: 30, height: 30, fontSize: 12, fontWeight: 800, color: "var(--ink-2)" }}>{label}</span>;
 }
 
 /* ── Month ── */
