@@ -445,6 +445,7 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
       {confirming ? (
         <div className={s.scrim} onClick={() => !starting && setConfirming(false)}>
           <div className={s.pop} role="dialog" aria-modal="true" aria-labelledby="pr-before" onClick={(e) => e.stopPropagation()}>
+            <div className={s.popBody}>
             <h2 id="pr-before">Before you start</h2>
             <p>{mode === "DAILY_CHALLENGE" ? "Today's challenge" : `${board} ${modeCopy[mode].title.toLowerCase()}`}. The clock starts as soon as you tap Start.</p>
             <div className={s.paper}>
@@ -466,6 +467,7 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
               <li><span>3</span><span>On a keyboard, press <kbd>A</kbd> to <kbd>E</kbd> to choose, and the arrow keys or <kbd>P</kbd> / <kbd>N</kbd> to move.</span></li>
             </ol>
             {startError ? <p className={s.popErr} role="alert">{startError}</p> : null}
+            </div>
             <div className={s.popActs}>
               <button type="button" className={s.ghost} disabled={starting} onClick={() => setConfirming(false)}>Back</button>
               <button type="button" className={s.btn} disabled={starting} onClick={enter}>
@@ -479,6 +481,7 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
       {premiumFor ? (
         <div className={s.scrim} onClick={() => setPremiumFor(null)}>
           <div className={s.pop} role="dialog" aria-modal="true" aria-labelledby="pr-prem" onClick={(e) => e.stopPropagation()}>
+            <div className={s.popBody}>
             <h2 id="pr-prem">Premium for {board}</h2>
             <p>
               {premiumFor === "Practice sets" || premiumFor === "Mixed papers"
@@ -495,6 +498,7 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
               {hasPracticeSets ? <li><TickIcon /><span>Practice sets and mixed papers</span></li> : null}
             </ul>
             {home.data ? <p className={s.price}>{priceLine(home.data.plan.priceNaira, home.data.plan.durationMonths)}</p> : null}
+            </div>
             <div className={s.popActs}>
               <button type="button" className={s.ghost} onClick={() => setPremiumFor(null)}>Not now</button>
               <Link href={PLAN} className={s.btn}>See premium</Link>
