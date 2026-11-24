@@ -10,8 +10,7 @@ import { toast } from "sonner";
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { getDashboardHome, homeKeys } from "@/features/home/api";
 import { ChevronLeft } from "@/features/home/icons";
-import { NotificationsSettingsTab } from "@/features/notifications/components/notifications-settings-tab";
-import { notificationsUiEnabled } from "@/features/notifications/notifications.config";
+import { AlertsSettings } from "@/features/notifications/alerts-settings";
 import { AdminTab } from "@/features/settings/components/admin-tab";
 import { CommunityTab } from "@/features/settings/components/community-tab";
 import { DangerZone } from "@/features/settings/components/danger-zone";
@@ -45,7 +44,6 @@ type Section = keyof typeof SECTIONS;
 
 function pickSection(tab: string | null, hasReference: boolean, isAdmin: boolean): Section {
   if (!tab || !(tab in SECTIONS)) return hasReference ? "subscription" : "profile";
-  if (tab === "notifications" && !notificationsUiEnabled) return "profile";
   if (tab === "admin" && !isAdmin) return "profile";
   return tab as Section;
 }
@@ -104,7 +102,7 @@ export function SettingsPageClient() {
   else if (section === "security") body = <SecurityTab />;
   else if (section === "exam") body = <ExamTab />;
   else if (section === "community") body = <CommunityTab />;
-  else if (section === "notifications") body = <NotificationsSettingsTab />;
+  else if (section === "notifications") body = <AlertsSettings />;
   else if (section === "admin") body = <AdminTab />;
   else body = <DangerZone />;
 

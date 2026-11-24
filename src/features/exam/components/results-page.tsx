@@ -16,6 +16,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Loader2 } from "lucide-react";
 import { useDuelSession } from "@/features/duel/hooks/use-duel";
 import { DuelOutcome } from "@/features/duel/result/duel-outcome";
+import { AlertAsk } from "@/features/notifications/asks";
 
 export function ResultsPageClient({ examId }: { examId: number }) {
   const router = useRouter();
@@ -249,6 +250,9 @@ export function ResultsPageClient({ examId }: { examId: number }) {
         examId={examId}
         restricted={!isStudySession && isInLastChance}
       />
+
+      {/* "Want a reminder at 9 pm?" right after a finished paper (plan 5). */}
+      <AlertAsk moment={{ kind: "paper", streak: result.stats?.currentStreak ?? 1, finishedAt: result.completedAt ?? null }} />
     </>
   );
 }

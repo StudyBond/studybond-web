@@ -12,8 +12,12 @@ export async function GET(
   return forwardAuthorizedRoute(request, context, "notifications", "GET");
 }
 
-export async function POST() {
-  return methodNotAllowed();
+/* Signing a browser up for alerts, and "Not on this device". */
+export async function POST(
+  request: NextRequest,
+  context: OptionalSlugRouteContext,
+) {
+  return forwardAuthorizedRoute(request, context, "notifications", "POST");
 }
 
 export async function PATCH(

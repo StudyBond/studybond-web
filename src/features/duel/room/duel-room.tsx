@@ -12,7 +12,9 @@ import { useCancelDuelMutation, useLeaveDuelMutation } from "@/features/duel/hoo
 import { useDuelFaceOff, useDuelFull } from "@/features/duel/hooks/use-duel-play";
 import { useDuelWebsocket } from "@/features/duel/hooks/use-duel-websocket";
 import { offlineStore } from "@/features/exam/stores/offline-store";
+import { shortName } from "@/features/home/format";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
+import { AlertAsk } from "@/features/notifications/asks";
 import type { DuelSessionFull } from "@/lib/api/duel";
 import { getExamQuestions } from "@/lib/api/exams";
 import type { ExamSessionData, UserProfile, UserStats } from "@/lib/api/types";
@@ -176,6 +178,14 @@ function DuelRoom({ code, profile, stats }: { code: string; profile: UserProfile
           leaving={leave.isPending || cancel.isPending}
         />
       )}
+
+      {/* Asking for alerts after sending or accepting a duel (plan 5). */}
+      {duel && isHost && duel.kind === "CHALLENGE" && duel.status === "WAITING" && !rival ? (
+        <AlertAsk moment={{ kind: "duel-sent", code: duel.code }} />
+      ) : null}
+      {duel && !isHost && me && faceOffOpen ? (
+        <AlertAsk moment={{ kind: "duel-accepted", rivalName: shortName(host?.fullName) || "Your rival" }} />
+      ) : null}
     </div>
   );
 }

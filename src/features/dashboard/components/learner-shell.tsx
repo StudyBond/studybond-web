@@ -26,8 +26,8 @@ import { BoardSheet } from "@/features/home/board-sheet";
 import { ChannelPrompt } from "@/features/home/channel-sheet";
 import { boardLabel, shortName } from "@/features/home/format";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
-import { NotificationBell } from "@/features/notifications/components/notification-bell";
-import { useNotificationsRealtime } from "@/features/notifications/hooks/use-notifications";
+import { NewDeviceAsk } from "@/features/notifications/asks";
+import { NotificationBell } from "@/features/notifications/bell";
 import { getDuelHome } from "@/lib/api/duel";
 import { getSubscriptionStatus } from "@/lib/api/subscriptions";
 import type { SubscriptionStatus, UserProfile } from "@/lib/api/types";
@@ -37,8 +37,9 @@ import s from "./learner-shell.module.css";
 
 /* The app shell from the dashboard canvas: on a laptop the 232px sidebar
    (16e: logo, board switcher, Study and Compete, the name box that opens
-   settings), with no top bar; on a phone the 5-tab bar (16a). The bell
-   renders only while notificationsUiEnabled is on (NotificationBell checks). */
+   settings), with no top bar; on a phone the 5-tab bar (16a). The bell sits
+   in the sidebar logo row and opens the notifications panel; on a phone it
+   is in the Home top bar. */
 
 function isRouteActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
@@ -113,8 +114,6 @@ export function LearnerShell({
   mobileTopBar,
   planText,
 }: Readonly<LearnerShellProps>) {
-  useNotificationsRealtime();
-
   const pathname = usePathname();
   const avatar = useMyAvatar();
   const examProfile = useExamProfile();
@@ -189,7 +188,6 @@ export function LearnerShell({
         ) : (
           <div className={cn("sb-ui", s.titleBar)}>
             <h1>{pageTitle(pathname)}</h1>
-            <NotificationBell mobile />
           </div>
         )}
       </div>
@@ -216,6 +214,9 @@ export function LearnerShell({
 
       {/* The board's WhatsApp channel, asked once per board (links set in admin). */}
       <ChannelPrompt />
+
+      {/* "Get alerts on this phone too?" when alerts are on on another device. */}
+      <NewDeviceAsk userId={profile?.id ?? null} isPremium={isPremium} />
 
       {boardsOpen ? (
         <BoardSheet currentCode={examProfile.data?.institution.code ?? null} onClose={() => setBoardsOpen(false)} />

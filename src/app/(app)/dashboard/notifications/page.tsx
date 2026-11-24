@@ -1,10 +1,16 @@
-import { NotificationsPageClient } from "@/features/notifications/components/notifications-page";
 import type { Metadata } from "next";
+import { Suspense } from "react";
+
+import { NotificationsPage } from "@/features/notifications/notifications-page";
 
 export const metadata: Metadata = {
   title: "Notifications | StudyBond",
 };
 
 export default function DashboardNotificationsPage() {
-  return <NotificationsPageClient />;
+  return (
+    <Suspense>
+      <NotificationsPage />
+    </Suspense>
+  );
 }

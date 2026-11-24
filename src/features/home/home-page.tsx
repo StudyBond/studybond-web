@@ -12,7 +12,7 @@ import { useMyAvatar } from "@/features/avatar/hooks/use-my-avatar";
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
 import { useDuelHome } from "@/features/duel/hooks/use-duel-play";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
-import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { NotificationBell } from "@/features/notifications/bell";
 import { getLeaderboardBoard, type LeaderboardBoard } from "@/lib/api/leaderboard";
 import { getUserProfile } from "@/lib/api/users";
 import { cn } from "@/lib/utils/cn";

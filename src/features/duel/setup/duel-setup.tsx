@@ -13,6 +13,7 @@ import { useChallenge, useDuelHome } from "@/features/duel/hooks/use-duel-play";
 import type { ExamProfileSubject } from "@/lib/api/institutions";
 import type { DuelQuestionSource, UserProfile } from "@/lib/api/types";
 import { cn } from "@/lib/utils/cn";
+import { rememberChallengeName } from "@/features/notifications/asks";
 
 import s from "../ui/duel.module.css";
 import { BackIcon } from "../ui/icons";
@@ -182,6 +183,7 @@ export function DuelSetup({ profile }: { profile: UserProfile }) {
       const result = targetId
         ? await challenge.mutateAsync({ ...payload, challengedUserId: targetId })
         : await create.mutateAsync(payload);
+      if (targetId && targetName && params.get("name")?.trim()) rememberChallengeName(result.session.code, targetName);
       router.replace(`/dashboard/duel/${result.session.code}?printed=1` as Route);
     } catch (error) {
       const code = apiErrorCode(error);

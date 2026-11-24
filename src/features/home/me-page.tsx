@@ -10,7 +10,6 @@ import { Avatar } from "@/features/avatar/components/avatar";
 import { useMyAvatar } from "@/features/avatar/hooks/use-my-avatar";
 import { useLogoutMutation } from "@/features/auth/hooks/use-auth-mutations";
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
-import { notificationsUiEnabled } from "@/features/notifications/notifications.config";
 import { getUserProfile } from "@/lib/api/users";
 import { cn } from "@/lib/utils/cn";
 
@@ -138,9 +137,7 @@ export function MePage() {
             sub={d && d.vault.saved > 0 ? `${d.vault.saved} saved question${d.vault.saved === 1 ? "" : "s"}` : "Questions you save to practise later"}
           />
           <Row href="/dashboard/settings?tab=exam" icon={<SlidersIcon />} title="Exam settings" sub="Paper colour, auto-advance, text size, grades" />
-          {notificationsUiEnabled ? (
-            <Row href="/dashboard/settings?tab=notifications" icon={<BellIcon />} title="Notifications" sub="What StudyBond tells you about" />
-          ) : null}
+          <Row href="/dashboard/settings?tab=notifications" icon={<BellIcon />} title="Notifications" sub="What StudyBond tells you about" />
         </section>
 
         <h2 className={s.gh}>Friends</h2>
