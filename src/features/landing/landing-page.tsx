@@ -26,7 +26,7 @@ export function LandingPage({ plans }: { plans: BoardPremiumPlan[] }) {
         <SpacetimeField />
         <div className="wrap">
           <div className="hero-in">
-            <h1 className="g-word g-line">
+            <h1 className="g-word">
               <span className="hl">
                 <span className="l1">
                   Outsmart <RotatingExamWord />

@@ -79,7 +79,7 @@ export function LandingPricing({ plans }: { plans: BoardPremiumPlan[] }) {
                   <span>Total</span>
                   <b>{formatNaira(plan.priceNaira)}</b>
                 </div>
-                <a className={receipt.primary ? "btn btn-p" : "btn btn-s"} href="/signup">
+                <a className={receipt.primary ? "btn btn-p" : "btn btn-s"} href={`/signup?board=${receipt.code}`}>
                   {receipt.cta}
                 </a>
               </article>

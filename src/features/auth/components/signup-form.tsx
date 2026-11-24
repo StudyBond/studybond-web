@@ -103,8 +103,13 @@ export function SignupForm() {
   const scoreMax = activeBoard?.targetScoreMax ?? 100;
   const asksDepartment = activeBoard?.signupAsksDepartment ?? false;
 
-  /* If the chosen board is not open, move to the first one that is. */
+  /* If the chosen board is not open, move to the first one that is.
+     Wait for the real board list first: the fallback list only knows UI, so
+     checking it would move a ?board=JAMB link to UI before the list arrives,
+     and UI would then stick. */
+  const boardsSettled = boardsQuery.isSuccess || boardsQuery.isError;
   useEffect(() => {
+    if (!boardsSettled) return;
     const openBoards = boards.filter((board) => board.status === "OPEN");
     if (
       openBoards.length > 0 &&
@@ -112,7 +117,7 @@ export function SignupForm() {
     ) {
       form.setValue("institution", openBoards[0].code);
     }
-  }, [boards, selectedBoard, form]);
+  }, [boardsSettled, boards, selectedBoard, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     const targetScore = values.targetScore

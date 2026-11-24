@@ -40,7 +40,7 @@ export const LANDING_FAQ: LandingFaqItem[] = [
   {
     question: "Is there a StudyBond app?",
     answer:
-      "It's coming, Android first, and it's built for offline practice. The app keeps practice exams made from real past questions saved on your phone for you, so you can practise with no network, and your results sync when you're back online. Free students get their free paper offline too, and premium keeps more ready. Until then, StudyBond works in the browser on any phone or laptop at studybond.app, and your account, streak and progress move straight into the app.",
+      "It's coming, Android first, and it's built to work offline. The app keeps timed exams of real past questions saved on your phone for you, so you can sit them with no network, and your results sync when you're back online. Free students get their free paper offline too, and premium keeps more ready. Until then, StudyBond works in the browser on any phone or laptop, and your account, streak and progress move straight into the app.",
   },
   {
     question: "What if my network goes off during a paper?",

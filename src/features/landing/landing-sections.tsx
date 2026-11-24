@@ -27,7 +27,7 @@ export function LandingSections() {
       </div>
       <p className="subj"><b>Use of English</b> plus any three of Physics, Chemistry, Biology, Mathematics, Government, Christian Religious Studies and Economics.</p>
       <p className="pledge"><svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>Your JAMB past-question papers hold only real UTME questions. Never a Post-UTME one.</span></p>
-      <a className="btn btn-p" href="/signup">Practise for JAMB</a>
+      <a className="btn btn-p" href="/signup?board=JAMB">Practise for JAMB</a>
       </div>
       </article>
       <p className="never">never mixed</p>
@@ -43,7 +43,7 @@ export function LandingSections() {
       </div>
       <p className="subj"><b>English</b> plus your science subjects from Physics, Chemistry, Biology and Mathematics.</p>
       <p className="pledge"><svg className="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>Your UI past-question papers hold only questions from UI&apos;s own screening exams. Never a JAMB one.</span></p>
-      <a className="btn btn-s" href="/signup">Practise for UI</a>
+      <a className="btn btn-s" href="/signup?board=UI">Practise for UI</a>
       </div>
       </article>
       </div>
