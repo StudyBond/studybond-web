@@ -15,7 +15,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
 import { getDashboardHome, homeKeys } from "@/features/home/api";
@@ -51,6 +52,16 @@ const TickIcon = () => (
 const SpinIcon = () => (
   <svg {...svg} strokeWidth={2.4} className={s.spin}><path d="M21 12a9 9 0 1 1-6.2-8.55" /></svg>
 );
+
+/* The shell's page fade-in uses a transform, which turns position: fixed
+   into "fixed to the page". Anything that must sit on the screen (the phone
+   slip, the sheets) is drawn on document.body instead. */
+const noSubscribe = () => () => {};
+
+function OnScreen({ children }: { children: ReactNode }) {
+  const onClient = useSyncExternalStore(noSubscribe, () => true, () => false);
+  return onClient ? createPortal(children, document.body) : null;
+}
 
 function duration(seconds: number): string {
   const mins = Math.round(seconds / 60);
@@ -316,6 +327,19 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
     ? `A full paper is ${plural(maxSubjects, "subject")}, ${ep.fullExamQuestions} questions, ${duration(ep.fullExamDurationSeconds)}.`
     : "";
 
+  const slip = (where: string) => (
+    <div className={cn(s.slip, where)}>
+      <div className={s.slipT}>
+        <b>{chosen.length > 0 ? chosen.map((x) => x.name).join(", ") : modeCopy[mode].title}</b>
+        <small>{slipLine}</small>
+      </div>
+      <button type="button" className={s.btn} disabled={!ready} onClick={onStart}>
+        {buttonText}
+        {ready ? <ArrowIcon /> : null}
+      </button>
+    </div>
+  );
+
   return (
     <div className={cn("sb-ui", s.root)}>
       <header className={s.head}>
@@ -429,18 +453,13 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
 
           {problem ? <p className={s.err} role="alert"><i /><span>{problem}</span></p> : null}
 
-          <div className={s.slip}>
-            <div className={s.slipT}>
-              <b>{chosen.length > 0 ? chosen.map((x) => x.name).join(", ") : modeCopy[mode].title}</b>
-              <small>{slipLine}</small>
-            </div>
-            <button type="button" className={s.btn} disabled={!ready} onClick={onStart}>
-              {buttonText}
-              {ready ? <ArrowIcon /> : null}
-            </button>
-          </div>
+          {slip(s.slipInline)}
         </section>
       </div>
+
+      <OnScreen>
+      <div className={cn("sb-ui", s.layer)}>
+      {slip(s.slipDock)}
 
       {confirming ? (
         <div className={s.scrim} onClick={() => !starting && setConfirming(false)}>
@@ -506,6 +525,8 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
           </div>
         </div>
       ) : null}
+      </div>
+      </OnScreen>
     </div>
   );
 }
