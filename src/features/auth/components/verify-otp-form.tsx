@@ -1,8 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { InlineError } from "@/components/ui/inline-error";
 import {
   useResendVerificationOtpMutation,
   useVerifyOtpMutation,
@@ -15,8 +12,14 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { AuthFrame, AuthHead } from "./auth-frame";
+import { AuthAlert, AuthField, AuthOk, AuthSubmit, PhoneIcon } from "./auth-fields";
+import { CodeBoxes } from "./code-boxes";
+
+/* One page for both codes: checking a new account's email, and approving a
+   new device for a premium account (?verificationType=DEVICE_REGISTRATION). */
 
 const emailSchema = z.string().email("Enter a valid email.");
 const schema = z.object({
@@ -42,7 +45,7 @@ function parseDateValue(value: string | null) {
 function formatCountdown(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 export function VerifyOtpForm() {
@@ -50,11 +53,10 @@ export function VerifyOtpForm() {
   const searchParams = useSearchParams();
   const mutation = useVerifyOtpMutation();
   const resendMutation = useResendVerificationOtpMutation();
-  const verificationType =
-    searchParams.get("verificationType") === "DEVICE_REGISTRATION"
-      ? "DEVICE_REGISTRATION"
-      : "EMAIL_VERIFICATION";
+  const isDevice = searchParams.get("verificationType") === "DEVICE_REGISTRATION";
+  const next = searchParams.get("next");
   const initialEmail = searchParams.get("email") || "";
+  const emailKnown = emailSchema.safeParse(initialEmail).success;
   const initialOtpExpiresAt = searchParams.get("otpExpiresAt");
   const initialResendAvailableAt = searchParams.get("resendAvailableAt");
   const [otpExpiresAt, setOtpExpiresAt] = useState<string | null>(() => initialOtpExpiresAt);
@@ -69,7 +71,7 @@ export function VerifyOtpForm() {
     },
   });
 
-  const emailValue = form.watch("email");
+  const emailValue = useWatch({ control: form.control, name: "email" });
   const otpExpiresAtMs = parseDateValue(otpExpiresAt);
   const resendAvailableAtMs = parseDateValue(resendAvailableAt);
   const otpSecondsRemaining =
@@ -77,10 +79,7 @@ export function VerifyOtpForm() {
   const resendSecondsRemaining =
     resendAvailableAtMs === null ? 0 : Math.max(0, Math.ceil((resendAvailableAtMs - now) / 1000));
   const otpExpired = otpSecondsRemaining === 0;
-  const canResend =
-    verificationType === "EMAIL_VERIFICATION" &&
-    resendSecondsRemaining === 0 &&
-    emailSchema.safeParse(emailValue).success;
+  const canResend = !isDevice && resendSecondsRemaining === 0 && emailSchema.safeParse(emailValue).success;
   const activeErrorMessage = mutation.isError
     ? safeErrorMessage(mutation.error)
     : resendMutation.isError
@@ -119,10 +118,9 @@ export function VerifyOtpForm() {
       device,
     });
 
-    const next = searchParams.get("next");
     router.push(
       response.requiresOTP
-        ? (next ? `/login?next=${encodeURIComponent(next)}` : "/login") as Route
+        ? ((next ? `/login?next=${encodeURIComponent(next)}` : "/login") as Route)
         : safeNext(next),
     );
   });
@@ -149,100 +147,106 @@ export function VerifyOtpForm() {
     setNow(Date.now());
   }
 
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
+  const sentTo = emailKnown ? <b>{initialEmail}</b> : "your email";
+  const expiryLine =
+    otpSecondsRemaining === null
+      ? "Use the newest code in your email."
+      : otpExpired
+        ? isDevice
+          ? "This code has expired. Start logging in again to get a new one."
+          : "This code has expired. Ask for a new one below."
+        : `The code expires in ${formatCountdown(otpSecondsRemaining)}.`;
+
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      {activeErrorMessage ? <InlineError message={activeErrorMessage} /> : null}
-      {statusMessage ? (
-        <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/10 px-3.5 py-3 text-sm text-emerald-300">
-          {statusMessage}
-        </div>
-      ) : null}
-
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
-        <p className="text-sm font-medium text-white/85">
-          {otpSecondsRemaining === null
-            ? "Check your email for the latest 6-digit code."
-            : otpExpired
-              ? "This verification code has expired."
-              : `Code expires in ${formatCountdown(otpSecondsRemaining)}.`}
+    <AuthFrame topLabel="Log in instead" topHref={loginHref}>
+      <AuthHead title={isDevice ? "Approve this device" : "Check your email"}>
+        <p>
+          {isDevice ? (
+            <>This is a new device for your premium account. We sent a 6-digit code to {sentTo}. Type it here to approve this device.</>
+          ) : (
+            <>We sent a 6-digit code to {sentTo}. Type it below to finish setting up your account.</>
+          )}
         </p>
-        <p className="mt-1 text-xs text-white/50">
-          {verificationType === "EMAIL_VERIFICATION"
-            ? otpExpired
-              ? "Request a fresh code to finish verifying your account."
-              : resendSecondsRemaining > 0
-                ? `You can request a new code in ${formatCountdown(resendSecondsRemaining)}.`
-                : "You can request a fresh code now if the email has not arrived."
-            : otpExpired
-              ? "Start sign-in again to request another device approval code."
-              : "Enter the code from your email to approve this device."}
-        </p>
-      </div>
+      </AuthHead>
 
-      <Field
-        autoComplete="email"
-        error={form.formState.errors.email?.message}
-        label="Email address"
-        type="email"
-        placeholder="you@example.com"
-        {...form.register("email")}
-      />
-      <Field
-        autoComplete="one-time-code"
-        className="sb-mono text-xl tracking-[0.3em] text-center"
-        error={form.formState.errors.otp?.message}
-        inputMode="numeric"
-        label="Verification code"
-        maxLength={6}
-        placeholder="000000"
-        {...form.register("otp")}
-      />
-      <Button
-        className="w-full"
-        isLoading={mutation.isPending}
-        type="submit"
-      >
-        Verify
-      </Button>
+      <form className="au-form" onSubmit={onSubmit} noValidate>
+        {activeErrorMessage ? <AuthAlert>{activeErrorMessage}</AuthAlert> : null}
+        {statusMessage ? <AuthOk>{statusMessage}</AuthOk> : null}
 
-      {verificationType === "EMAIL_VERIFICATION" ? (
-        <Button
-          className="w-full"
-          disabled={!canResend || mutation.isPending}
-          isLoading={resendMutation.isPending}
-          onClick={handleResend}
-          type="button"
-          variant="secondary"
-        >
-          {resendSecondsRemaining > 0
-            ? `Resend code in ${formatCountdown(resendSecondsRemaining)}`
-            : "Resend code"}
-        </Button>
-      ) : null}
-
-      <p className="text-center text-xs text-[var(--sb-text-secondary)]">
-        {verificationType === "EMAIL_VERIFICATION" ? (
-          <>
-            Already verified?{" "}
-            <Link
-              className="text-[var(--sb-accent)] transition-colors hover:text-[var(--sb-accent-hover)]"
-              href="/login"
-            >
-              Sign in
-            </Link>
-          </>
-        ) : (
-          <>
-            Need a fresh device code?{" "}
-            <Link
-              className="text-[var(--sb-accent)] transition-colors hover:text-[var(--sb-accent-hover)]"
-              href="/login"
-            >
-              Start sign-in again
-            </Link>
-          </>
+        {emailKnown ? null : (
+          <AuthField
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            error={form.formState.errors.email?.message}
+            {...form.register("email")}
+          />
         )}
-      </p>
-    </form>
+
+        <Controller
+          control={form.control}
+          name="otp"
+          render={({ field, fieldState }) => (
+            <CodeBoxes
+              label="6-digit code"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error?.message}
+              autoFocus={emailKnown}
+            />
+          )}
+        />
+        <p className="au-hint" aria-live="polite">
+          {expiryLine}
+        </p>
+
+        {isDevice ? (
+          <p className="au-warn">
+            <PhoneIcon />
+            <span>
+              Once you approve this device, <b>your other device will be signed out.</b> Premium works on one device at
+              a time.
+            </span>
+          </p>
+        ) : null}
+
+        <AuthSubmit busy={mutation.isPending}>{isDevice ? "Approve this device" : "Verify my email"}</AuthSubmit>
+
+        <div className="au-resend">
+          {isDevice ? (
+            <>
+              <span>Need a new code?</span>
+              <Link href={loginHref as Route}>Start logging in again</Link>
+            </>
+          ) : (
+            <>
+              <span>Didn&apos;t get it? Check spam first.</span>
+              <button type="button" onClick={handleResend} disabled={!canResend || mutation.isPending || resendMutation.isPending}>
+                {resendMutation.isPending
+                  ? "Sending..."
+                  : resendSecondsRemaining > 0
+                    ? `Send a new code in ${formatCountdown(resendSecondsRemaining)}`
+                    : "Send a new code"}
+              </button>
+            </>
+          )}
+        </div>
+
+        <p className="au-alt">
+          {isDevice ? (
+            <>
+              Wasn&apos;t you? <Link href="/forgot-password">Change your password</Link>
+            </>
+          ) : (
+            <>
+              Already verified? <Link href={loginHref as Route}>Log in</Link>
+            </>
+          )}
+        </p>
+      </form>
+    </AuthFrame>
   );
 }

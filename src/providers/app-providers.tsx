@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { useState } from "react";
 import { OfflineSyncProvider } from "@/providers/offline-sync-provider";
 import { OfflineBanner } from "@/components/ui/offline-banner";
+import { SignedOutNotice } from "@/features/auth/components/signed-out-notice";
 
 export function AppProviders({
   children,
@@ -49,6 +50,7 @@ export function AppProviders({
         {children}
         <OfflineBanner />
       </OfflineSyncProvider>
+      <SignedOutNotice />
       <Toaster
         position="top-right"
         theme="dark"

@@ -1,18 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
-
-import { AuthPanel } from "@/features/auth/components/auth-panel";
 import { SignupForm } from "@/features/auth/components/signup-form";
+
+export const metadata: Metadata = { title: "Create your free account" };
 
 export default function SignupPage() {
   return (
-    <AuthPanel
-      description="Create your free account and start practicing today."
-      eyebrow="Get started"
-      title="Create your account"
-    >
-      <Suspense>
-        <SignupForm />
-      </Suspense>
-    </AuthPanel>
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }

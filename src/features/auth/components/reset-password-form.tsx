@@ -1,194 +1,160 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { InlineError } from "@/components/ui/inline-error";
 import { useResetPasswordMutation } from "@/features/auth/hooks/use-auth-mutations";
 import { ApiError } from "@/lib/api/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { Check, ArrowLeft, ShieldCheck } from "lucide-react";
+import { AuthFrame, AuthHead } from "./auth-frame";
+import { AuthAlert, AuthField, AuthSubmit, PasswordField } from "./auth-fields";
+import { CodeBoxes } from "./code-boxes";
 
-// ── Step 1: verify code schema ────────────────────────
+/* Two screens: the code from the email (kept here, checked by the server
+   with the new password), then the new password. */
 
-const verifySchema = z.object({
+const codeSchema = z.object({
   email: z.string().email("Enter a valid email."),
   otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit code."),
 });
-
-type VerifyFormValues = z.infer<typeof verifySchema>;
-
-// ── Step 2: new password schema ───────────────────────
+type CodeFormValues = z.infer<typeof codeSchema>;
 
 const passwordSchema = z
   .object({
     newPassword: z.string().min(8, "Use at least 8 characters."),
-    confirmNewPassword: z.string().min(8, "Confirm your new password."),
+    confirmNewPassword: z.string().min(8, "Type your new password again."),
   })
   .refine((value) => value.newPassword === value.confirmNewPassword, {
-    message: "Passwords must match.",
+    message: "The two passwords don't match.",
     path: ["confirmNewPassword"],
   });
-
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 function safeErrorMessage(error: unknown) {
-  return error instanceof ApiError
-    ? error.message
-    : "Something went wrong. Please try again.";
+  return error instanceof ApiError ? error.message : "Something went wrong. Please try again.";
 }
 
 export function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mutation = useResetPasswordMutation();
+  const initialEmail = searchParams.get("email") || "";
+  const emailKnown = codeSchema.shape.email.safeParse(initialEmail).success;
+  const [code, setCode] = useState<CodeFormValues | null>(null);
 
-  // Two-step state
-  const [step, setStep] = useState<1 | 2>(1);
-  const [verifiedEmail, setVerifiedEmail] = useState("");
-  const [verifiedOtp, setVerifiedOtp] = useState("");
-
-  // Step 1 form
-  const verifyForm = useForm<VerifyFormValues>({
-    resolver: zodResolver(verifySchema),
-    defaultValues: {
-      email: searchParams.get("email") || "",
-      otp: "",
-    },
+  const codeForm = useForm<CodeFormValues>({
+    resolver: zodResolver(codeSchema),
+    defaultValues: { email: initialEmail, otp: "" },
   });
-
-  // Step 2 form
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      newPassword: "",
-      confirmNewPassword: "",
-    },
+    defaultValues: { newPassword: "", confirmNewPassword: "" },
   });
 
-  const onVerify = verifyForm.handleSubmit((values) => {
-    setVerifiedEmail(values.email);
-    setVerifiedOtp(values.otp);
-    setStep(2);
-  });
+  const onCode = codeForm.handleSubmit((values) => setCode(values));
 
   const onReset = passwordForm.handleSubmit(async (values) => {
+    if (!code) return;
     await mutation.mutateAsync({
-      email: verifiedEmail,
-      otp: verifiedOtp,
+      email: code.email,
+      otp: code.otp,
       newPassword: values.newPassword,
       confirmNewPassword: values.confirmNewPassword,
     });
-    router.push("/login");
+    router.push("/login?reason=reset" as Route);
   });
 
-  // ── Step 1: Email + OTP ─────────────────────────────
-
-  if (step === 1) {
+  if (!code) {
     return (
-      <form className="space-y-4" onSubmit={onVerify}>
-        <Field
-          autoComplete="email"
-          error={verifyForm.formState.errors.email?.message}
-          label="Email address"
-          type="email"
-          placeholder="you@example.com"
-          {...verifyForm.register("email")}
-        />
-        <Field
-          autoComplete="one-time-code"
-          error={verifyForm.formState.errors.otp?.message}
-          inputMode="numeric"
-          label="Reset code"
-          maxLength={6}
-          placeholder="6-digit code"
-          {...verifyForm.register("otp")}
-        />
+      <AuthFrame topQuestion="Remember it?" topLabel="Log in" topHref="/login">
+        <AuthHead title="Reset your password">
+          <p>
+            {emailKnown ? (
+              <>
+                We sent a 6-digit code to <b>{initialEmail}</b>. Type it here, then choose a new password.
+              </>
+            ) : (
+              <>Type your email and the 6-digit code we sent you, then choose a new password.</>
+            )}
+          </p>
+        </AuthHead>
 
-        <Button className="w-full" type="submit">
-          <ShieldCheck className="mr-2 h-4 w-4" />
-          Verify code
-        </Button>
-
-        <p className="text-center text-xs text-[var(--sb-text-secondary)]">
-          Back to{" "}
-          <Link
-            className="text-[var(--sb-accent)] transition-colors hover:text-[var(--sb-accent-hover)]"
-            href="/login"
-          >
-            sign in
-          </Link>
-        </p>
-      </form>
+        <form className="au-form" onSubmit={onCode} noValidate>
+          {emailKnown ? null : (
+            <AuthField
+              label="Email address"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              error={codeForm.formState.errors.email?.message}
+              {...codeForm.register("email")}
+            />
+          )}
+          <Controller
+            control={codeForm.control}
+            name="otp"
+            render={({ field, fieldState }) => (
+              <CodeBoxes
+                label="6-digit code"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={fieldState.error?.message}
+                autoFocus={emailKnown}
+              />
+            )}
+          />
+          <AuthSubmit>Next</AuthSubmit>
+          <p className="au-alt">
+            No code? <Link href="/forgot-password">Send it again</Link>
+          </p>
+        </form>
+      </AuthFrame>
     );
   }
 
-  // ── Step 2: New Password ────────────────────────────
-
   return (
-    <form className="space-y-4" onSubmit={onReset}>
-      {/* Verified badge */}
-      <div className="flex items-center gap-2 rounded-xl border border-emerald-400/15 bg-emerald-400/[0.04] px-4 py-3">
-        <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-emerald-400">Code verified</p>
-          <p className="text-[10px] text-white/30 truncate">{verifiedEmail}</p>
+    <AuthFrame topQuestion="Remember it?" topLabel="Log in" topHref="/login">
+      <AuthHead title="Choose a new password">
+        <p>Use at least 8 characters. Saving it signs you out on every device, so you&apos;ll log in again.</p>
+      </AuthHead>
+
+      <form className="au-form" onSubmit={onReset} noValidate>
+        <div className="au-chip">
+          <span>
+            Code <b>{code.otp}</b>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setCode(null);
+              mutation.reset();
+            }}
+          >
+            Change
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setStep(1);
-            mutation.reset();
-          }}
-          className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60 transition-colors"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          Change
-        </button>
-      </div>
-
-      {mutation.isError ? (
-        <InlineError message={safeErrorMessage(mutation.error)} />
-      ) : null}
-
-      <Field
-        autoComplete="new-password"
-        error={passwordForm.formState.errors.newPassword?.message}
-        label="New password"
-        type="password"
-        placeholder="At least 8 characters"
-        {...passwordForm.register("newPassword")}
-      />
-      <Field
-        autoComplete="new-password"
-        error={passwordForm.formState.errors.confirmNewPassword?.message}
-        label="Confirm new password"
-        type="password"
-        placeholder="Repeat your password"
-        {...passwordForm.register("confirmNewPassword")}
-      />
-
-      <Button
-        className="w-full"
-        isLoading={mutation.isPending}
-        type="submit"
-      >
-        Reset password
-      </Button>
-
-      <p className="text-center text-xs text-[var(--sb-text-secondary)]">
-        Back to{" "}
-        <Link
-          className="text-[var(--sb-accent)] transition-colors hover:text-[var(--sb-accent-hover)]"
-          href="/login"
-        >
-          sign in
-        </Link>
-      </p>
-    </form>
+        {mutation.isError ? <AuthAlert>{safeErrorMessage(mutation.error)}</AuthAlert> : null}
+        <PasswordField
+          label="New password"
+          autoComplete="new-password"
+          placeholder="At least 8 characters"
+          autoFocus
+          error={passwordForm.formState.errors.newPassword?.message}
+          {...passwordForm.register("newPassword")}
+        />
+        <PasswordField
+          label="Type it again"
+          autoComplete="new-password"
+          placeholder="Same password again"
+          error={passwordForm.formState.errors.confirmNewPassword?.message}
+          {...passwordForm.register("confirmNewPassword")}
+        />
+        <AuthSubmit busy={mutation.isPending}>Save new password</AuthSubmit>
+      </form>
+    </AuthFrame>
   );
 }

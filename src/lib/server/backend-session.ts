@@ -14,8 +14,14 @@ type RefreshSuccessPayload = {
   refreshToken: string;
 };
 
+/* A failed renewal keeps the backend's reason (e.g. SESSION_REPLACED: the
+   account logged in on another device), so the page can say why. */
+type RefreshOutcome =
+  | { tokens: RefreshSuccessPayload }
+  | { tokens: null; code: string | null; message: string | null };
+
 const RECENT_REFRESH_TTL_MS = 30_000;
-const inFlightRefreshes = new Map<string, Promise<RefreshSuccessPayload | null>>();
+const inFlightRefreshes = new Map<string, Promise<RefreshOutcome>>();
 const recentRefreshResults = new Map<
   string,
   { result: RefreshSuccessPayload; expiresAt: number }
@@ -50,7 +56,20 @@ export function sanitizeAuthPayload(payload: unknown) {
   return clone;
 }
 
-async function performRefreshWebSession(refreshToken: string): Promise<RefreshSuccessPayload | null> {
+/* Only a plain upper-case code from the backend's error body. */
+function backendError(payload: unknown) {
+  if (!payload || typeof payload !== "object") return { code: null, message: null };
+  const p = payload as Record<string, unknown>;
+  const nested = p.error && typeof p.error === "object" ? (p.error as Record<string, unknown>) : {};
+  const code = nested.code ?? p.code;
+  const message = nested.message ?? p.message;
+  return {
+    code: typeof code === "string" && /^[A-Z][A-Z0-9_]{0,63}$/.test(code) ? code : null,
+    message: typeof message === "string" && message.length > 0 ? message : null,
+  };
+}
+
+async function performRefreshWebSession(refreshToken: string): Promise<RefreshOutcome> {
   const response = await fetch(buildBackendUrl("/api/auth/refresh"), {
     method: "POST",
     headers: {
@@ -62,25 +81,31 @@ async function performRefreshWebSession(refreshToken: string): Promise<RefreshSu
 
   const payload = await parseJsonSafely(response);
   if (!response.ok || !payload || typeof payload !== "object") {
-    return null;
+    return { tokens: null, ...backendError(payload) };
   }
 
   const tokens = payload as Partial<RefreshSuccessPayload>;
   if (!tokens.accessToken || !tokens.refreshToken) {
-    return null;
+    return { tokens: null, code: null, message: null };
   }
 
   return {
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken,
+    tokens: {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    },
   };
 }
 
 export async function refreshWebSession(refreshToken: string) {
+  return (await refreshWebSessionOutcome(refreshToken)).tokens;
+}
+
+export async function refreshWebSessionOutcome(refreshToken: string): Promise<RefreshOutcome> {
   const recentRefresh = recentRefreshResults.get(refreshToken);
   if (recentRefresh) {
     if (recentRefresh.expiresAt > Date.now()) {
-      return recentRefresh.result;
+      return { tokens: recentRefresh.result };
     }
 
     recentRefreshResults.delete(refreshToken);
@@ -92,15 +117,15 @@ export async function refreshWebSession(refreshToken: string) {
   }
 
   const refreshPromise = performRefreshWebSession(refreshToken)
-    .then((result) => {
-      if (result) {
+    .then((outcome) => {
+      if (outcome.tokens) {
         recentRefreshResults.set(refreshToken, {
-          result,
+          result: outcome.tokens,
           expiresAt: Date.now() + RECENT_REFRESH_TTL_MS,
         });
       }
 
-      return result;
+      return outcome;
     })
     .finally(() => {
       inFlightRefreshes.delete(refreshToken);
@@ -175,8 +200,25 @@ export async function authorizedBackendRequest(
     };
   }
 
-  const refreshedTokens = await refreshWebSession(refreshToken);
+  const outcome = await refreshWebSessionOutcome(refreshToken);
+  const refreshedTokens = outcome.tokens;
   if (!refreshedTokens) {
+    /* The access token had expired, and the renewal says why the session
+       ended. Pass a "logged in on another device" reason on instead of the
+       plain expired-token 401, so the student is told what happened. */
+    if (!outcome.tokens && outcome.code === "SESSION_REPLACED") {
+      response = Response.json(
+        {
+          success: false,
+          error: {
+            code: outcome.code,
+            message:
+              outcome.message ?? "We signed you out because this account became active on another device or browser.",
+          },
+        },
+        { status: 401 },
+      );
+    }
     return {
       response,
       refreshedTokens: null,

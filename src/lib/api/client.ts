@@ -3,6 +3,7 @@ import {
   createApiErrorFromResponse,
   createApiErrorFromUnknown,
 } from "@/lib/api/errors";
+import { announceSignedOut, signedOutReasonFromCode } from "@/lib/auth/signed-out";
 
 function isFormDataBody(body: BodyInit | null | undefined) {
   return typeof FormData !== "undefined" && body instanceof FormData;
@@ -91,6 +92,11 @@ export async function apiClient<T>(
   const payload = await response.json().catch(() => undefined);
 
   if (!response.ok) {
+    /* Signed out because the account logged in elsewhere: say so on screen. */
+    if (response.status === 401 && payload && typeof payload === "object") {
+      const reason = signedOutReasonFromCode((payload as { code?: unknown }).code);
+      if (reason) announceSignedOut(reason);
+    }
     throw createApiErrorFromResponse(response.status, payload);
   }
 
