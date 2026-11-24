@@ -36,7 +36,7 @@ function frameRows(frames: AvatarFrames | undefined): FrameRow[] {
     { id: "none", label: "No frame", how: "Plain avatar", status: "", earned: true, pct: null },
     {
       id: "merit",
-      label: "Merit list",
+      label: "Top 10",
       how: merit?.best
         ? `Finish a week in the top 10. You did: #${merit.best.rank}, week of ${shortDate(merit.best.weekStartDate)}.`
         : `Finish a week in the top 10. Weeks count when ${merit?.minPlayers ?? 30} or more students score.`,
@@ -119,7 +119,7 @@ export function AvatarMaker({ profile }: Readonly<AvatarMakerProps>) {
     try {
       await save.mutateAsync(look);
       boardSounds.save();
-      showToast("Saved to your account. Everyone sees it on the leaderboard and in duels, on any phone you log in from.");
+      showToast("Saved to your account. Everyone sees it in the league and in duels, on any phone you log in from.");
     } catch (error) {
       boardSounds.no();
       showToast(error instanceof ApiError ? error.message : "We couldn't save your avatar. Check your connection and try again.");

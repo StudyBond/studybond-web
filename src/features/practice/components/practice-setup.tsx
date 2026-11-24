@@ -82,7 +82,7 @@ const EXAM_MODES: {
     id: "DAILY_CHALLENGE",
     title: "Daily Challenge",
     tagline: "4 questions · 3 minutes · up to 40 SP",
-    features: ["1 attempt per day", "Build consistency", "Climb the leaderboard"],
+    features: ["1 attempt per day", "Build consistency", "Climb the league"],
     icon: Flame,
     colorFrom: "#d946ef",
     colorTo: "#7c3aed",

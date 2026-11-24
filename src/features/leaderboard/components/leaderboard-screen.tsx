@@ -81,9 +81,9 @@ export function LeaderboardScreen(props: Readonly<ScreenProps>) {
     <div className={styles.frame}>
     <div className={cn("sb-ui", styles.root, "mx-auto w-full max-w-[560px] px-3.5 pb-24 pt-3")}>
       <header className={styles.top}>
-      <h1 className={cn(styles.head, styles.title, "mb-3 px-1 text-[17px] font-bold")}>Leaderboard</h1>
+      <h1 className={cn(styles.head, styles.title, "mb-3 px-1 text-[17px] font-bold")}>League</h1>
 
-      <div role="group" aria-label="Which leaderboard" className={cn(styles.tabs, "grid grid-cols-3 gap-0.5 rounded-xl bg-[var(--sheet)] p-[3px] ring-1 ring-inset ring-[var(--rule)]")}>
+      <div role="group" aria-label="Which table" className={cn(styles.tabs, "grid grid-cols-3 gap-0.5 rounded-xl bg-[var(--sheet)] p-[3px] ring-1 ring-inset ring-[var(--rule)]")}>
         {tabs.map(([id, label]) => (
           <button
             key={id}
@@ -118,7 +118,7 @@ export function LeaderboardScreen(props: Readonly<ScreenProps>) {
         </div>
       ) : query.isError || !data ? (
         <div className="mt-6 rounded-2xl bg-[var(--sheet)] p-5 text-sm text-[var(--ink-2)]">
-          We couldn&apos;t load the leaderboard.{" "}
+          We couldn&apos;t load the league.{" "}
           <button type="button" className={cn(styles.textBtn, "text-[var(--mark-ink)] underline")} onClick={() => query.refetch()}>
             Try again
           </button>
@@ -169,12 +169,12 @@ function Ranked({ data, tab, viewerId, fullPaperSp, departmentBoard }: { data: L
     made = true;
     cutText = group
       ? `You are in the top 10 of ${groupName} this week.`
-      : "You are on the merit list. Hold #10 or better until Sunday, 11:59 PM.";
+      : "You're in the Top 10. Hold #10 or better until Sunday, 11:59 PM.";
   } else if (tenth && data.me.rank !== null) {
     const need = tenth.points - data.me.points + 1;
     cutText = group
       ? `The top 10 of ${groupName} starts at ${fmt(tenth.points)} SP. You need ${fmt(need)} more.`
-      : `The merit list cut-off is ${fmt(tenth.points)} SP, held by ${firstName(tenth.displayName)} at #10. You need ${fmt(need)} more. A full real paper pays up to ${fmt(fullPaperSp)} SP.`;
+      : `The Top 10 starts at ${fmt(tenth.points)} SP, held by ${firstName(tenth.displayName)} at #10. You need ${fmt(need)} more. A full real paper pays up to ${fmt(fullPaperSp)} SP.`;
   } else if (data.me.rank === null) {
     cutText = "Score any SP this week and you're on it.";
   }
@@ -217,11 +217,11 @@ function Ranked({ data, tab, viewerId, fullPaperSp, departmentBoard }: { data: L
         title={
           group
             ? departmentBoard
-              ? `${groupName} on this board`
+              ? `${groupName} in this league`
               : "Admission is by course. These are your real rivals."
             : "Top students this week"
         }
-        lineLabel={group ? `Top 10 of ${departmentBoard ? groupName.toLowerCase() : "your course"}` : "Top 10 · merit list"}
+        lineLabel={group ? `Top 10 of ${departmentBoard ? groupName.toLowerCase() : "your course"}` : "Top 10"}
         belowNoun={group ? (departmentBoard ? `${groupName.toLowerCase()}` : `${groupName} hopefuls`) : "students"}
         rankLabel={group ? (departmentBoard ? "in your department" : "in your course") : "this week"}
       />
@@ -267,7 +267,7 @@ function BoardList({ data, viewerId, animate, title, belowNoun, lineLabel, rankL
     let text = `Now #${myNew}.`;
     if (passed.length === 1) text = `You passed ${passed[0]}. Now #${myNew}.`;
     if (passed.length > 1) text = `You passed ${passed.slice(0, -1).join(", ")} and ${passed[passed.length - 1]}. Now #${myNew}.`;
-    if (madeIt) text = `You made the merit list at #${myNew}.${passed.length ? ` ${text.replace(` Now #${myNew}.`, "")}` : ""}`;
+    if (madeIt) text = `You made the Top 10 at #${myNew}.${passed.length ? ` ${text.replace(` Now #${myNew}.`, "")}` : ""}`;
     const start: Record<string, number> = { ...seen.ranks, [viewerId]: seen.myRank };
     return { start, text, madeIt };
   }, [animate, data, viewerId]);
@@ -402,9 +402,9 @@ function LastWeek({ data }: { data: LeaderboardBoard }) {
   const best = data.myBest;
   return (
     <section className="mt-[22px] rounded-2xl border border-white/[0.06] p-4">
-      <h3 className={cn(styles.head, "mb-2 text-base font-extrabold")}>Last week&apos;s merit list</h3>
+      <h3 className={cn(styles.head, "mb-2 text-base font-extrabold")}>Last week&apos;s Top 10</h3>
       {last.entries.length === 0 ? (
-        <p className="text-[13.5px] text-[var(--ink-2)]">Nobody scored on this board last week.</p>
+        <p className="text-[13.5px] text-[var(--ink-2)]">Nobody scored in this league last week.</p>
       ) : (
         <ol className="grid gap-1.5">
           {last.entries.map((entry) => (
@@ -423,7 +423,7 @@ function LastWeek({ data }: { data: LeaderboardBoard }) {
             You finished <b className="text-[var(--ink)]">#{mine}</b> last week.
           </>
         ) : (
-          "You weren't on last week's board."
+          "You didn't score in the league last week."
         )}
         {best ? (
           <>
@@ -457,7 +457,7 @@ function AllTime({ data, onWeek }: { data: LeaderboardBoard; onWeek: () => void 
               <small className="ml-1 text-sm font-semibold text-[var(--ink-3)]">of {fmt(data.totalParticipants)}</small>
             </h2>
           ) : (
-            <h2 className={cn(styles.head, "text-xl font-bold")}>Not on the all-time board yet</h2>
+            <h2 className={cn(styles.head, "text-xl font-bold")}>Not on the all-time table yet</h2>
           )}
           <p className="mt-2 text-[13.5px] text-[var(--ink-2)]">
             {data.me.rank !== null ? (
@@ -467,7 +467,7 @@ function AllTime({ data, onWeek }: { data: LeaderboardBoard; onWeek: () => void 
             ) : (
               "Your first SP puts you on it. "
             )}
-            All time never resets. The weekly board is where you can climb fast.
+            All time never resets. The weekly league is where you can climb fast.
           </p>
           <button type="button" onClick={onWeek} className={cn(styles.btn, styles.btnLine, "mt-3 w-full")}>
             See this week
@@ -485,7 +485,7 @@ function AllTimeList({ data, top, tail, gap }: { data: LeaderboardBoard; top: Bo
         <h3 className={cn(styles.head, "text-base font-extrabold")}>Since StudyBond opened</h3>
         <span className="text-[12.5px] text-[var(--ink-3)]">SP</span>
       </div>
-      {top.length === 0 ? <p className="mx-1 text-sm text-[var(--ink-2)]">Nobody has scored on this board yet.</p> : null}
+      {top.length === 0 ? <p className="mx-1 text-sm text-[var(--ink-2)]">Nobody has scored in this league yet.</p> : null}
       <ol>
         {top.map((entry) => <StaticRow key={entry.userId} entry={entry} />)}
         {gap > 0 ? (
@@ -495,9 +495,9 @@ function AllTimeList({ data, top, tail, gap }: { data: LeaderboardBoard; top: Bo
       </ol>
       <div className={styles.narrowOnly}>
         {data.me.rank === null ? (
-          <p className="mx-1 mt-2 text-[12.5px] text-[var(--ink-3)]">You&apos;re not on the all-time board yet. Your first SP puts you on it.</p>
+          <p className="mx-1 mt-2 text-[12.5px] text-[var(--ink-3)]">You&apos;re not on the all-time table yet. Your first SP puts you on it.</p>
         ) : null}
-        <p className="mx-1 mt-1.5 text-[12.5px] text-[var(--ink-3)]">All time never resets. The weekly board is where you can climb fast.</p>
+        <p className="mx-1 mt-1.5 text-[12.5px] text-[var(--ink-3)]">All time never resets. The weekly league is where you can climb fast.</p>
       </div>
     </div>
   );
@@ -556,7 +556,7 @@ function NotOnBoardYet({ data, isPremium }: { data: LeaderboardBoard; isPremium:
           <span className={cn(styles.num, "grid h-[26px] w-[26px] place-items-center rounded-full border-[1.5px] border-dashed border-white/25 text-xs text-[var(--ink-3)]")}>?</span>
           Your spot is waiting
         </span>
-        <h2 className={cn(styles.head, "mt-3 text-[22px] font-bold leading-tight")}>You&apos;re not on this week&apos;s board yet</h2>
+        <h2 className={cn(styles.head, "mt-3 text-[22px] font-bold leading-tight")}>You&apos;re not in this week&apos;s league yet</h2>
         <p className="mt-2 text-sm text-[var(--ink-2)]">
           Score any SP before Sunday and you&apos;re on it.
           {data.totalParticipants > 0 ? (

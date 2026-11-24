@@ -57,7 +57,7 @@ const studyNav: NavItem[] = [
 
 const competeNav: NavItem[] = [
   { label: "Duel", href: "/dashboard/duel", icon: Swords },
-  { label: "Leaderboard", href: "/dashboard/leaderboard", icon: ListOrdered },
+  { label: "League", href: "/dashboard/leaderboard", icon: ListOrdered },
 ];
 
 /** Phone tabs: Home / Practice / Duel / Board / Me. Settings and the vault are reached from Me. */
@@ -65,7 +65,7 @@ const bottomTabs: NavItem[] = [
   { label: "Home", href: "/dashboard", icon: Home },
   { label: "Practice", href: "/dashboard/practice", icon: BookOpen },
   { label: "Duel", href: "/dashboard/duel", icon: Swords },
-  { label: "Board", href: "/dashboard/leaderboard", icon: ListOrdered },
+  { label: "League", href: "/dashboard/leaderboard", icon: ListOrdered },
   { label: "Me", href: "/dashboard/me", icon: User, match: ["/dashboard/me", "/dashboard/settings", "/dashboard/streak"] },
 ];
 
@@ -76,7 +76,7 @@ const PAGE_TITLES: Array<[string, string]> = [
   ["/dashboard/settings/avatar", "Your avatar"],
   ["/dashboard/practice", "Practice"],
   ["/dashboard/duel", "Duel"],
-  ["/dashboard/leaderboard", "Leaderboard"],
+  ["/dashboard/leaderboard", "League"],
   ["/dashboard/history", "Past papers"],
   ["/dashboard/study", "Study mode"],
   ["/dashboard/bookmarks", "Study vault"],

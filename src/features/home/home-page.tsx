@@ -234,7 +234,7 @@ function Loaded({ data, offline, savedAt, skewMs, race, duel, firstPaper }: {
   let helloLine: ReactNode;
   const sp = `${thousands(data.student.weeklySp)} SP this week`;
   if (nextUp.kind === "FIRST_PAPER" && streak.longest === 0) helloLine = "Welcome to StudyBond. Your first paper sets up everything below.";
-  else if (data.broken) helloLine = <>{sp}{position ? `, ${position.split(" of ")[0]} on the board` : ""}.</>;
+  else if (data.broken) helloLine = <>{sp}{position ? `, ${position.split(" of ")[0]} in the league` : ""}.</>;
   else if (streak.count > 0 && streak.studiedToday) helloLine = <>Day {streak.count} of your run. {sp}<span className={s.posWide}>{position ? `, ${position}` : ""}</span>.</>;
   else if (streak.count > 0) helloLine = <>{streak.count}-day run, and today isn&rsquo;t ticked yet. {sp}<span className={s.posWide}>{position ? `, ${position}` : ""}</span>.</>;
   else helloLine = <>{sp}<span className={s.posWide}>{position ? `, ${position}` : ""}</span>.</>;
@@ -639,7 +639,7 @@ function Race({ race, now }: { race: LeaderboardBoard | null; now: number }) {
     const gap = above.points - me.points;
     note = <>{gap} SP behind {endSentence(above.displayName)}{below ? ` ${below.displayName} is ${me.points - below.points} SP behind you.` : ""}</>;
   } else if (me.rank === 1) {
-    note = <>You&rsquo;re top of this week&rsquo;s board.{below ? ` ${below.displayName} is ${me.points - below.points} SP behind you.` : ""}</>;
+    note = <>You&rsquo;re top of the league this week.{below ? ` ${below.displayName} is ${me.points - below.points} SP behind you.` : ""}</>;
   }
   return (
     <>
@@ -660,7 +660,7 @@ function Race({ race, now }: { race: LeaderboardBoard | null; now: number }) {
           </>
         ) : (
           <p className={s.raceNote}>
-            <b>You&rsquo;re not on this week&rsquo;s board yet.</b> Any SP before Sunday puts you on it.
+            <b>You&rsquo;re not in this week&rsquo;s league yet.</b> Any SP before Sunday puts you on it.
             {race.lastWeek?.cutoffPoints != null ? ` Last week, the top ${race.meritList.size} needed ${thousands(race.lastWeek.cutoffPoints)} SP.` : ""}
           </p>
         )}

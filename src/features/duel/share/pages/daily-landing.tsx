@@ -137,7 +137,7 @@ export function DailyLanding({ daily, board }: { daily: DailyLinkView | null; bo
               </li>
               <li>
                 <span className={p.n}>3</span>
-                <span><b>New questions at midnight</b>Each one earns up to 40 SP for the leaderboard: some for taking it, more for each right answer.</span>
+                <span><b>New questions at midnight</b>Each one earns up to 40 SP in the league: some for taking it, more for each right answer.</span>
               </li>
             </ol>
           </section>

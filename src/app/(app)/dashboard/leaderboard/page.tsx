@@ -2,7 +2,7 @@ import { LeaderboardPageClient } from "@/features/leaderboard/components/leaderb
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Leaderboard | StudyBond",
+  title: "League | StudyBond",
 };
 
 export default function LeaderboardPage() {

@@ -234,7 +234,7 @@ export function DuelResult({
                 {h2h && h2h.form.length > 0 && <FormGuide form={h2h.form} />}
               </li>
               <li>
-                <span><b>Leaderboard this week</b><small>{weeklyRank ? "Your place on the board now" : "Duel SP counts for this week's board"}</small></span>
+                <span><b>League this week</b><small>{weeklyRank ? "Your place in the league now" : "Duel SP counts in this week's league"}</small></span>
                 <Link className={cn(m.val, m.valLink)} href={"/dashboard/leaderboard" as Route}>
                   {weeklyRank ? `#${weeklyRank}` : "See it"}
                   <ChevronRight />

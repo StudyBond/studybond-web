@@ -53,7 +53,7 @@
     ],
     "frame": [
       { "id": "none", "label": "No frame" },
-      { "id": "merit", "label": "Merit list", "ring": "#e09040", "badge": "10" },
+      { "id": "merit", "label": "Top 10", "ring": "#e09040", "badge": "10" },
       { "id": "duel", "label": "Duel winner", "ring": "#c3c9d4", "badge": "W" },
       { "id": "streak", "label": "30-day streak", "ring": "#e87b2e", "badge": "30" }
     ]
