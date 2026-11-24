@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
+import { formatNaira, formatPlanLength, type HomePricing } from "@/lib/premium/plans";
 import {
   Zap, ArrowRight, Check, X, Shield, Users, BarChart3, HelpCircle, FileText,
   Trophy, Flame, Timer, ChevronDown, Swords, Sparkles, Star, Crown, Clock
@@ -30,6 +30,7 @@ type MarketingClientProps = {
   faq: { question: string; answer: string }[];
   pricingFree: string[];
   pricingPremium: string[];
+  premiumPricing: HomePricing;
 };
 
 function Section({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) {
@@ -45,8 +46,6 @@ const featureHeadingClassName = "sb-display mt-4 text-sm font-semibold tracking-
 const planHeadingClassName = "sb-display text-lg font-bold tracking-tight";
 const stepHeadingClassName = "sb-display mt-3 text-sm font-semibold tracking-tight text-white/90";
 
-const SALE_END_TIME = new Date("2026-06-06T15:00:00+01:00").getTime();
-
 export function MarketingClient({
   leaderboardCard,
   streakCard,
@@ -56,37 +55,8 @@ export function MarketingClient({
   faq,
   pricingFree,
   pricingPremium,
+  premiumPricing,
 }: MarketingClientProps) {
-  const [timeLeft, setTimeLeft] = useState<string>("");
-  const [isActive, setIsActive] = useState<boolean>(true);
-
-  useEffect(() => {
-    const updateCountdown = () => {
-      const now = Date.now();
-      const distance = SALE_END_TIME - now;
-
-      if (distance <= 0) {
-        setIsActive(false);
-        setTimeLeft("");
-        return;
-      }
-
-      const hours = Math.floor(distance / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-      const hDisplay = hours.toString().padStart(2, "0");
-      const mDisplay = minutes.toString().padStart(2, "0");
-      const sDisplay = seconds.toString().padStart(2, "0");
-
-      setTimeLeft(`${hDisplay}h ${mDisplay}m ${sDisplay}s`);
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="sb-marketing-copy">
       {/* ══ HERO ══ */}
@@ -361,32 +331,29 @@ export function MarketingClient({
                 <div className="relative z-10">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className={`${planHeadingClassName} text-[#e09040]`}>Premium</h3>
-                    {isActive ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-0.5 text-[0.6rem] font-bold text-yellow-400 uppercase tracking-wider animate-pulse">
-                        ⚡ Flash Sale
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#e09040]/10 border border-[#e09040]/15 px-2.5 py-0.5 text-[0.6rem] font-bold text-[#e09040] uppercase tracking-wider">
-                        <Star className="h-3 w-3" /> Popular
-                      </span>
-                    )}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e09040]/10 border border-[#e09040]/15 px-2.5 py-0.5 text-[0.6rem] font-bold text-[#e09040] uppercase tracking-wider">
+                      <Star className="h-3 w-3" /> Popular
+                    </span>
                   </div>
                   <div className="mt-2 flex items-baseline gap-2 flex-wrap">
-                    {isActive ? (
-                      <>
-                        <span className="font-mono text-4xl font-bold text-white">₦4,000</span>
-                        <span className="font-mono text-lg text-white/35 line-through">₦5,000</span>
-                      </>
-                    ) : (
-                      <span className="font-mono text-4xl font-bold text-white">₦5,000</span>
+                    {premiumPricing.varies && (
+                      <span className="text-sm text-white/40">from</span>
                     )}
-                    <span className="text-sm text-white/25">/ 5-months</span>
+                    <span className="font-mono text-4xl font-bold text-white">
+                      {formatNaira(premiumPricing.headline.priceNaira)}
+                    </span>
+                    <span className="text-sm text-white/25">
+                      / {formatPlanLength(premiumPricing.headline.durationMonths)}
+                    </span>
                   </div>
-                  {isActive && timeLeft && (
-                    <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-yellow-400">
-                      <Clock className="h-3.5 w-3.5 text-yellow-400" />
-                      <span>Ends in {timeLeft}</span>
-                    </div>
+                  {premiumPricing.perBoard.length > 0 && (
+                    <ul className="mt-2 space-y-0.5 text-[11px] text-white/40">
+                      {premiumPricing.perBoard.map((line) => (
+                        <li key={line.label}>
+                          <span className="text-white/60">{line.label}:</span> {line.text}
+                        </li>
+                      ))}
+                    </ul>
                   )}
                   <p className="mt-3 text-xs text-white/30">Unlimited practice. Full power.</p>
                 </div>

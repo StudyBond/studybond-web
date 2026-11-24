@@ -11,6 +11,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "openapi:sync": "node scripts/sync-openapi-types.js",
+    "premium:sync": "node scripts/sync-premium-plans.js",
     "avatar:sync": "node scripts/sync-avatar-parts.js"
   },
   "dependencies": {

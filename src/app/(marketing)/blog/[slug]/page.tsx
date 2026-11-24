@@ -5,7 +5,12 @@ import { notFound } from "next/navigation";
 import { getPublicAppUrl } from "@/lib/env/server";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { articleJsonLd, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/json-ld";
-import { getArticle, getAllSlugs } from "@/lib/seo/blog-content";
+import { articleUsesPremiumPrices, getArticle, getAllSlugs, withPremiumPrices } from "@/lib/seo/blog-content";
+import { getPremiumPlans } from "@/lib/premium/get-premium-plans";
+
+/* Articles may quote a board's premium price ({{premium:UI}}). Rebuilt when
+   an admin saves a price, and at least hourly (see getPremiumPlans). */
+export const revalidate = 3600;
 
 /* ── Markdown Parser Helper ── */
 export const parseMarkdown = (s: string) => {
@@ -64,8 +69,11 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
 /* ── Page ── */
 export default async function BlogPage({ params }: BlogPageProps) {
   const { slug } = await params;
-  const article = getArticle(slug);
-  if (!article) notFound();
+  const stored = getArticle(slug);
+  if (!stored) notFound();
+  const article = articleUsesPremiumPrices(stored)
+    ? withPremiumPrices(stored, await getPremiumPlans())
+    : stored;
 
   const appUrl = getPublicAppUrl();
 

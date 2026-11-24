@@ -1,7 +1,13 @@
 /**
  * Blog article content for SEO guide pages.
  * Each article targets a specific long-tail keyword cluster.
+ *
+ * Never type a premium price into an article: write {{premium:UI}} (any
+ * board code) and the page fills in that board's admin-set price, e.g.
+ * "₦5,000 for 5 months".
  */
+
+import { describePlan, planForBoard, type BoardPremiumPlan } from "@/lib/premium/plans";
 
 export type BlogArticle = {
   slug: string;
@@ -114,7 +120,7 @@ export const blogArticles: Record<string, BlogArticle> = {
     ],
     sections: [
       { heading: "What to Look for in a Practice Platform", content: "Not all exam prep platforms are equal. For effective UI Post-UTME preparation, you need:\n\n1. **Real past questions** — Not generic JAMB questions or AI-generated content. Actual questions from previous UI Post-UTME exams.\n2. **CBT simulation** — The ability to practice under real exam conditions (timed, computer-based).\n3. **Score analytics** — Detailed breakdown by subject so you know where to improve.\n4. **Verified content** — Questions that have been reviewed for accuracy.\n5. **Accessibility** — Works on mobile and desktop. No sketchy downloads." },
-      { heading: "Why StudyBond Stands Out", content: "StudyBond was built specifically for Nigerian Post-UTME candidates by engineers who understand the exam. Here's what makes it different:\n\n- **1000+ verified UI Post-UTME past questions** across all 4 subjects\n- **Exact CBT simulation**: 100 questions, 90-minute timer, identical to the real exam\n- **Instant score analytics** by subject — see strengths and weaknesses immediately\n- **Leaderboard** — See how you rank against other students weekly\n- **Daily streaks** — Build study consistency with milestone rewards\n- **1v1 Duels** — Challenge other students in real-time exam battles\n- **Free to start** — Your first full exam is completely free, no credit card\n- **Premium at ₦5,000** for 5 months — unlimited exams, subject practice, all features" },
+      { heading: "Why StudyBond Stands Out", content: "StudyBond was built specifically for Nigerian Post-UTME candidates by engineers who understand the exam. Here's what makes it different:\n\n- **1000+ verified UI Post-UTME past questions** across all 4 subjects\n- **Exact CBT simulation**: 100 questions, 90-minute timer, identical to the real exam\n- **Instant score analytics** by subject — see strengths and weaknesses immediately\n- **Leaderboard** — See how you rank against other students weekly\n- **Daily streaks** — Build study consistency with milestone rewards\n- **1v1 Duels** — Challenge other students in real-time exam battles\n- **Free to start** — Your first full exam is completely free, no credit card\n- **Premium at {{premium:UI}}** — unlimited exams, subject practice, all features" },
       { heading: "The Problem with PDF Past Questions", content: "Many students rely on PDF past question compilations shared on WhatsApp or sold by tutorial centers. These have serious problems:\n\n- **No timing** — You can't simulate exam pressure with a PDF\n- **No scoring** — You don't get instant feedback on your performance\n- **Unverified** — Many PDFs contain incorrect answers or outdated questions\n- **No analytics** — You can't track progress or identify weak subjects\n- **Passive learning** — Reading PDFs is far less effective than active CBT practice\n\nStudyBond solves all of these by providing an interactive, timed, scored CBT experience with real verified questions." },
     ],
   },
@@ -194,6 +200,24 @@ export const blogArticles: Record<string, BlogArticle> = {
 
 export function getArticle(slug: string): BlogArticle | undefined {
   return blogArticles[slug];
+}
+
+const PREMIUM_TOKEN = /\{\{premium:([A-Za-z0-9_-]+)\}\}/g;
+
+export function articleUsesPremiumPrices(article: BlogArticle): boolean {
+  const texts = [...article.sections.map((s) => s.content), ...article.faq.map((f) => f.answer)];
+  return texts.some((text) => text.includes("{{premium:"));
+}
+
+/** The article with every {{premium:CODE}} replaced by that board's price. */
+export function withPremiumPrices(article: BlogArticle, plans: BoardPremiumPlan[]): BlogArticle {
+  const fill = (text: string) =>
+    text.replace(PREMIUM_TOKEN, (_match, code: string) => describePlan(planForBoard(plans, code.toUpperCase())));
+  return {
+    ...article,
+    sections: article.sections.map((section) => ({ ...section, content: fill(section.content) })),
+    faq: article.faq.map((item) => ({ ...item, answer: fill(item.answer) })),
+  };
 }
 
 export function getAllSlugs(): string[] {

@@ -4,6 +4,12 @@ import { ArrowRight, BookOpen, Clock, Trophy, Swords, BarChart3, Flame, CheckCir
 import { getPublicAppUrl } from "@/lib/env/server";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { courseJsonLd, faqJsonLd, breadcrumbJsonLd, quizJsonLd, aggregateRatingJsonLd } from "@/lib/seo/json-ld";
+import { getPremiumPlans } from "@/lib/premium/get-premium-plans";
+import { describePlan, planForBoard, type PremiumPlan } from "@/lib/premium/plans";
+
+/* The FAQ quotes UI's admin-set premium price. Rebuilt when an admin saves
+   a price, and at least hourly (see getPremiumPlans). */
+export const revalidate = 3600;
 
 const parseMarkdown = (s: string) => {
   let html = s;
@@ -68,7 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /* ── FAQ Data ── */
-const pillarFaq = [
+const buildPillarFaq = (uiPremium: PremiumPlan) => [
   {
     question: "What is the UI Post-UTME exam?",
     answer:
@@ -87,7 +93,7 @@ const pillarFaq = [
   {
     question: "Is StudyBond free for UI Post-UTME practice?",
     answer:
-      "Yes! Your first full UI Post-UTME exam on StudyBond is completely free — no credit card required. This includes 100 real past questions, timed CBT simulation, and a score breakdown by subject. [Create your free account](/signup) to get started. Premium (₦5,000 for 5 months) unlocks unlimited exams, subject-specific practice, 1v1 duels, and detailed analytics.",
+      `Yes! Your first full UI Post-UTME exam on StudyBond is completely free — no credit card required. This includes 100 real past questions, timed CBT simulation, and a score breakdown by subject. [Create your free account](/signup) to get started. Premium (${describePlan(uiPremium)}) unlocks unlimited exams, subject-specific practice, 1v1 duels, and detailed analytics.`,
   },
   {
     question: "What subjects are covered in the UI Post-UTME on StudyBond?",
@@ -151,8 +157,9 @@ const sampleQuestions = [
 ];
 
 /* ── Main Pillar Page ── */
-export default function UIPostUtmePage() {
+export default async function UIPostUtmePage() {
   const appUrl = getPublicAppUrl();
+  const pillarFaq = buildPillarFaq(planForBoard(await getPremiumPlans(), "UI"));
 
   return (
     <article>

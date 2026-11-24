@@ -6,9 +6,17 @@ import { DuelCard } from "@/components/marketing/duel-card";
 import { features, faq, pricingFree, pricingPremium } from "./constants";
 import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { faqJsonLd } from "@/lib/seo/json-ld";
+import { getPremiumPlans } from "@/lib/premium/get-premium-plans";
+import { homePricing } from "@/lib/premium/plans";
+
+/* Shows the admin-set premium price. Rebuilt when an admin saves a price,
+   and at least hourly (see getPremiumPlans). */
+export const revalidate = 3600;
 
 /* ── Homepage component ── */
-export default function MarketingPage() {
+export default async function MarketingPage() {
+  const premiumPricing = homePricing(await getPremiumPlans());
+
   return (
     <main className="overflow-x-hidden">
       <JsonLdScript data={faqJsonLd(faq)} />
@@ -22,6 +30,7 @@ export default function MarketingPage() {
         faq={faq}
         pricingFree={pricingFree}
         pricingPremium={pricingPremium}
+        premiumPricing={premiumPricing}
       />
     </main>
   );

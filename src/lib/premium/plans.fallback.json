@@ -1,0 +1,54 @@
+{
+  "_note": "Last-known premium prices, used only when the backend cannot be reached while the site is being built. Refresh with: npm run premium:sync",
+  "syncedAt": "2026-11-24T11:33:06.272Z",
+  "boards": [
+    {
+      "code": "UI",
+      "name": "University of Ibadan",
+      "examName": "Post-UTME",
+      "status": "OPEN",
+      "priceNaira": 5000,
+      "durationMonths": 5
+    },
+    {
+      "code": "JAMB",
+      "name": "JAMB UTME",
+      "examName": "UTME",
+      "status": "COMING_SOON",
+      "priceNaira": 5000,
+      "durationMonths": 5
+    },
+    {
+      "code": "OAU",
+      "name": "Obafemi Awolowo University",
+      "examName": "Post-UTME",
+      "status": "COMING_SOON",
+      "priceNaira": 5000,
+      "durationMonths": 5
+    },
+    {
+      "code": "UNIBEN",
+      "name": "University of Benin",
+      "examName": "Post-UTME",
+      "status": "COMING_SOON",
+      "priceNaira": 5000,
+      "durationMonths": 5
+    },
+    {
+      "code": "UNILORIN",
+      "name": "University of Ilorin",
+      "examName": "Post-UTME",
+      "status": "COMING_SOON",
+      "priceNaira": 5000,
+      "durationMonths": 5
+    },
+    {
+      "code": "UNILAG",
+      "name": "University of Lagos",
+      "examName": "Post-UTME",
+      "status": "COMING_SOON",
+      "priceNaira": 5000,
+      "durationMonths": 5
+    }
+  ]
+}
