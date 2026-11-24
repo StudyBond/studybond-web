@@ -54,13 +54,17 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://studybond.app";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "StudyBond — UI Post-UTME Past Questions & CBT Practice",
+    default: "StudyBond — JAMB UTME & UI Post-UTME Past Questions and CBT Practice",
     template: "%s — StudyBond",
   },
   description:
-    "Practice with real University of Ibadan Post-UTME past questions on StudyBond. Free CBT simulation, 100 questions in 90 minutes, score analytics, leaderboards, and 1v1 duels. Start free — no credit card.",
+    "Real JAMB UTME and UI Post-UTME past questions in timed CBT practice, each exam kept on its own. Every answer explained, live duels with other students, free to start.",
   keywords: [
     "StudyBond",
+    "JAMB past questions",
+    "JAMB UTME past questions",
+    "JAMB CBT practice",
+    "UTME practice",
     "UI Post UTME",
     "UI post utme past questions",
     "University of Ibadan Post UTME",
@@ -95,17 +99,17 @@ export const metadata: Metadata = {
     ],
     apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
-  alternates: {
-    canonical: appUrl,
-  },
+  /* No site-wide canonical: each indexable page sets its own. A canonical
+     here made every page without one (duel links, share pages) point at the
+     homepage. */
   other: {
     "geo.region": "NG",
     "geo.placename": "Nigeria",
   },
   openGraph: {
-    title: "StudyBond — UI Post-UTME Past Questions & CBT Practice",
+    title: "StudyBond — JAMB UTME & UI Post-UTME Past Questions and CBT Practice",
     description:
-      "Practice with real University of Ibadan Post-UTME past questions. Free CBT simulation, score analytics, leaderboards, and 1v1 duels. Start free.",
+      "Real JAMB UTME and UI Post-UTME past questions in timed CBT practice, each exam kept on its own. Every answer explained, live duels, free to start.",
     url: appUrl,
     siteName: "StudyBond",
     images: [
@@ -113,7 +117,7 @@ export const metadata: Metadata = {
         url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "StudyBond — UI Post-UTME CBT Practice",
+        alt: "StudyBond — JAMB UTME and UI Post-UTME CBT practice",
       },
     ],
     type: "website",
@@ -121,9 +125,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "StudyBond — UI Post-UTME Past Questions & Practice",
+    title: "StudyBond — JAMB UTME & UI Post-UTME Past Questions and CBT Practice",
     description:
-      "Nigeria's #1 Post-UTME exam prep platform. Real past questions, timed CBT, score analytics. Free to start.",
+      "Real JAMB UTME and UI Post-UTME past questions in timed CBT practice, each exam kept on its own. Free to start.",
     images: ["/api/og"],
   },
 };

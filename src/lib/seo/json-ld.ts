@@ -15,7 +15,7 @@ export function organizationJsonLd(appUrl: string) {
     url: appUrl,
     logo: `${appUrl}/icon-512.png`,
     description:
-      "StudyBond is Nigeria's #1 Post-UTME exam preparation platform. Practice with real University of Ibadan past questions, timed CBT simulation, score analytics, and 1v1 competitive duels.",
+      "StudyBond is a Nigerian exam practice platform: real JAMB UTME and University of Ibadan Post-UTME past questions in timed CBT practice, each exam kept on its own, with every answer explained, live duels between students and a weekly league.",
     foundingDate: "2025",
     areaServed: {
       "@type": "Country",
@@ -25,7 +25,7 @@ export function organizationJsonLd(appUrl: string) {
   };
 }
 
-// ─── WebSite with SearchAction (root layout — sitelinks search box) ──
+// ─── WebSite (root layout) ───────────────────────────────────────────
 
 export function websiteJsonLd(appUrl: string) {
   return {
@@ -34,15 +34,7 @@ export function websiteJsonLd(appUrl: string) {
     name: "StudyBond",
     url: appUrl,
     description:
-      "Free Post-UTME exam preparation with real past questions, CBT simulation, and performance analytics for Nigerian university candidates.",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${appUrl}/ui-post-utme?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
+      "Real JAMB UTME and UI Post-UTME past questions in timed CBT practice, each exam kept on its own, free to start.",
   };
 }
 

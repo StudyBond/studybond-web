@@ -1,6 +1,8 @@
-import { MarketingNavbar } from "@/components/marketing/marketing-navbar";
-import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { SiteFooter, SiteNav } from "@/features/landing/site-chrome";
+import "@/features/landing/landing.css";
 
+/* Every public page shares the homepage's nav and footer. The nav sits in
+   the page flow (not fixed), so pages need no top padding for it. */
 export default function MarketingLayout({
   children,
 }: {
@@ -8,16 +10,9 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-[#09090b] text-white">
-      {/* Shared Navigation */}
-      <MarketingNavbar />
-
-      {/* Main Content Area */}
-      <div className="flex-grow pt-16 md:pt-20">
-        {children}
-      </div>
-
-      {/* Shared Footer */}
-      <MarketingFooter />
+      <SiteNav />
+      <div className="grow">{children}</div>
+      <SiteFooter />
     </div>
   );
 }

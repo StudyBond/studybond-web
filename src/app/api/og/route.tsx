@@ -7,8 +7,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     // Get title and description from query parameters
-    const title = searchParams.get("title") || "StudyBond — UI Post-UTME CBT Practice";
-    const desc = searchParams.get("desc") || "Nigeria's #1 Post-UTME preparation platform. Practice with real past questions in a timed CBT simulation, track your performance, and secure your admission.";
+    const title = searchParams.get("title") || "Outsmart the Exam. Outrank the Rest.";
+    const desc = searchParams.get("desc") || "Real JAMB UTME and UI Post-UTME past questions in timed CBT practice. Each exam kept on its own, every answer explained.";
 
     return new ImageResponse(
       (
