@@ -15,7 +15,7 @@ const row = (extra: CSSProperties = {}): CSSProperties => ({ display: "flex", fl
 const col = (extra: CSSProperties = {}): CSSProperties => ({ display: "flex", flexDirection: "column", ...extra });
 const LOCKUP_RATIO = 350 / 712;
 
-function Frame({ u, fonts, origin, slip, title, text, link, look }: {
+export function PreviewFrame({ u, fonts, origin, slip, title, text, link, look }: {
   u: number;
   fonts: CardFonts;
   origin: string;
@@ -56,7 +56,7 @@ function Frame({ u, fonts, origin, slip, title, text, link, look }: {
   );
 }
 
-function SlipHead({ u, fonts, look, label, rest }: { u: number; fonts: CardFonts; look: ShareCardView["look"]; label: string; rest: string }) {
+export function SlipHead({ u, fonts, look, label, rest }: { u: number; fonts: CardFonts; look: ShareCardView["look"]; label: string; rest: string }) {
   const p = paletteFor(look);
   return (
     <div style={col()}>
@@ -66,14 +66,15 @@ function SlipHead({ u, fonts, look, label, rest }: { u: number; fonts: CardFonts
       </div>
       <div style={row({ marginTop: 4 * u, gap: 4 * u, fontSize: 10.5 * u, color: p.ink2 })}>
         <span style={{ fontWeight: 700 }}>{label}</span>
-        {rest ? <span>{` · ${rest}`}</span> : null}
+        {/* Non-breaking spaces: next/og dropped plain ones here ("English1978"). */}
+        {rest ? <span>{` · ${rest.replace(/ /g, "\u00a0")}`}</span> : null}
       </div>
       <div style={{ height: 1 * u, marginTop: 10 * u, marginLeft: -16 * u, marginRight: -16 * u, background: p.rule }} />
     </div>
   );
 }
 
-function Tear({ u, look }: { u: number; look: ShareCardView["look"] }) {
+export function Tear({ u, look }: { u: number; look: ShareCardView["look"] }) {
   const p = paletteFor(look);
   return (
     <div style={row({ position: "relative", height: 0, marginTop: 12 * u, marginLeft: -16 * u, marginRight: -16 * u, borderTop: `${2 * u}px dashed ${p.rule}` })}>
@@ -147,7 +148,7 @@ export function ResultPreviewArt({ card, u, fonts, origin, link }: { card: Share
       )}
     </div>
   );
-  return <Frame u={u} fonts={fonts} origin={origin} slip={slip} title={card.previewTitle} text={card.previewText} link={link} look={card.look} />;
+  return <PreviewFrame u={u} fonts={fonts} origin={origin} slip={slip} title={card.previewTitle} text={card.previewText} link={link} look={card.look} />;
 }
 
 /** 11h: a duel slip link (/d/<CODE>). */
@@ -182,7 +183,7 @@ export function InvitePreviewArt({ u, fonts, origin, hostName, firstName, board,
     </div>
   );
   return (
-    <Frame
+    <PreviewFrame
       u={u}
       fonts={fonts}
       origin={origin}
@@ -235,7 +236,7 @@ export function ChallengePreviewArt({ u, fonts, origin, shortName, firstName, co
     </div>
   );
   return (
-    <Frame
+    <PreviewFrame
       u={u}
       fonts={fonts}
       origin={origin}
@@ -246,4 +247,47 @@ export function ChallengePreviewArt({ u, fonts, origin, shortName, firstName, co
       link={link}
     />
   );
+}
+
+/** A Daily Challenge link (/daily/<name>) before its owner has shared a daily result. */
+export function DailyOpenPreviewArt({ u, fonts, origin, shortName, course, avatar, board, title, text, link }: {
+  u: number;
+  fonts: CardFonts;
+  origin: string;
+  shortName: string;
+  course: string | null;
+  avatar: AvatarView;
+  board: string;
+  title: string;
+  text: string;
+  link: string;
+}) {
+  const p = paletteFor("AMBER");
+  const lines: Array<[string, string]> = [
+    ["Questions", "One from each subject"],
+    ["Price", "Free, every day"],
+  ];
+  const slip = (
+    <div style={col()}>
+      <SlipHead u={u} fonts={fonts} look="AMBER" label="Daily Challenge" rest={board} />
+      <div style={row({ alignItems: "center", gap: 10 * u, marginTop: 12 * u })}>
+        <AvatarArt look={avatar} size={38 * u} ringOn={p.paper} />
+        <div style={col()}>
+          <span style={{ fontSize: 14 * u, fontWeight: 700 }}>{shortName}</span>
+          {course ? <span style={{ fontSize: 10.5 * u, color: p.ink2 }}>{course}</span> : null}
+        </div>
+      </div>
+      <span style={{ marginTop: 12 * u, fontFamily: fonts.head, fontSize: 30 * u, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.05 }}>3 minutes.</span>
+      <div style={col({ gap: 3 * u, marginTop: 10 * u, fontSize: 11 * u })}>
+        {lines.map(([k, v]) => (
+          <div key={k} style={row({ gap: 8 * u })}>
+            <span style={{ width: 62 * u, color: p.ink2 }}>{k}</span>
+            <span style={{ flex: 1, fontWeight: 700 }}>{v}</span>
+          </div>
+        ))}
+      </div>
+      <Tear u={u} look="AMBER" />
+    </div>
+  );
+  return <PreviewFrame u={u} fonts={fonts} origin={origin} slip={slip} look="AMBER" title={title} text={text} link={link} />;
 }

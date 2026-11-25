@@ -111,6 +111,14 @@ export function dailyPath(name: string) {
   return `/daily/${name}`;
 }
 
+/** The link preview words for /daily/<name> before its owner has shared a daily result. */
+export function dailyOpenPreview(firstName: string) {
+  return {
+    title: `Take today’s Daily Challenge with ${firstName}`,
+    text: "One question from each of your subjects, 3 minutes, free. New questions every day at midnight.",
+  };
+}
+
 /** Where today's Daily Challenge starts, subjects picked for the student. */
 export const DAILY_START_PATH = "/dashboard/practice?mode=DAILY_CHALLENGE";
 

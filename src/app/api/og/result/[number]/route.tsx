@@ -28,7 +28,9 @@ export async function GET(request: NextRequest, { params }: Props) {
   const origin = request.nextUrl.origin;
   // A Daily Challenge prints /daily/<name>: friends land on today's challenge.
   const link = `${SHARE_HOST}${cardLinkPath(card)}`;
-  const headers = { "cache-control": "public, max-age=60, s-maxage=60" };
+  // A minute fresh, then served stale while a new copy is made: a cold render
+  // takes 4-5 s, and WhatsApp may drop a picture that slow.
+  const headers = { "cache-control": "public, max-age=60, s-maxage=60, stale-while-revalidate=604800" };
 
   if (shape === "status" || shape === "square") {
     const square = shape === "square";

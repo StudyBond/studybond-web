@@ -124,7 +124,8 @@ export const metadata: Metadata = {
     siteName: "StudyBond",
     images: [
       {
-        url: "/api/og",
+        // The homepage's picture is the site's default.
+        url: "/api/og/home",
         width: 1200,
         height: 630,
         alt: "StudyBond — JAMB UTME and UI Post-UTME CBT practice",
@@ -138,7 +139,7 @@ export const metadata: Metadata = {
     title: "StudyBond — JAMB UTME & UI Post-UTME Past Questions and CBT Practice",
     description:
       "Real JAMB UTME and UI Post-UTME past questions in timed CBT practice, each exam kept on its own. Free to start.",
-    images: ["/api/og"],
+    images: ["/api/og/home"],
   },
 };
 

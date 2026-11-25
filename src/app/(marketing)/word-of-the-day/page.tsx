@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 import { WordDayView } from "@/features/words/components/word-day-view";
+import { KIND_OF_THE_DAY } from "@/features/words/lib/words";
 import { fetchWordArchive, fetchWordDay } from "@/features/words/server";
 import { WEB_ACCESS_COOKIE, WEB_REFRESH_COOKIE } from "@/lib/auth/cookies";
 import { getPublicAppUrl } from "@/lib/env/server";
@@ -15,20 +16,35 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const { before } = await searchParams;
   const day = await fetchWordDay();
   const appUrl = getPublicAppUrl();
-  const word = day?.word?.headword;
-  const idiom = day?.idiom?.headword;
-  const today = [word, idiom].filter(Boolean).join(" and ");
-  const title = today ? `Word of the Day: ${today}` : "Word of the Day";
-  const description = today
-    ? `Today's JAMB English word and idiom: ${today}. Each one came out in a real JAMB paper. Learn what it means, how to say it, and try the real question.`
-    : "A word, an idiom and a phrasal verb a day, from real JAMB English past questions.";
+  const main = day?.word ?? day?.idiom ?? day?.phrasalVerb ?? null;
+  const url = `${appUrl}/word-of-the-day`;
+  if (!day || !main) {
+    const description = "A word, an idiom and a phrasal verb a day, from real JAMB English past questions.";
+    return {
+      title: "Word of the Day",
+      description,
+      alternates: { canonical: url },
+      robots: { index: false, follow: true },
+      openGraph: { title: "Word of the Day", description, url, siteName: "StudyBond", locale: "en_NG", type: "website", images: [{ url: "/api/og", width: 1200, height: 630, alt: "StudyBond" }] },
+    };
+  }
+  const title = `Word of the Day: ${main.headword}`;
+  // Short, so WhatsApp shows it whole under the title. The meaning is on the picture.
+  const year = main.cameOut.years[0];
+  const paper = `${main.cameOut.board ?? "JAMB"}${year ? ` ${year}` : ""}`;
+  const description = `See what it means, then try the real ${paper} question. Plus an idiom and a phrasal verb. Free.`;
+  // The date makes a new picture each day, so no cache shows yesterday's word.
+  const image = `/api/og/word?date=${day.date}`;
+  const alt = `${KIND_OF_THE_DAY[main.kind]}: ${main.headword}`;
   return {
-    title: `${title} | StudyBond`,
+    // The root layout adds " — StudyBond".
+    title,
     description,
-    alternates: { canonical: `${appUrl}/word-of-the-day` },
-    // Older pages and an empty day stay out of search results.
-    robots: before || !today ? { index: false, follow: true } : undefined,
-    openGraph: { title, description, url: `${appUrl}/word-of-the-day` },
+    alternates: { canonical: url },
+    // Older pages stay out of search results.
+    robots: before ? { index: false, follow: true } : undefined,
+    openGraph: { title, description, url, siteName: "StudyBond", locale: "en_NG", type: "website", images: [{ url: image, width: 1200, height: 630, alt }] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 

@@ -11,15 +11,15 @@ type Props = { params: Promise<{ name: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { name } = await params;
   const link = await fetchChallengeLink(name);
-  if (!link) return { title: "Duel | StudyBond", robots: { index: false } };
+  if (!link) return { title: "Duel", robots: { index: false } };
   const title = `${link.firstName} wants a duel`;
   const description = "Same real past questions, same clock, live. Your first duel is free.";
   const image = `/api/og/challenge/${link.name}`;
   return {
-    title: `${title} | StudyBond`,
+    title,
     description,
     robots: { index: false },
-    openGraph: { title, description, url: `/c/${link.name}`, images: [{ url: image, width: 1200, height: 630, alt: title }] },
+    openGraph: { title, description, url: `/c/${link.name}`, siteName: "StudyBond", locale: "en_NG", type: "website", images: [{ url: image, width: 1200, height: 630, alt: title }] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }

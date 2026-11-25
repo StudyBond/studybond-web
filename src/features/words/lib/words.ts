@@ -111,3 +111,11 @@ export function questionLabel(year: number | null | undefined): string {
 export function comesBackLine(today: string): string {
   return `Added to your word book. It comes back tomorrow, ${shortDay(addDays(today, 1))}.`;
 }
+
+/** Cut long text at a word, so the slip never runs out of room. */
+export function clip(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), max - 15)).replace(/[\s,;:.]+$/, "")}…`;
+}

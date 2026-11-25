@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { DailyLanding } from "@/features/duel/share/pages/daily-landing";
 import { boardLabelOf, cleanChallengeName, fetchDailyLink } from "@/features/duel/share/server";
+import { dailyOpenPreview } from "@/features/duel/share/types";
 import { WEB_ACCESS_COOKIE, WEB_REFRESH_COOKIE } from "@/lib/auth/cookies";
 
 type Props = { params: Promise<{ name: string }> };
@@ -11,20 +12,28 @@ type Props = { params: Promise<{ name: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { name } = await params;
   const daily = await fetchDailyLink(name);
-  if (!daily) return { title: "Daily Challenge | StudyBond", robots: { index: false } };
+  if (!daily) return { title: "Daily Challenge", robots: { index: false } };
   const card = daily.card;
-  const title = card ? card.previewTitle : `Take today’s Daily Challenge with ${daily.link.firstName}`;
-  const description = card
-    ? card.previewText
-    : "One question from each of your subjects, 3 minutes, free. New questions every day at midnight.";
-  // The preview is the shared result's; with none shared yet, the site's own image.
-  const images = card ? [{ url: `/api/og/result/${card.number}?shape=link`, width: 1200, height: 630, alt: title }] : undefined;
+  const open = dailyOpenPreview(daily.link.firstName);
+  const title = card ? card.previewTitle : open.title;
+  const description = card ? card.previewText : open.text;
+  // The shared result's picture; with none shared yet, a Daily Challenge slip with the owner on it.
+  const image = card ? `/api/og/result/${card.number}?shape=link` : `/api/og/daily/${daily.link.name}`;
   return {
-    title: `${title} | StudyBond`,
+    // The root layout adds " — StudyBond".
+    title,
     description,
     robots: { index: false },
-    openGraph: { title, description, url: `/daily/${daily.link.name}`, ...(images ? { images } : {}) },
-    twitter: { card: images ? "summary_large_image" : "summary", title, description, ...(images ? { images: images.map((i) => i.url) } : {}) },
+    openGraph: {
+      title,
+      description,
+      url: `/daily/${daily.link.name}`,
+      siteName: "StudyBond",
+      locale: "en_NG",
+      type: "website",
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 

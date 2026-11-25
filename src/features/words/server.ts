@@ -24,8 +24,10 @@ async function publicRead<T>(path: string, revalidate: number | false = false): 
   }
 }
 
-/** Today's cards (Lagos date). A new day starts at midnight, so never cached. */
-export const fetchWordDay = cache(async () => publicRead<WordDay>("/api/word-of-the-day"));
+/** Today's cards (Lagos date), or a past day's. A new day starts at midnight, so never cached. */
+export const fetchWordDay = cache(async (date?: string) =>
+  publicRead<WordDay>(`/api/word-of-the-day${date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? `?date=${date}` : ""}`),
+);
 
 export const fetchWordArchive = cache(async (before?: string) => {
   const query = before && /^\d{4}-\d{2}-\d{2}$/.test(before) ? `&before=${before}` : "";
