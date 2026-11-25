@@ -27,7 +27,12 @@ export function PageTransition({ children, className }: PageTransitionProps) {
       className={cn(
         "transition-all duration-500",
         mounted
-          ? "opacity-100 translate-y-0 blur-0"
+          ? /* Settle on NO translate and NO filter, not zero ones. Any
+               translate or filter, even translate 0 / blur(0), makes this
+               wrapper the box that position: fixed is measured from, so
+               every pop-up sheet in a page (duel code entry, practice
+               sheets...) sat at the bottom of the page, not the screen. */
+            "opacity-100 translate-none filter-none"
           : "opacity-0 translate-y-3 blur-[6px]",
         className,
       )}

@@ -983,7 +983,10 @@
 .sheet {
   width: 100%;
   max-width: 560px;
-  max-height: 94vh;
+  /* 94vh is taller than the visible screen on Android while the address
+     bar shows, which pushed the sheet's buttons off the bottom. */
+  max-height: 86vh;
+  max-height: calc(100dvh - 24px);
   overflow-y: auto;
   padding: 16px 18px 22px;
   background: var(--ui-sheet);

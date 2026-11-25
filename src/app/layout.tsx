@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Inter,
   JetBrains_Mono,
@@ -50,6 +50,16 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://studybond.app";
+
+/* interactive-widget=resizes-content: when the phone keyboard opens, the
+   page shrinks to the space above it. Without it, Android lays the keyboard
+   over the page, so a bottom sheet's button (Join on the duel code sheet)
+   hides behind the keyboard and students have to scroll to find it. */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
