@@ -75,3 +75,9 @@ export function dateList(isos: string[]) {
   const joined = words.length === 1 ? words[0] : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`;
   return sameMonth ? `${joined} ${parts[0].month}` : joined;
 }
+
+/** True for an outside address (a notice link to WhatsApp, say). StudyBond
+    links arrive as paths, so anything with its own origin is outside. */
+export function isOutsideLink(url: string | null | undefined) {
+  return Boolean(url && /^https?:\/\//i.test(url));
+}

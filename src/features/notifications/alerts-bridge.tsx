@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 import { markNoteRead, markNoticeRead } from "./api";
+import { isOutsideLink } from "./format";
 import { refreshNotifications, useThisDevice } from "./hooks";
 import { CloseIcon } from "./icons";
 import { refreshThisDevice, registerAlertWorker, type PushNote, type WorkerMessage } from "./push";
@@ -83,7 +84,8 @@ export function AlertsBridge() {
       void read.then(() => refreshNotifications(client)).catch(() => undefined);
     }
     setBanner(null);
-    router.push((banner.url || "/dashboard/notifications") as Route);
+    if (isOutsideLink(banner.url)) window.open(banner.url, "_blank", "noopener,noreferrer");
+    else router.push((banner.url || "/dashboard/notifications") as Route);
   };
 
   return (

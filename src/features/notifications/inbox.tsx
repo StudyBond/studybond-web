@@ -12,7 +12,7 @@ import { caveat } from "@/features/home/home-fonts";
 import { cn } from "@/lib/utils/cn";
 
 import type { InboxItem, InboxNote, InboxNotice } from "./api";
-import { clock, dateList, dayGroup, dayMonth, daysAgo, lagosMidnight, leftLabel, noteTime, untilLabel, type DayGroup } from "./format";
+import { clock, dateList, dayGroup, dayMonth, daysAgo, isOutsideLink, lagosMidnight, leftLabel, noteTime, untilLabel, type DayGroup } from "./format";
 import { refreshNotifications, useInbox, useInboxActions, useThisDevice } from "./hooks";
 import {
   BellIcon, BellOffIcon, CardIcon, ChevronDown, ChevronRight, ChevronUp, CloseIcon, PinIcon, SwordsIcon, TickIcon,
@@ -204,14 +204,31 @@ function NoticePile({ notices, variant, onLeave }: { notices: InboxNotice[]; var
 }
 
 function noticeLinkLabel(notice: InboxNotice) {
+  if (notice.linkLabel) return notice.linkLabel;
   switch (notice.target?.screen) {
     case "home": return "Open Home";
     case "duel": return "Open Duel";
     case "plan": return "See your plan";
     case "league": return "Open the League";
     case "streak": return "See your streak";
+    case "link": return "Open the link";
     default: return "Open";
   }
+}
+
+/* A notice's button: a StudyBond page opens in place, an outside link
+   (a WhatsApp channel, say) opens in a new tab. */
+function NoticeLink({ notice, onClick }: { notice: InboxNotice; onClick: () => void }) {
+  if (!notice.url) return null;
+  const label = <>{noticeLinkLabel(notice)} <ChevronRight /></>;
+  if (isOutsideLink(notice.url)) {
+    return (
+      <a href={notice.url} className={s.link} target="_blank" rel="noopener noreferrer" onClick={onClick}>
+        {label}
+      </a>
+    );
+  }
+  return <Link href={notice.url as Route} className={s.link} onClick={onClick}>{label}</Link>;
 }
 
 function NoticeCard({
@@ -235,18 +252,13 @@ function NoticeCard({
       {notice.body ? <p>{notice.body}</p> : null}
       <div className={s.nFoot}>
         <div className={s.sign}>The StudyBond team</div>
-        {notice.url ? (
-          <Link
-            href={notice.url as Route}
-            className={s.link}
-            onClick={() => {
-              onOpen(notice);
-              onLeave?.();
-            }}
-          >
-            {noticeLinkLabel(notice)} <ChevronRight />
-          </Link>
-        ) : null}
+        <NoticeLink
+          notice={notice}
+          onClick={() => {
+            onOpen(notice);
+            if (!isOutsideLink(notice.url)) onLeave?.();
+          }}
+        />
       </div>
       <button type="button" className={s.nClose} aria-label="Close this notice" onClick={() => onClose(notice.id)}>
         <CloseIcon />
@@ -267,16 +279,13 @@ function ClosedNoticeRow({ notice, variant, pickedId, onLeave }: RowProps & { no
         {notice.body && variant === "page" ? <p>{notice.body}</p> : null}
         {notice.url ? (
           <div>
-            <Link
-              href={notice.url as Route}
-              className={s.link}
+            <NoticeLink
+              notice={notice}
               onClick={() => {
                 if (!notice.isRead) readNotice.mutate(notice.id);
-                onLeave?.();
+                if (!isOutsideLink(notice.url)) onLeave?.();
               }}
-            >
-              {noticeLinkLabel(notice)} <ChevronRight />
-            </Link>
+            />
           </div>
         ) : null}
       </div>

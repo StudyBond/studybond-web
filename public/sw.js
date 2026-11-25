@@ -91,6 +91,11 @@ self.addEventListener("notificationclick", (event) => {
 
 async function openPage(url) {
   const target = new URL(url, self.location.origin);
+  // An outside link (from a notice) always gets its own tab.
+  if (target.origin !== self.location.origin) {
+    await self.clients.openWindow(target.href);
+    return;
+  }
   const open = await windows();
   const app = open.find(isAppPage);
   if (app) {

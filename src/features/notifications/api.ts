@@ -31,7 +31,10 @@ export type InboxNotice = {
   title: string;
   body: string;
   target: NoteTarget;
+  /** A path, or a full https address for an outside link. */
   url: string | null;
+  /** Button text for a link; null means "Open the link". */
+  linkLabel?: string | null;
   createdAt: string;
   expiresAt: string | null;
   isRead: boolean;
