@@ -107,6 +107,7 @@
 .pick { position: sticky; top: 12px; background: var(--s1); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .pickHead { padding: 12px 12px 9px; }
 .pickHead h2 { margin: 0 0 9px; font-size: 13.5px; font-weight: 600; }
+.pickHint { margin: -4px 0 10px; font-size: 13px; line-height: 1.45; color: var(--t2); }
 .pickPapers { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
 .page .pickPapers button { display: flex; justify-content: space-between; gap: 5px; min-width: 0; padding: 6px 8px; border-radius: 8px; font-size: 12.5px; color: var(--t2); }
 .pickPapers button > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -125,6 +126,31 @@
 .page .rq.b { box-shadow: inset 0 0 0 1px var(--line2); background: none; color: var(--t3); }
 .page .rq.sel { outline: 2px solid var(--text); outline-offset: 1px; color: var(--text); }
 .page .rq.dim { opacity: 0.22; }
+/* The phone's tap hint, the first few visits: question 1 pulses, and a label
+   sits beside it in row 1 (over numbers 2 to 8 for a few seconds). */
+.grid { position: relative; }
+.page .rq.pulse { animation: tapPulse 1.3s ease-out 0.3s 4; }
+@keyframes tapPulse {
+  0% { box-shadow: 0 0 0 0 rgba(224, 144, 64, 0.75); }
+  100% { box-shadow: 0 0 0 9px rgba(224, 144, 64, 0); }
+}
+.tapTip {
+  position: absolute; z-index: 2; top: 10px; right: 12px;
+  /* One column of the 8-across phone grid, plus its gap, plus room for the arrow. */
+  left: calc(12px + (100% - 24px - 28px) / 8 + 12px);
+  display: flex; align-items: center; height: 28px; margin: 0; padding: 0 12px;
+  border-radius: 8px; background: var(--s3); border: 1px solid var(--line2); box-shadow: var(--lift);
+  font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; pointer-events: none;
+  animation: tapIn 0.22s var(--ease) 0.2s both;
+}
+.tapTip::before {
+  content: ""; position: absolute; left: -6px; top: 50%; width: 10px; height: 10px;
+  background: var(--s3); border-left: 1px solid var(--line2); border-bottom: 1px solid var(--line2);
+  transform: translateY(-50%) rotate(45deg);
+}
+.tapTipOut { animation: tapOut 0.25s ease both; }
+@keyframes tapIn { from { opacity: 0; transform: translateX(-6px); } }
+@keyframes tapOut { to { opacity: 0; } }
 
 /* ── One question, reviewed ── */
 .card { min-width: 0; padding: 20px 24px 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; scroll-margin-top: 12px; }

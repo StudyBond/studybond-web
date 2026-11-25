@@ -23,6 +23,7 @@ import { FLAT_COLOUR, paperColours, paperLabel } from "@/features/exam/lib/paper
 import { sharedGroup } from "@/features/exam/lib/options";
 import { STATUS_WORD, computeMarks, formatDuration, statusOf, type Status } from "@/features/exam/lib/results";
 import { noteSwipeHintShown, noteSwiped, shouldShowSwipeHint } from "@/features/exam/lib/swipe-hint";
+import { noteTapHintShown, noteTapped, shouldShowTapHint } from "@/features/exam/lib/tap-hint";
 import { textScale } from "@/features/exam/lib/text-size";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
 import type { ExamResult } from "@/lib/api/types";
@@ -134,7 +135,39 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
     clearTip();
   }, [clearTip]);
 
+  // ─── The tap hint (phone): question 1 pulses once the grid is in sight ───
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [tapTip, setTapTip] = useState<"in" | "out" | null>(null);
+  const tapTimers = useRef<number[]>([]);
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!isPhone || !grid || !shouldShowTapHint()) return;
+    const seen = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        seen.disconnect();
+        noteTapHintShown();
+        setTapTip("in");
+        tapTimers.current = [
+          window.setTimeout(() => setTapTip("out"), 6500),
+          window.setTimeout(() => setTapTip(null), 6800),
+        ];
+      },
+      { threshold: 0.6 },
+    );
+    seen.observe(grid);
+    return () => {
+      seen.disconnect();
+      tapTimers.current.forEach((t) => window.clearTimeout(t));
+    };
+  }, [isPhone]);
+
   const select = (i: number) => {
+    if (isPhone) {
+      noteTapped();
+      tapTimers.current.forEach((t) => window.clearTimeout(t));
+      setTapTip(null);
+    }
     setView((v) => ({ ...v, idx: i, paper: paperOf[i] ?? 0, drawer: isPhone, dir: "" }));
     if (isPhone && !view.drawer && shouldShowSwipeHint()) {
       noteSwipeHintShown();
@@ -388,6 +421,7 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
             <aside className={s.pick} aria-label="Pick a question">
               <div className={s.pickHead}>
                 <h2>Go through them</h2>
+                {isPhone ? <p className={s.pickHint}>Tap a number to see the answer and why.</p> : null}
                 {marks.papers.length > 1 ? (
                   <div className={s.pickPapers}>
                     {marks.papers.map((p, pk) => (
@@ -425,14 +459,25 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
                   ))}
                 </div>
               </div>
-              <div className={s.grid}>
+              <div className={s.grid} ref={gridRef}>
+                {tapTip ? (
+                  <p className={cn(s.tapTip, tapTip === "out" && s.tapTipOut)} role="status">
+                    Tap to see the explanation
+                  </p>
+                ) : null}
                 {gridPaper?.indices.map((i, n) => {
                   const st: Status = statuses[i];
                   return (
                     <button
                       key={i}
                       type="button"
-                      className={cn(s.rq, s[st], i === idx && s.sel, !matches(i, view.filter) && s.dim)}
+                      className={cn(
+                        s.rq,
+                        s[st],
+                        i === idx && s.sel,
+                        !matches(i, view.filter) && s.dim,
+                        n === 0 && tapTip === "in" && s.pulse,
+                      )}
                       aria-current={i === idx ? "true" : undefined}
                       aria-label={`${paperLabel(gridPaper.subject)} ${n + 1}: ${STATUS_WORD[st]}`}
                       onClick={() => select(i)}
