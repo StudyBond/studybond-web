@@ -1,0 +1,16 @@
+/* "Your last paper" on Practice (canvas board 3, option 2). */
+.card { margin-top: 12px; border-radius: 14px; background: var(--ui-sheet); box-shadow: inset 0 0 0 1px var(--ui-rule); overflow: hidden; }
+.top { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; color: var(--ui-ink); text-decoration: none; }
+.top:hover { background: var(--ui-sheet-2); }
+.ico { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: rgba(255, 255, 255, 0.06); color: var(--ui-ink-2); font: 600 14px/1 var(--ui-num); }
+.t { display: grid; gap: 5px; min-width: 0; }
+.t b { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t small { font-size: 12px; color: var(--ui-ink-3); }
+.ticks { display: grid; gap: 2px; height: 7px; }
+.ticks i { border-radius: 1.5px; background: rgba(255, 255, 255, 0.1); }
+.ticks i.on { background: #c17a28; }
+.sc { display: grid; justify-items: end; }
+.sc b { font: 600 16px/1.2 var(--ui-num); }
+.sc small { font: 500 11.5px/1.2 var(--ui-num); color: var(--ui-ink-3); }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 14px; min-height: 44px; border-top: 1px solid var(--ui-rule); font-size: 13px; color: var(--ui-ink-2); }
+.foot a { display: inline-flex; align-items: center; min-height: 44px; color: #f5c890; font-weight: 700; text-decoration: none; white-space: nowrap; }

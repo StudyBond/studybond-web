@@ -1,592 +1,216 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { motion, AnimatePresence, LayoutGroup, type Variants } from "framer-motion";
-import { cn } from "@/lib/utils/cn";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import type { Route } from "next";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+
 import { LearnerShell } from "@/features/dashboard/components/learner-shell";
-import { useDashboardCriticalData } from "@/features/dashboard/hooks/use-dashboard-data";
-import { useBookmarks } from "@/features/bookmarks/hooks/use-bookmarks";
-import { BookmarkCard } from "@/features/bookmarks/components/bookmark-card";
-import { BookmarkEmptyState } from "@/features/bookmarks/components/bookmark-empty-state";
-import { BookmarkExamLauncher } from "@/features/bookmarks/components/bookmark-exam-launcher";
-import { BookmarkReviewModal } from "@/features/bookmarks/components/bookmark-review-modal";
 import { ExamSecurityOverlay } from "@/features/exam/components/exam-security-overlay";
 import { useExamGuard } from "@/features/exam/hooks/use-exam-guard";
-import {
-  Bookmark,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Library,
-  Flame,
-  Clock,
-  Filter,
-} from "lucide-react";
+import { getDashboardHome, homeKeys } from "@/features/home/api";
+import { priceLine } from "@/features/home/format";
+import { caveat } from "@/features/home/home-fonts";
+import { BookmarkIcon, ChevronLeft } from "@/features/home/icons";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
-import { subjectPalette } from "@/components/ui/subject-icon";
+import { getBookmarks } from "@/lib/api/bookmarks";
+import { startBookmarkExam } from "@/lib/api/exams";
+import { getUserProfile } from "@/lib/api/users";
+import { BOOKMARK_EXAM_MIN_QUESTIONS, evaluateBookmarkExamGate } from "@/lib/utils/bookmark-exam-gate";
+import { cn } from "@/lib/utils/cn";
 
-/* Subject colours used to be hardcoded here. They now come from the
-   institution's own subject list, through useExamProfile(). */
+import s from "../vault.module.css";
+import { VaultCard } from "./vault-card";
+import { VaultReview } from "./vault-review";
 
-/* ─── Stagger Variants ─── */
+/*
+ * Study vault (canvas 94g6nUXE…, boards 2a / 2b): a box of question cards.
+ * The box strip shows every space (20 free, 50 premium); amber ones expire
+ * within soonDays. Two jobs: "Go through them" (one card at a time, free for
+ * all, approved 2026-11-26) and "Make a paper" (premium, 20+ saved).
+ */
 
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 16, filter: "blur(4px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
-  },
-};
-
-/* ─── Page Sections ─── */
-
-function VaultHero({
-  bookmarkCount,
-  totalBookmarks,
-  maxBookmarks,
-  expiryDays,
-  accessTier,
-}: {
-  bookmarkCount: number;
-  totalBookmarks: number;
-  maxBookmarks: number;
-  expiryDays: number;
-  accessTier: "FREE" | "PREMIUM";
-}) {
-  const capacityPercent = maxBookmarks > 0 ? Math.min(100, (totalBookmarks / maxBookmarks) * 100) : 0;
-  const capacityColor =
-    capacityPercent >= 85
-      ? "text-red-400"
-      : capacityPercent >= 60
-        ? "text-amber-400"
-        : "text-emerald-400";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="relative overflow-hidden"
-    >
-      {/* Ambient background glow */}
-      <div className="pointer-events-none absolute -top-32 left-1/4 h-64 w-96 rounded-full bg-[var(--sb-accent)]/[0.04] blur-[100px]" />
-      <div className="pointer-events-none absolute -top-20 right-1/4 h-48 w-64 rounded-full bg-purple-500/[0.02] blur-[80px]" />
-
-      <div className="relative space-y-5">
-        {/* Title Row */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--sb-accent)]/15 to-[var(--sb-accent)]/5 border border-[var(--sb-accent)]/10 shadow-[0_0_24px_var(--sb-accent-glow)]">
-                <Bookmark className="h-6 w-6 text-[var(--sb-accent)]" />
-              </div>
-              {/* Subtle breathing ring */}
-              <div className="absolute inset-0 rounded-2xl bg-[var(--sb-accent)]/[0.06] animate-[sb-breathe_4s_ease-in-out_infinite]" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-                Study Vault
-              </h1>
-              <p className="text-sm text-white/25 mt-0.5">
-                Your curated collection of questions worth revisiting
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Ribbon */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Bookmark count */}
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-            <Library className="h-3.5 w-3.5 text-[var(--sb-accent)]/60" />
-            <span className="text-xs font-semibold text-white/50">
-              <span className="text-white/80 font-bold">{bookmarkCount}</span> saved
-            </span>
-          </div>
-
-          {/* Capacity */}
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-            <div className="relative h-3.5 w-3.5">
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 -rotate-90">
-                <circle
-                  cx="12" cy="12" r="9"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.06)"
-                  strokeWidth="3"
-                />
-                <circle
-                  cx="12" cy="12" r="9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 9}`}
-                  strokeDashoffset={`${2 * Math.PI * 9 * (1 - capacityPercent / 100)}`}
-                  className={cn("transition-all duration-1000", capacityColor)}
-                />
-              </svg>
-            </div>
-            <span className="text-xs font-semibold text-white/50">
-              <span className={cn("font-bold", capacityColor)}>{totalBookmarks}</span>
-              <span className="text-white/20">/{maxBookmarks}</span>
-            </span>
-          </div>
-
-          {/* Expiry */}
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-            <Clock className="h-3.5 w-3.5 text-white/20" />
-            <span className="text-xs font-semibold text-white/30">
-              {expiryDays}d expiry
-            </span>
-          </div>
-
-          {/* Tier badge */}
-          <div className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest",
-            accessTier === "PREMIUM"
-              ? "bg-[var(--sb-gold)]/[0.08] text-[var(--sb-gold)] border border-[var(--sb-gold)]/10"
-              : "bg-white/[0.03] text-white/20 border border-white/[0.04]",
-          )}>
-            {accessTier === "PREMIUM" ? (
-              <>
-                <Flame className="h-2.5 w-2.5" />
-                Elite Vault
-              </>
-            ) : (
-              "Explorer"
-            )}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─── Subject Filter Bar ─── */
-
-function SubjectFilterBar({
-  subjects,
-  subjectCounts,
-  selected,
-  onSelect,
-  totalCount,
-}: {
-  subjects: string[];
-  subjectCounts: Record<string, number>;
-  selected: string | undefined;
-  onSelect: (subject: string | undefined) => void;
-  totalCount: number;
-}) {
-  /* Pill colours come from the institution's subject list. */
-  const { data: examProfile } = useExamProfile();
-  const colorTokenByName = new Map(
-    (examProfile?.subjects ?? []).map((subject) => [
-      subject.name.toLowerCase(),
-      subject.colorToken,
-    ]),
-  );
-
-  if (subjects.length === 0) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      className="relative"
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <Filter className="h-3 w-3 text-white/15" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/15">
-          Filter by subject
-        </span>
-      </div>
-      <div
-        className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 sb-scroll-hide"
-        role="tablist"
-        aria-label="Filter bookmarks by subject"
-      >
-        {/* All */}
-        <button
-          role="tab"
-          aria-selected={!selected}
-          onClick={() => onSelect(undefined)}
-          className={cn(
-            "relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 shrink-0 border",
-            !selected
-              ? "bg-[var(--sb-accent)]/[0.1] text-[var(--sb-accent)] border-[var(--sb-accent)]/15 shadow-[0_0_16px_var(--sb-accent-glow)]"
-              : "bg-white/[0.02] text-white/30 border-white/[0.04] hover:bg-white/[0.04] hover:text-white/50 hover:border-white/[0.07]",
-          )}
-        >
-          All
-          <span className={cn(
-            "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
-            !selected
-              ? "bg-[var(--sb-accent)]/15 text-[var(--sb-accent)]"
-              : "bg-white/[0.04] text-white/20",
-          )}>
-            {totalCount}
-          </span>
-        </button>
-
-        {/* Subject pills */}
-        {subjects.map((subject) => {
-          const palette = subjectPalette(colorTokenByName.get(subject.toLowerCase()));
-          const isActive = selected === subject;
-          const count = subjectCounts[subject] || 0;
-
-          return (
-            <button
-              key={subject}
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => onSelect(isActive ? undefined : subject)}
-              className={cn(
-                "relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 shrink-0 border",
-                isActive
-                  ? "bg-[var(--sb-accent)]/[0.1] text-[var(--sb-accent)] border-[var(--sb-accent)]/15 shadow-[0_0_16px_var(--sb-accent-glow)]"
-                  : "bg-white/[0.02] text-white/30 border-white/[0.04] hover:bg-white/[0.04] hover:text-white/50 hover:border-white/[0.07]",
-              )}
-            >
-              <span className={cn(
-                "h-2 w-2 rounded-full shrink-0 transition-all",
-                palette.dot,
-                isActive ? "scale-110" : "opacity-60",
-              )} />
-              {subject}
-              <span className={cn(
-                "text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all",
-                isActive
-                  ? "bg-[var(--sb-accent)]/15 text-[var(--sb-accent)]"
-                  : "bg-white/[0.04] text-white/20",
-              )}>
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─── Pagination ─── */
-
-function PaginationBar({
-  page,
-  totalPages,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  if (totalPages <= 1) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.3 }}
-      className="flex items-center justify-center gap-1.5 pt-6"
-    >
-      <button
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-        disabled={page <= 1}
-        aria-label="Previous page"
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-white/30 bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:text-white/50 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-
-      {/* Page dots */}
-      <div className="flex items-center gap-1 px-3">
-        {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-          let pageNum: number;
-          if (totalPages <= 7) {
-            pageNum = i + 1;
-          } else if (page <= 4) {
-            pageNum = i + 1;
-          } else if (page >= totalPages - 3) {
-            pageNum = totalPages - 6 + i;
-          } else {
-            pageNum = page - 3 + i;
-          }
-
-          return (
-            <button
-              key={pageNum}
-              onClick={() => onPageChange(pageNum)}
-              aria-label={`Page ${pageNum}`}
-              aria-current={page === pageNum ? "page" : undefined}
-              className={cn(
-                "flex h-8 min-w-[2rem] items-center justify-center rounded-lg text-xs font-semibold transition-all duration-200",
-                page === pageNum
-                  ? "bg-[var(--sb-accent)]/15 text-[var(--sb-accent)] shadow-[0_0_12px_var(--sb-accent-glow)]"
-                  : "text-white/25 hover:bg-white/[0.04] hover:text-white/50",
-              )}
-            >
-              {pageNum}
-            </button>
-          );
-        })}
-      </div>
-
-      <button
-        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-        disabled={page >= totalPages}
-        aria-label="Next page"
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-white/30 bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] hover:text-white/50 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </motion.div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════ */
-/* ═══ MAIN PAGE COMPONENT                                   ═══ */
-/* ═══════════════════════════════════════════════════════════════ */
+const PAGE_SIZE = 20;
+const PLAN = "/dashboard/settings?tab=subscription" as Route;
 
 export function BookmarksPageClient() {
-  const critical = useDashboardCriticalData();
-  const [selectedSubject, setSelectedSubject] = useState<string | undefined>(undefined);
-  const [page, setPage] = useState(1);
-  const [reviewingBookmarkId, setReviewingBookmarkId] = useState<number | null>(null);
+  const router = useRouter();
+  const profile = useQuery({ queryKey: ["dashboard", "profile"], queryFn: getUserProfile, retry: 1 });
+  const home = useQuery({ queryKey: homeKeys.home, queryFn: getDashboardHome, staleTime: 30_000, retry: 1 });
+  const examProfile = useExamProfile();
+  const subjects = examProfile.data?.subjects ?? [];
+  const [tab, setTab] = useState<string | null>(null);
+  const [sort, setSort] = useState<"soon" | "new">("soon");
+  const [reviewing, setReviewing] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const { guardState, dismissViolation } = useExamGuard({ mode: "review", enabled: true });
 
-  const { guardState, dismissViolation } = useExamGuard({
-    mode: "review",
-    enabled: true,
+  const list = useInfiniteQuery({
+    queryKey: ["bookmarks", "vault", tab, sort],
+    queryFn: ({ pageParam }) => getBookmarks({ page: pageParam, limit: PAGE_SIZE, subject: tab ?? undefined, sort }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.pagination.page < last.pagination.totalPages ? last.pagination.page + 1 : undefined),
   });
 
-  const { data: bookmarksData, isLoading, isError, error } = useBookmarks({
-    page,
-    limit: 20,
-    subject: selectedSubject,
-  });
+  const first = list.data?.pages[0];
+  const cards = useMemo(() => list.data?.pages.flatMap((p) => p.bookmarks) ?? [], [list.data]);
+  const limits = first?.limits;
+  const summary = first?.summary;
+  const saved = limits?.activeBookmarks ?? 0;
+  const max = limits?.maxBookmarks ?? 0;
+  const premium = limits?.accessTier === "PREMIUM";
+  const soonDays = summary?.soonDays ?? 3;
+  const soon = Math.min(summary?.goingSoon ?? 0, saved);
+  const full = !!limits && limits.remainingBookmarks === 0;
+  const empty = !!first && saved === 0;
+  const gate = evaluateBookmarkExamGate(saved, premium);
+  const plan = home.data?.plan;
+  const tabCount = tab ? summary?.subjects.find((x) => x.subject === tab)?.count ?? first?.pagination.total ?? 0 : saved;
 
-  // Also fetch unfiltered data for global counts
-  const { data: allBookmarksData } = useBookmarks({
-    page: 1,
-    limit: 1,
-  });
-
-  // Extract unique subjects with counts
-  const { availableSubjects, subjectCounts } = useMemo(() => {
-    if (!bookmarksData?.bookmarks) return { availableSubjects: [], subjectCounts: {} };
-    // When filtering, we use the unfiltered subject set from allBookmarks
-    const allBookmarks = selectedSubject ? allBookmarksData?.bookmarks : bookmarksData.bookmarks;
-    const counts: Record<string, number> = {};
-    const subjects = new Set<string>();
-
-    // For counts, use the full dataset when available
-    (allBookmarks || bookmarksData.bookmarks).forEach((b) => {
-      const s = b.question.subject;
-      subjects.add(s);
-      counts[s] = (counts[s] || 0) + 1;
-    });
-
-    // Also add from current filtered data if subjects aren't in unfiltered
-    bookmarksData.bookmarks.forEach((b) => {
-      subjects.add(b.question.subject);
-    });
-
-    return {
-      availableSubjects: Array.from(subjects).sort(),
-      subjectCounts: counts,
-    };
-  }, [bookmarksData, allBookmarksData, selectedSubject]);
-
-  const handleSubjectSelect = useCallback((subject: string | undefined) => {
-    setSelectedSubject(subject);
-    setPage(1);
-  }, []);
-
-  const handleReview = useCallback((id: number) => {
-    setReviewingBookmarkId(id);
-  }, []);
-
-  /* ─── Loading State ─── */
-  if (critical.isLoading) {
-    return (
-      <LearnerShell>
-        <div className="flex h-[50vh] items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <Loader2 className="h-8 w-8 animate-spin text-[var(--sb-accent)] opacity-40" />
-              <div className="absolute inset-0 h-8 w-8 rounded-full bg-[var(--sb-accent)]/[0.06] blur-xl" />
-            </div>
-            <p className="text-xs text-white/15 font-medium">Loading your vault…</p>
-          </div>
-        </div>
-      </LearnerShell>
-    );
+  async function makePaper() {
+    setStarting(true);
+    try {
+      const session = await startBookmarkExam(tab ? { subject: tab } : undefined);
+      router.push(`/exams/${session.examId}`);
+    } catch (err: unknown) {
+      toast.error((err instanceof Error && err.message) || "The paper didn't start. Try again.");
+      setStarting(false);
+    }
   }
 
-  /* ─── Error State ─── */
-  if (critical.isError || !critical.profile.data) {
-    return (
-      <LearnerShell>
-        <div className="p-8 text-center text-red-400/80">
-          Failed to load essential data.
-        </div>
-      </LearnerShell>
-    );
-  }
-
-  const isPremium = critical.stats.data?.isPremium ?? false;
-  const limits = bookmarksData?.limits || allBookmarksData?.limits;
+  const topBar = (
+    <div className={cn("sb-ui", s.bar)}>
+      <Link href={"/dashboard/me" as Route} className={s.barBack} aria-label="Back to Me"><ChevronLeft /></Link>
+      <h1>Study vault</h1>
+    </div>
+  );
 
   return (
-    <LearnerShell
-      profile={critical.profile.data}
-      isPremium={isPremium}
-    >
-      <ExamSecurityOverlay
-        guardState={guardState}
-        onDismiss={dismissViolation}
-        mode="review"
-      />
+    <LearnerShell profile={profile.data} isPremium={home.data?.plan.isPremium ?? profile.data?.isPremium ?? false} mobileTopBar={topBar}>
+      <ExamSecurityOverlay guardState={guardState} onDismiss={dismissViolation} mode="review" />
+      <div className={cn("sb-ui", s.root, caveat.variable)}>
+        <div className={s.title}>
+          <h1>Study vault</h1>
+          <p>Questions you saved to come back to. Each one stays {limits?.expiryDays ?? 30} days.</p>
+        </div>
 
-      <BookmarkReviewModal
-        bookmarkId={reviewingBookmarkId}
-        onClose={() => setReviewingBookmarkId(null)}
-      />
-
-      <div className="space-y-6">
-        {/* ═══ HERO ═══ */}
-        {limits && (
-          <VaultHero
-            bookmarkCount={bookmarksData?.pagination.total ?? limits.activeBookmarks}
-            totalBookmarks={limits.activeBookmarks}
-            maxBookmarks={limits.maxBookmarks}
-            expiryDays={limits.expiryDays}
-            accessTier={limits.accessTier}
-          />
-        )}
-
-        {/* ═══ BOOKMARK EXAM LAUNCHER — the gravitational center ═══ */}
-        {limits && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <BookmarkExamLauncher
-              bookmarkCount={limits.activeBookmarks}
-              isPremium={isPremium}
-              availableSubjects={availableSubjects}
-            />
-          </motion.div>
-        )}
-
-        {/* ═══ SUBJECT FILTER ═══ */}
-        {availableSubjects.length > 0 && (
-          <SubjectFilterBar
-            subjects={availableSubjects}
-            subjectCounts={subjectCounts}
-            selected={selectedSubject}
-            onSelect={handleSubjectSelect}
-            totalCount={bookmarksData?.pagination.total ?? limits?.activeBookmarks ?? 0}
-          />
-        )}
-
-        {/* ═══ COLLECTION ═══ */}
-        {isLoading ? (
-          <div className="flex h-[30vh] items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-6 w-6 animate-spin text-white/15" />
-              <p className="text-[11px] text-white/10">Fetching bookmarks…</p>
-            </div>
+        {list.isLoading ? <div className={s.cards}><div className={s.skel} /><div className={s.skel} /></div> : null}
+        {list.isError && !first ? (
+          <div className={s.noHit}>
+            Your vault didn&rsquo;t load. Check your connection.
+            <div className={s.more}><button type="button" className={cn(s.btn, s.btn2)} onClick={() => list.refetch()}>Try again</button></div>
           </div>
-        ) : isError ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex h-48 items-center justify-center rounded-2xl border border-red-400/10 bg-red-400/[0.02] p-6 text-center"
-          >
-            <div className="space-y-2">
-              <p className="text-red-400/80 font-bold text-sm">
-                Failed to load bookmarks
-              </p>
-              <p className="text-red-400/40 text-xs max-w-xs">
-                {error instanceof Error ? error.message : "Unknown error occurred"}
-              </p>
-            </div>
-          </motion.div>
-        ) : !bookmarksData?.bookmarks.length ? (
-          <BookmarkEmptyState />
-        ) : (
+        ) : null}
+
+        {empty ? (
+          <div className={s.empty}>
+            <div className={s.emptyBox} aria-hidden="true"><i /><i /><i /></div>
+            <h3>Nothing saved yet</h3>
+            <p>Save the questions that caught you. They wait here for {limits?.expiryDays ?? 30} days, with the answer and the full explanation.</p>
+            <ul className={s.steps}>
+              <li>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 21V4h11l-2 4 2 4H5" /></svg></span>
+                <div><b>Flag it during a paper.</b> Flagged questions are saved when you send the paper.</div>
+              </li>
+              <li>
+                <span><BookmarkIcon /></span>
+                <div><b>Or save it from your results.</b> Tap the bookmark on any answer.</div>
+              </li>
+            </ul>
+            <Link href={"/dashboard/history" as Route} className={s.btn}>Open your past papers</Link>
+          </div>
+        ) : null}
+
+        {first && !empty ? (
           <>
-            {/* Results count */}
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] text-white/15 font-medium">
-                {selectedSubject ? (
-                  <>
-                    Showing <span className="text-white/30">{bookmarksData.bookmarks.length}</span>{" "}
-                    {selectedSubject} bookmark{bookmarksData.bookmarks.length !== 1 ? "s" : ""}
-                  </>
-                ) : (
-                  <>
-                    <span className="text-white/30">{bookmarksData.pagination.total}</span>{" "}
-                    total bookmark{bookmarksData.pagination.total !== 1 ? "s" : ""}
-                  </>
-                )}
-              </p>
+            <div className={s.top}>
+              <section className={s.box} aria-label="Spaces in your vault">
+                <div className={s.boxTop}>
+                  <h2>{saved} <small>saved</small></h2>
+                  <span className={full ? s.full : undefined}>{full ? `Full: ${saved} of ${max}` : `${max - saved} space${max - saved === 1 ? "" : "s"} left`}</span>
+                </div>
+                <div className={s.slots} role="img" aria-label={`${saved} of ${max} spaces used, ${soon} going within ${soonDays} days`}>
+                  {Array.from({ length: max }, (_, i) => <i key={i} className={i < soon ? s.soon : i < saved ? "" : s.free} />)}
+                </div>
+                <div className={s.boxFoot}>
+                  <span>Amber goes within {soonDays} days <b>· {soon}</b></span>
+                  {!premium ? <Link href={PLAN}>Get 50 spaces</Link> : null}
+                </div>
+              </section>
 
-              {bookmarksData.pagination.totalPages > 1 && (
-                <p className="text-[10px] text-white/10">
-                  Page {page} of {bookmarksData.pagination.totalPages}
-                </p>
-              )}
+              <div className={s.jobs}>
+                <div className={s.job}>
+                  <b>Go through them</b>
+                  <p>One card at a time. The answer stays hidden until you pick.</p>
+                  <button type="button" className={cn(s.btn, s.btn2)} onClick={() => setReviewing(true)}>Start</button>
+                </div>
+                {gate.status === "UNLOCKED" ? (
+                  <div className={cn(s.job, s.jobGo)}>
+                    <b>Make a paper</b>
+                    <p>{tab ? `Your ${tab} cards as one timed paper.` : `All ${saved} as one timed paper, or pick a subject first.`}</p>
+                    <button type="button" className={s.btn} onClick={makePaper} disabled={starting} aria-busy={starting}>
+                      {starting ? "Starting…" : tab ? `Make a ${tab} paper` : "Make a paper"}
+                    </button>
+                  </div>
+                ) : gate.status === "LOCKED_INSUFFICIENT" ? (
+                  <div className={s.job}>
+                    <b>Make a paper</b>
+                    <p>Save {BOOKMARK_EXAM_MIN_QUESTIONS - saved} more to turn them into a timed paper.</p>
+                    <div className={s.prog} aria-hidden="true">
+                      {Array.from({ length: BOOKMARK_EXAM_MIN_QUESTIONS }, (_, i) => <i key={i} className={i < saved ? s.on : ""} />)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={cn(s.job, s.jobGo)}>
+                    <b>Make a paper</b>
+                    <p>A timed paper from your saved questions comes with premium{plan ? `: ${priceLine(plan.priceNaira, plan.durationMonths)}` : ""}.</p>
+                    <Link href={PLAN} className={cn(s.btn, s.btn2)}>See premium</Link>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Card list */}
-            <LayoutGroup>
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                key={`${selectedSubject}-${page}`}
-                className="space-y-3"
-              >
-                {bookmarksData.bookmarks.map((bookmark) => (
-                  <motion.div
-                    key={bookmark.id}
-                    variants={itemVariants}
-                    layout
-                  >
-                    <BookmarkCard
-                      bookmark={bookmark}
-                      onReview={handleReview}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
-            </LayoutGroup>
+            <div className={s.tabs} role="tablist" aria-label="Subject">
+              <button type="button" role="tab" className={cn(s.tab, !tab && s.tabOn)} aria-selected={!tab} onClick={() => setTab(null)}>All <i>{saved}</i></button>
+              {(summary?.subjects ?? []).map((x) => (
+                <button key={x.subject} type="button" role="tab" className={cn(s.tab, tab === x.subject && s.tabOn)} aria-selected={tab === x.subject} onClick={() => setTab(x.subject)}>
+                  {x.subject} <i>{x.count}</i>
+                </button>
+              ))}
+            </div>
+            <div className={s.sortRow}>
+              <span>{sort === "soon" ? "The ones going first are on top" : "Last saved on top"}</span>
+              <div className={s.seg} role="group" aria-label="Order">
+                <button type="button" className={sort === "soon" ? s.segOn : undefined} aria-pressed={sort === "soon"} onClick={() => setSort("soon")}>Going soon</button>
+                <button type="button" className={sort === "new" ? s.segOn : undefined} aria-pressed={sort === "new"} onClick={() => setSort("new")}>Newest</button>
+              </div>
+            </div>
 
-            {/* Pagination */}
-            <PaginationBar
-              page={page}
-              totalPages={bookmarksData.pagination.totalPages}
-              onPageChange={setPage}
-            />
+            <div className={s.cards}>
+              {cards.length === 0 && !list.isFetching ? <p className={s.noHit}>Nothing saved in this subject yet.</p> : null}
+              {cards.map((b) => <VaultCard key={b.id} bookmark={b} subjects={subjects} soonDays={soonDays} />)}
+            </div>
+            {list.hasNextPage ? (
+              <div className={s.more}>
+                <button type="button" className={cn(s.btn, s.btn2)} onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage}>
+                  {list.isFetchingNextPage ? "Loading…" : "Show more"}
+                </button>
+              </div>
+            ) : null}
+            <p className={s.endNote}>
+              {full
+                ? premium
+                  ? "Your vault is full. A new save won't fit until you take one out or one runs out."
+                  : "Your vault is full. Take one out, wait for one to run out, or go premium for 50 spaces."
+                : `Showing ${cards.length} of ${tabCount}.`}
+            </p>
           </>
-        )}
+        ) : null}
       </div>
+
+      {reviewing ? <VaultReview subject={tab} subjects={subjects} soonDays={soonDays} onClose={() => setReviewing(false)} /> : null}
     </LearnerShell>
   );
 }

@@ -78,6 +78,8 @@
 .facts > div { display: grid; gap: 1px; }
 .facts dt { font-size: 11.5px; color: var(--t3); }
 .facts dd { margin: 0; font-size: 14.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.allPapers { display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; padding: 0 14px; border-radius: 10px; background: var(--amber-s); box-shadow: inset 0 0 0 1px var(--amber-l); color: var(--amber-t); font-size: 13.5px; font-weight: 600; text-decoration: none; }
+.allPapers:hover { background: var(--amber-l); }
 .facts dd small { color: var(--t3); font-size: 11.5px; font-weight: 400; }
 .sp { color: var(--amber-t); }
 

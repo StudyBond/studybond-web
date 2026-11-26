@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } fr
 import { createPortal } from "react-dom";
 
 import { SubjectIcon, subjectPalette } from "@/components/ui/subject-icon";
+import { LastPaperCard } from "@/features/history/components/last-paper-card";
 import { getDashboardHome, homeKeys } from "@/features/home/api";
 import { boardLabel, priceLine } from "@/features/home/format";
 import { useExamProfile } from "@/features/institution/hooks/use-exam-profile";
@@ -376,6 +377,7 @@ export function PracticePage({ profile }: { profile: UserProfile }) {
             })}
           </div>
           {note ? <p className={s.note} key={mode}><i />{<span>{note}</span>}</p> : null}
+          <LastPaperCard />
         </section>
 
         <section aria-labelledby="pr-subjects">

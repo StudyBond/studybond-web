@@ -4998,8 +4998,10 @@ export interface paths {
                     institutionCode?: string;
                     page?: number;
                     limit?: number;
-                    examType?: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED" | "ONE_V_ONE_DUEL" | "GROUP_COLLAB" | "DAILY_CHALLENGE";
-                    status?: "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
+                    examType?: "REAL_PAST_QUESTION" | "PRACTICE" | "MIXED" | "ONE_V_ONE_DUEL" | "GROUP_COLLAB" | "DAILY_CHALLENGE" | "BOOKMARK_EXAM" | "STUDY" | "GHOST_RACE";
+                    kind?: "past" | "practice" | "duel" | "challenge" | "vault" | "study";
+                    subject?: string;
+                    status?: "IN_PROGRESS" | "COMPLETED" | "ABANDONED" | "ENDED";
                 };
                 header?: never;
                 path?: never;
@@ -5040,6 +5042,24 @@ export interface paths {
                                     duelSessionCode?: string | null;
                                     /** @description Deprecated: old name, sent with the same value until older clients are gone (duel rename, 2026-11-08). Use duelSessionCode. */
                                     collaborationSessionCode?: string | null;
+                                    /** @description The first try, when this paper is a retake */
+                                    originalExamId?: number | null;
+                                    /** @description One character per question in paper order: 1 right, 0 wrong, - blank */
+                                    marks?: string;
+                                    /** @description Right / total per subject, in the paper subject order */
+                                    subjectScores?: {
+                                        subject: string;
+                                        score: number;
+                                        total: number;
+                                        marks: string;
+                                    }[];
+                                    duel?: {
+                                        opponentName: string | null;
+                                        /** @enum {string|null} */
+                                        result: "W" | "L" | "D" | null;
+                                        myScore: number;
+                                        opponentScore: number | null;
+                                    } | null;
                                 } & {
                                     [key: string]: unknown;
                                 })[];
@@ -5054,7 +5074,23 @@ export interface paths {
                                     averageScore: number;
                                     totalSpEarned: number;
                                     bestScore: number;
+                                    /** Format: date-time */
+                                    firstPaperAt?: string | null;
                                 };
+                                /** @description Papers of each kind, for the Past papers chips */
+                                kindCounts?: {
+                                    past: number;
+                                    practice: number;
+                                    duel: number;
+                                    challenge: number;
+                                    vault: number;
+                                    study: number;
+                                };
+                                /** @description Subjects with papers on this board, most-used first */
+                                subjectCounts?: {
+                                    subject: string;
+                                    count: number;
+                                }[];
                             } & {
                                 [key: string]: unknown;
                             };
@@ -28059,6 +28095,7 @@ export interface paths {
                     page?: number;
                     limit?: number;
                     subject?: string;
+                    sort?: "soon" | "new";
                 };
                 header?: never;
                 path?: never;
@@ -28176,6 +28213,15 @@ export interface paths {
                                     limit: number;
                                     total: number;
                                     totalPages: number;
+                                };
+                                summary: {
+                                    subjects: {
+                                        subject: string;
+                                        count: number;
+                                    }[];
+                                    /** @description Saved questions that expire within soonDays */
+                                    goingSoon: number;
+                                    soonDays: number;
                                 };
                                 limits: {
                                     activeBookmarks: number;

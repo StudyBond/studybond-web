@@ -215,7 +215,21 @@ export type ExamSummary = {
   completedAt: string | null;
   timeTakenSeconds: number | null;
   duelSessionCode?: string | null;
+  /** The first try, when this paper is a retake. */
+  originalExamId?: number | null;
+  /** One character per question in paper order: 1 right, 0 wrong, - blank. */
+  marks?: string;
+  subjectScores?: Array<{ subject: string; score: number; total: number; marks: string }>;
+  duel?: {
+    opponentName: string | null;
+    result: "W" | "L" | "D" | null;
+    myScore: number;
+    opponentScore: number | null;
+  } | null;
 };
+
+/** The chips on the Past papers page. */
+export type HistoryKind = "past" | "practice" | "duel" | "challenge" | "vault" | "study";
 
 // ─── Exam Session Types (for active exam-taking) ───
 
@@ -408,7 +422,10 @@ export type ExamHistory = {
     averageScore: number;
     totalSpEarned: number;
     bestScore: number;
+    firstPaperAt?: string | null;
   };
+  kindCounts?: Record<HistoryKind, number>;
+  subjectCounts?: Array<{ subject: string; count: number }>;
 };
 
 export type MyRank = {
@@ -536,6 +553,12 @@ export type BookmarksList = {
     limit: number;
     total: number;
     totalPages: number;
+  };
+  /** Subject tabs and the amber "going soon" count, for every subject. */
+  summary?: {
+    subjects: Array<{ subject: string; count: number }>;
+    goingSoon: number;
+    soonDays: number;
   };
   limits: BookmarkLimits;
 };

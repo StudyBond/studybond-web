@@ -61,3 +61,16 @@ export const SpeakerIcon = ({ className }: P) => (
     <path d="M11 5 6 9H3v6h3l5 4Z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" />
   </svg>
 );
+/** Past papers: a marked script. */
+export const PapersIcon = ({ className }: P) => (
+  <svg {...base} strokeWidth={1.8} className={className}><path d="M7 3h8l4 4v14H7z" /><path d="M15 3v4h4" /><path d="m10 12 1.5 1.5L14 11" /><path d="M10 17h6" /></svg>
+);
+export const PenIcon = ({ className }: P) => (
+  <svg {...base} strokeWidth={1.9} className={className}><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></svg>
+);
+export const BinIcon = ({ className }: P) => (
+  <svg {...base} strokeWidth={1.9} className={className}><path d="M4 7h16M10 7V4h4v3M6 7l1 13h10l1-13" /></svg>
+);
+export const CloseIcon = ({ className }: P) => (
+  <svg {...base} strokeWidth={2} className={className}><path d="M6 6l12 12M18 6 6 18" /></svg>
+);

@@ -14,8 +14,9 @@ import { getUserProfile } from "@/lib/api/users";
 import { cn } from "@/lib/utils/cn";
 
 import { getDashboardHome, homeKeys } from "./api";
-import { boardLabel, nextFreezeDay } from "./format";
-import { BookmarkIcon, CardIcon, ChevronRight } from "./icons";
+import { boardLabel, dayGap, lagosKey, nextFreezeDay, shortDate, thousands, weekday } from "./format";
+import { useLastPaper } from "@/features/history/use-last-paper";
+import { BookmarkIcon, CardIcon, ChevronRight, PapersIcon } from "./icons";
 import s from "./me.module.css";
 
 const Icon = ({ d }: { d: ReactNode }) => (
@@ -69,6 +70,16 @@ export function MePage() {
       : plan.freeSubjectsLeft
         ? `Free · ${plan.freeSubjectsLeft} of ${plan.freeSubjectsTotal} free subjects left`
         : "Free plan";
+
+  /* Past papers row: how many, and how the last one went. */
+  const papers = useLastPaper();
+  const lastPaper = papers.data?.last;
+  const lastDay = lastPaper ? lagosKey(lastPaper.completedAt ?? lastPaper.startedAt) : null;
+  const gap = lastDay ? dayGap(lastDay, lagosKey(d?.serverNow ?? new Date().toISOString())) : 0;
+  const lastWord = !lastDay ? "" : gap === 0 ? "today" : gap === 1 ? "yesterday" : gap < 7 ? `on ${weekday(lastDay)}` : `on ${shortDate(lastDay)}`;
+  const papersSub = !papers.data || papers.data.total === 0
+    ? "Every paper you send, marked"
+    : `${thousands(papers.data.total)} paper${papers.data.total === 1 ? "" : "s"}${lastPaper ? ` · last one ${lastWord}, ${Math.round(lastPaper.percentage)}%` : ""}`;
 
   const streak = d?.streak;
   const freezeText = !streak
@@ -130,6 +141,7 @@ export function MePage() {
 
         <h2 className={s.gh}>Study</h2>
         <section className={s.list}>
+          <Row href="/dashboard/history" icon={<PapersIcon />} title="Past papers" sub={papersSub} />
           <Row
             href="/dashboard/bookmarks"
             icon={<BookmarkIcon />}

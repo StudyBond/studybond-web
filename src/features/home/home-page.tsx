@@ -23,6 +23,7 @@ import {
   boardLabel, dayGap, dayList, dayMonth, daysHours, greeting, hoursMinutes, lagosKey, lagosTime, monthName,
   nextFreezeDay, ordinal, paperTitle, priceLine, shortDate, thousands, weekday, whenLine,
 } from "./format";
+import { useLastPaper } from "@/features/history/use-last-paper";
 import { caveat } from "./home-fonts";
 import {
   BookmarkIcon, BrokenLinkIcon, CardIcon, ChallengeIcon, ChevronDown, ChevronRight, CrossIcon,
@@ -766,9 +767,17 @@ function Ticks({ marks }: { marks: string }) {
 }
 
 function RecentPapers({ papers, today, subjects }: { papers: RecentPaper[]; today: string; subjects: SubjectRef[] }) {
+  /* A real button with the count, so Past papers is easy to find (canvas board 3). */
+  const all = useLastPaper();
+  const total = all.data?.total ?? 0;
   return (
     <>
-      <div className={s.h}><h3>Recent papers</h3><Link href={"/dashboard/history" as Route} className={s.hLink}>See all</Link></div>
+      <div className={s.h}>
+        <h3>Recent papers</h3>
+        {papers.length > 0 ? (
+          <Link href={"/dashboard/history" as Route} className={s.allBtn}>{total > 0 ? `All ${thousands(total)}` : "See all"}</Link>
+        ) : null}
+      </div>
       <section className={s.papers}>
         {papers.length === 0 ? <p className={s.none}>Papers you finish show up here, with your score and every answer to review.</p> : null}
         {papers.map((p) => {

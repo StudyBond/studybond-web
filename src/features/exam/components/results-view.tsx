@@ -367,6 +367,8 @@ export function ResultsView({ result, examId, restricted }: ResultsViewProps) {
                   </dd>
                 </div>
               </dl>
+              {/* A way back to the whole file (Past papers, canvas board 3). */}
+              <Link href={"/dashboard/history" as Route} className={s.allPapers}>See all your past papers</Link>
             </div>
 
             <div className={s.papers}>

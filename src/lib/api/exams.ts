@@ -3,6 +3,7 @@ import type {
   ExamSessionData,
   ExamResult,
   ExamHistory,
+  HistoryKind,
   ExamAbandonResult,
   SubmitExamPayload,
   SuccessEnvelope,
@@ -176,13 +177,18 @@ export async function getExamHistory(params?: {
   page?: number;
   limit?: number;
   examType?: ExamType;
+  /** COMPLETED, ABANDONED, IN_PROGRESS, or ENDED (sent or not sent). */
   status?: string;
+  kind?: HistoryKind;
+  subject?: string;
 }) {
   const searchParams = new URLSearchParams();
   if (params?.page) searchParams.set("page", String(params.page));
   if (params?.limit) searchParams.set("limit", String(params.limit));
   if (params?.examType) searchParams.set("examType", params.examType);
   if (params?.status) searchParams.set("status", params.status);
+  if (params?.kind) searchParams.set("kind", params.kind);
+  if (params?.subject) searchParams.set("subject", params.subject);
 
   const query = searchParams.toString();
   const response = await apiClient<SuccessEnvelope<ExamHistory>>(

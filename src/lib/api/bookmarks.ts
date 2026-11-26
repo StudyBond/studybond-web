@@ -22,11 +22,14 @@ export async function getBookmarks(params?: {
   page?: number;
   limit?: number;
   subject?: string;
+  /** soon: the ones that expire first on top. new (default): last saved on top. */
+  sort?: "soon" | "new";
 }) {
   const searchParams = new URLSearchParams();
   if (params?.page) searchParams.set("page", String(params.page));
   if (params?.limit) searchParams.set("limit", String(params.limit));
   if (params?.subject) searchParams.set("subject", params.subject);
+  if (params?.sort) searchParams.set("sort", params.sort);
 
   const query = searchParams.toString();
   const response = await apiClient<SuccessEnvelope<BookmarksList>>(
